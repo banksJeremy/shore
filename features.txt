@@ -1,0 +1,10 @@
+Every time I try to get something done I fall victim to terrible feature
+creep, so I need to decide in advance what the scope of this should be.
+
+Let's start with a relatively minimal set.
+- Arithmatic, exponents, logarithms, imaginary numbers
+- Differentiation, possibly trivial integration
+- Margin of error
+- Possibly restrictions
+- Variable identifiers/names abstracted away from the math.
+- No inequalities for now
