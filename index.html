@@ -10,9 +10,23 @@
 				padding: 0;
 			}
 			
+			h1 {
+				text-shadow: rgba(48, 64, 92, .75) 1px 1px 2px;
+			}
+			
+			h1 span {
+				font-size: 80%;
+			}
+			
+			a {
+				color: rgb(255, 255, 200);
+			}
+			
 			body {
 				font-family: sans-serif;
 				font-size: 125%;
+				background: rgb(48, 64, 92);
+				text-align: center;
 			}
 			
 			h1, h2, h3, h4, h5, h6 {
@@ -20,10 +34,26 @@
 			}
 			
 			.centering {
+				text-align: left;
 				width: 32em;
+				max-width: 100%;
 				margin: 1em auto;
-				border: 1px solid gray;
+			}
+			
+			.content {
 				padding: 1em;
+				background: rgb(255, 255, 240);
+				border-radius: .5em;
+				-webkit-box-shadow: 0 0 4px rgb(255, 255, 240);
+				-moz-box-shadow: 0 0 4px rgb(255, 255, 240);
+				box-shadow: 0 0 4px rgb(255, 255, 240);
+			}
+			
+			.footer {
+				color: rgb(255, 255, 240);;
+				font-size: 75%;
+				text-align: center;
+				margin: 1em;
 			}
 			
 			form {
@@ -34,7 +64,18 @@
 				border: 1px solid black;
 				border-radius: .5em;
 				padding: .25em;
-				background: white;
+				background: #EEE;
+				font-weight: bold;
+				-webkit-box-shadow: 0 0 2px black;
+				cursor: pointer;
+			}
+			
+			input.submit:hover {
+				background: #DDD;
+			}
+			
+			input.submit:active {
+				background: #CCC;
 			}
 			
 			#input {
@@ -44,16 +85,27 @@
 				display: block;
 				padding: .2em;
 				width: 90%;
-				margin: .25em auto;
+				margin: .5em auto;
 				height: 2em;
 				line-height: 1em;
 				font-size: 100%;
 				white-space: nowrap;
+				-webkit-box-shadow: 0 0 2px black;
+				-moz-box-shadow: 0 0 2px black;
+				box-shadow: 0 0 2px black;
 			}
 			
 			form .buttons {
-				margin: .25em;
+				margin: .5em;
 				text-align: center;
+			}
+			
+			hr {
+				border-top: 1px solid gray;
+				margin: 1em;
+				-webkit-box-shadow: 0 0 2px gray;
+				-moz-box-shadow: 0 0 2px gray;
+				box-shadow: 0 0 2px gray;
 			}
 		</style>
 		<script type="text/javascript" src="coffee-script.js"></script>
@@ -87,20 +139,28 @@
 	</head>
 	<body>
 		<div class=centering>
-			<h1>
-				Shore Math Engine
-			</h1>
+			<div class=content>
+				<h1>
+					Shore <span>Math Engine</span>
+				</h1>
 			
-			<form>
-				<textarea id=input name=i></textarea>
-				<div class=buttons>
-					<input type=submit class=submit value="Calculate">
-				</div>
-			</form>
+				<form>
+					<textarea id=input name=i></textarea>
+					<div class=buttons>
+						<input type=submit class=submit value="Calculate">
+					</div>
+				</form>
 			
-			<p>
-				foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar 
-			</p>
+				<hr />
+			
+				<p>
+					foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar 
+				</p>
+			</div>
+			
+			<div class=footer>
+				Shore is developed by <a href="mailto:jeremy@jeremybanks.ca">Jeremy Banks</a>, the source can be found <a href="http://github.com/jeremybanks/shore">on GitHub</a>.
+			</div>
 		</div>
 	</body>
 </html>
