@@ -184,8 +184,8 @@
 			$("#input").focus()
 			
 			$("form").submit ->
-				$(".result p").html $("#input").val()
-				MathJax.Hub.Typeset $(".result p").get(0)
+				$(".result").text $("#input").val()
+				MathJax.Hub.Queue ["Typeset", MathJax.Hub, $(".result").get(0)]
 				false # prevent form from being submitted normally
 		</script>
 	</head>
