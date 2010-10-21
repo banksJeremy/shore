@@ -139,9 +139,19 @@
 				box-shadow: 0 0 2px gray;
 			}
 		</style>
-		<script type="text/javascript" src="coffeescript.js"></script>
 		<script type="text/javascript" src="jquery.js"></script>
-		<script type="text/coffeescript">
+		<script type="text/javascript" src="mathjax/MathJax.js">
+			MathJax.Hub.Config({
+				extensions: ["tex2jax.js", "TeX/AMSmath.js", "TeX/AMSsymbols.js"],
+				jax: ["input/TeX", "output/HTML-CSS"],
+				tex2jax: {
+					inlineMath: [["$", "$"]],
+					displayMath: [["$$", "$$"]]
+				}
+			})
+		</script>
+		<script type="text/javascript" src="coffeescript.js"></script>
+		<script type="text/coffeescript">$ -> # jQuery on DOM ready...
 			emPixels = ((element) ->
 				"The approximate number of pixels per em in an element."
 				
@@ -175,7 +185,8 @@
 			
 			$("form").submit ->
 				$(".result p").html $("#input").val()
-				false # don't aually submit the form
+				MathJax.Hub.Typeset $(".result p").get(0)
+				false # prevent form from being submitted normally
 		</script>
 	</head>
 	<body>
@@ -194,12 +205,13 @@
 			</div>
 			<div class="result box">
 				<p>
-					foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar 
+					$x + 2 = 9$
+					$$ x + 9 = 2$$
 				</p>
 			</div>
 			
 			<div class=footer>
-				Shore is developed by <a href="mailto:jeremy@jeremybanks.ca">Jeremy Banks</a>, the source is available <a href="http://github.com/jeremybanks/shore">on GitHub</a>.
+				Shore is developed by <a href="mailto:jeremy@jeremybanks.ca">Jeremy Banks</a>, the source and full credits are on <a href="http://github.com/jeremybanks/shore">on GitHub</a>.
 			</div>
 		</div>
 	</body>

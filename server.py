@@ -63,8 +63,12 @@ class Server(ThreadingHTTPServer):
                 self.end_headers()
                 with open("coffeescript-0.9.4.js", "rb") as f:
                     self.wfile.write(f.read())
-            else:
-                self.send_error(404)
+            else: # insecure as shit but fine for the moment
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                with open("." + parsed_path.path, "rb") as f:
+                    self.wfile.write(f.read())
 
 
 def main(port="8000"):
