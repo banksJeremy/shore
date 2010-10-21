@@ -2,6 +2,7 @@
 from multiprocessing import Process, Queue, Lock, Pipe
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import urllib.parse
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     """A threading HTTP server."""
@@ -31,9 +32,42 @@ class Server(ThreadingHTTPServer):
         
         with open("error_template.html") as f:
             error_message_format = f.read()
+        
+        def do_GET(self):    
+            parsed_path = urllib.parse.urlparse(self.path)
+            qs_args = urllib.parse.parse_qs(parsed_path.query, True)
+            name, _, extension = parsed_path.path[1:].partition(".")
+            
+            # defaults
+            name = name or "index"
+            extension = extension or "html"
+            
+            target = name, extension
+            
+            if target == ("index", "html"):
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                
+                with open("index.html", "rb") as f:
+                    self.wfile.write(f.read())
+            elif target == ("jquery", "js"):
+                self.send_response(200)
+                self.send_header("Content-type", "application/javascript")
+                self.end_headers()
+                with open("jquery-1.3.4.js", "rb") as f:
+                    self.wfile.write(f.read())
+            elif target == ("coffeescript", "js"):
+                self.send_response(200)
+                self.send_header("Content-type", "application/javascript")
+                self.end_headers()
+                with open("coffeescript-0.9.4.js", "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self.send_error(404)
 
 
-def main(port=""):
+def main(port="8000"):
     server = Server(*([("", int(port))] if port else []))
     server.serve_forever()
 
