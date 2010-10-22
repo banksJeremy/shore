@@ -45,12 +45,23 @@ class Server(ThreadingHTTPServer):
             target = name, extension
             
             if target == ("index", "html"):
+                if "i" in qs_args and qs_args["i"]:
+                    latex = qs_args["i"][0]
+                else:
+                    latex = "a + b &= c^{10}\n\int^d_bfoo&=c"
+                
+                latex = ("\\begin{align}" +
+                         latex.replace("\n", "\\\\<br>\n") +
+                         "\\end{align}").encode()
+                
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 
                 with open("index.html", "rb") as f:
-                    self.wfile.write(f.read())
+                    self.wfile.write(f.read()
+                                     .replace(b"\"result box\">",
+                                              b"\"result box\">" + latex))
             elif target == ("jquery", "js"):
                 self.send_response(200)
                 self.send_header("Content-type", "application/javascript")
@@ -65,7 +76,8 @@ class Server(ThreadingHTTPServer):
                     self.wfile.write(f.read())
             else: # insecure as shit but fine for the moment
                 self.send_response(200)
-                self.send_header("Content-type", "text/plain")
+                mime = "text/plain" if extension != "css" else "style/css"
+                self.send_header("Content-type", mime)
                 self.end_headers()
                 with open("." + parsed_path.path, "rb") as f:
                     self.wfile.write(f.read())
