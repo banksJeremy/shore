@@ -68,6 +68,9 @@
 			form.submit ->
 				result_box.text "\\[" + $("#input").val() + "\\]"
 				MathJax.Hub.Queue ["Typeset", MathJax.Hub, $(".result").get(0)]
+				
+				process_math input, output
+				
 				false # prevent form from being submitted normally
 		</script>
 	</head>
