@@ -2,9 +2,8 @@
 require("sys").print((new require("jison").Parser({
 	"lex": {
 		"rules": [
-			[ "[ \\t]+", "/* ignore horizontal whitespace */" ],
-			[ "[\n\r]+", "/* vertical too, for now */" ],
-			[ "([0-9]*\.[0-9]+|[0-9]+)\\b", "return 'NUMBER';" ],
+			[ "\\s+", "" ],
+			[ "([0-9]*\\.[0-9]+|[0-9]+)\\b", "return 'NUMBER';" ],
 			[ "=", "return 'EQUALS';" ],
 			[ "\\*", "return '*';" ],
 			[ "\\/", "return '/';" ],
@@ -14,7 +13,7 @@ require("sys").print((new require("jison").Parser({
 			[ "\\(", "return '(';" ],
 			[ "\\)", "return ')';" ],
 			[ "(±|\\?)", "return 'PLUSMINUS';" ],
-			[ "[_\.]", "return 'SUB';" ],
+			[ "[_\\.]", "return 'SUB';" ],
 			[ "[a-zA-Z][a-zA-Z0-9]*", "return 'IDENTIFIER';" ],
 			[ "$", "return 'EOF';" ],
 		]
@@ -41,12 +40,12 @@ require("sys").print((new require("jison").Parser({
 			[ "e / e", "$$ = ($1).over($3);" ],
 			[ "e ^ e", "$$ = ($1).to_the($3);" ],
 			[ "e PLUSMINUS e", "$$ = ($1).plus_minus($3);" ],
-			[ "IDENTIFIER SUB e", "$$ = ($1).sub($3);" ],
+			[ "e SUB e", "$$ = ($1).sub($3);" ],
 			[ "- e", "$$ = ($2).neg();", { "prec": "UMINUS" } ],
 			[ "+ e", "$$ = ($2).pos();", { "prec": "UPLUS" } ],
-			[ "( e ) ", "$$ = $2;" ],
-			[ "NUMBER", "$$ = new Shore.Number(yytext);"],
-			[ "IDENTIFIER", "$$ = new Shore.Identifier(yytext);"],
+			[ "( e ) ", "$$ = ($2);" ],
+			[ "NUMBER", "$$ = new shore.Number(yytext);"],
+			[ "IDENTIFIER", "$$ = new shore.Identifier(yytext);"],
 		]
 	}
-})).generate())
+})).generate({moduleName: "parser"}))
