@@ -17,6 +17,7 @@ sys.print((new require("jison").Parser({
 			[ "~", "return 'INTEGRATE';" ],
 			[ "`", "return 'DIFFERENTIATE';" ],
 			[ "[_\\.]", "return 'SUB';" ],
+			[ "\\bgiven\\b", "return 'GIVEN';" ],
 			[ "[a-zA-Z][a-zA-Z0-9]*'*", "return 'IDENTIFIER';" ],
 			[ "$", "return 'EOF';" ],
 		]
@@ -24,6 +25,7 @@ sys.print((new require("jison").Parser({
 	
 	"operators": [
 		[ "left", "EQUALS" ],
+		[ "left", "GIVEN" ],
 		[ "left", "+", "-" ],
 		[ "left", "INTEGRATE", "DIFFERENTIATE" ],
 		[ "left", "*", "/" ],
@@ -44,6 +46,7 @@ sys.print((new require("jison").Parser({
 			[ "e + e", "$$ = ($1).plus($3);" ],
 			[ "e - e", "$$ = ($1).minus($3);" ],
 			[ "e * e", "$$ = ($1).times($3);" ],
+			[ "e GIVEN e", "$$ = ($1).given($3);" ],
 			[ "e / e", "$$ = ($1).over($3);" ],
 			[ "e ^ e", "$$ = ($1).to_the($3);" ],
 			[ "e INTEGRATE e", "$$ = ($1).integrate($3);" ],

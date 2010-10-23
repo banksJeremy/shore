@@ -105,6 +105,7 @@
 					equals: (other) -> new shore.Equality this, other
 					integrate: (variable) -> new shore.Integral this, variable
 					differentiate: (variable) -> new shore.Derivative this, variable
+					given: (substitution) -> new shore.PendingSubstitution this, substitution
 				
 				Number: class Number extends Value
 					type: "Number"
@@ -191,11 +192,12 @@
 							@base.to_tex @precedence
 						else
 							"{#{@base.to_tex @precedence}}^{#{@exponent.to_tex()}}"
+					
 					to_free_string: ->
 						if @exponent.type == "Number" and @exponent.value == 1
 							@base.to_tex @precedence
 						else
-							"#{@base.to_string(@precedence)}^#{@exponent.to_string()}"
+							"#{@base.to_string @precedence}^#{@exponent.to_string()}"
 				
 				Integral: class Integral extends Value
 					type: "Integral"
@@ -204,7 +206,7 @@
 					constructor: (@expression, @variable) ->
 					
 					to_free_tex: ->
-						"\\int{#{@expression.to_tex(@precedence)}\\left[d#{@variable.to_tex()}\\right]}"
+						"\\int{#{@expression.to_tex @precedence}\\left[d#{@variable.to_tex()}\\right]}"
 				
 				Equality: class Equality extends Thing
 					precedence: 10
@@ -212,7 +214,7 @@
 					type: "Equality"
 					constructor: (@terms...) ->
 					string_symbol: " = "
-					tex_symbol: " &= "
+					tex_symbol: " = "
 					
 					to_free_tex: ->
 						(term.to_tex() for term in @terms).join(@tex_symbol)
@@ -225,6 +227,19 @@
 						else
 							new shore.Equality @terms..., other
 				
+				PendingSubstitution: class PendingSubstitution extends Value
+					precedence: 16
+					
+					thing: "PendingSubstitution"
+					
+					constructor: (@expression, @substitution) ->
+					
+					to_free_string: ->
+						@expression.to_string(0) + " given " + @substitution.to_string(15)
+					to_free_tex: ->
+						@expression.to_tex(0) + " \\;\\text{given}\\; " + @substitution.to_tex(15)
+				
+				
 			shore.NEGATIVE_ONE = new shore.Number(-1)
 			process_math = (input, output) ->
 				parsed = [] 
@@ -235,9 +250,9 @@
 				output_parts = []
 				
 				output_parts.push "<div><h3 class=tex2jax_ignore>Input</h3></div>"
-				output_parts.push "\\begin{align*}"
-				output_parts.push (escape_html line.to_tex() for line in parsed).join(" \\\\\n<br>")
-				output_parts.push "\\end{align*}"
+				output_parts.push "\\begin{align}"
+				output_parts.push ((escape_html line.to_tex()).replace(/=/, "&=") for line in parsed).join(" \\\\\n<br>")
+				output_parts.push "\\end{align}"
 				
 				output.html output_parts.join ""
 				
@@ -259,11 +274,12 @@
 				
 				<form>
 					<textarea id=input name=i>f = 5; m = 10
-A = f/m
+A = f/m given (foo = bar)
 v_0 = 0
 v = A ~ t + v_0
 d_0 = 0
-d = v ~ t + d_0</textarea>
+d = v ~ t + d_0
+t = 10</textarea>
 					<div class=buttons>
 						<input type=submit class=submit value="Calculate">
 					</div>
