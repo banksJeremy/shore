@@ -67,14 +67,7 @@
 			input_box.keyup (event) -> scale_textarea input_box
 			
 			window.shore = shore =
-				Value: class Value
-					plus: (other) -> new shore.Sum [this, other]
-					minus: (other) -> new shore.Sum [this, other.neg()]
-					times: (other) -> new shore.Product [this, other]
-					over: (other) -> new shore.Product [this, other.to_the shore.NEGATIVE_ONE]
-					pos: -> this
-					to_the: (other) -> new shore.Exponent this, other
-					
+				Thing: class Thing
 					toString: -> @to_string()
 					
 					precedence: 0
@@ -93,6 +86,17 @@
 							"(#{@to_free_string()})"
 						else
 							@to_free_string()
+					
+				Value: class Value extends Thing
+					plus: (other) -> new shore.Sum [this, other]
+					minus: (other) -> new shore.Sum [this, other.neg()]
+					times: (other) -> new shore.Product [this, other]
+					over: (other) -> new shore.Product [this, other.to_the shore.NEGATIVE_ONE]
+					pos: -> this
+					to_the: (other) -> new shore.Exponent this, other
+					equals: (other) -> new shore.Equality this, other
+					integrate: (variable) -> new shore.Integral this, variable
+					differentiate: (variable) -> new shore.Derivative this, variable
 				
 				Number: class Number extends Value
 					type: "Number"
@@ -159,11 +163,30 @@
 					
 					to_free_tex: -> @identifier.to_free_tex()
 					to_free_string: -> @identifier.to_free_string()
+				
+				Equality: class Equality extends Thing
+					precedence: 10
 					
-			
+					type: "Equality"
+					constructor: (@terms...) ->
+					string_symbol: " = "
+					tex_symbol: " = "
+					
+					to_free_tex: ->
+						(term.to_tex() for term in @terms).join(@tex_symbol)
+					to_free_string: ->
+						(term.to_string() for term in @terms).join(@string_symbol)
+						
+					equals: (other) ->
+						if other.type == Equality
+							new shore.Equality @terms..., other.terms...
+						else
+							new shore.Equality @terms..., other
+				
+			shore.NEGATIVE_ONE = new shore.Number(-1)
 			process_math = (input, output) ->
 				parsed_input = parser.parse input
-				
+				console.log parsed_input.to_tex()
 				tex_output = "\\[" + parsed_input.to_tex() + "\\]"
 				output.text tex_output
 				MathJax.Hub.Queue ["Typeset", MathJax.Hub, output.get(0) ]

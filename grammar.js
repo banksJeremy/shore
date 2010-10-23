@@ -15,9 +15,9 @@ sys.print((new require("jison").Parser({
 			[ "\\)", "return ')';" ],
 			[ "(±|\\?)", "return 'PLUSMINUS';" ],
 			[ "~", "return 'INTEGRATE';" ],
-			[ "'", "return 'DIFFERENTIATE';" ],
+			[ "`", "return 'DIFFERENTIATE';" ],
 			[ "[_\\.]", "return 'SUB';" ],
-			[ "[a-zA-Z][a-zA-Z0-9]*", "return 'IDENTIFIER';" ],
+			[ "[a-zA-Z][a-zA-Z0-9]*'*", "return 'IDENTIFIER';" ],
 			[ "$", "return 'EOF';" ],
 		]
 	},
@@ -49,10 +49,9 @@ sys.print((new require("jison").Parser({
 			[ "e SUB e", "$$ = ($1).sub($3);" ],
 			[ "- e", "$$ = ($2).neg();", { "prec": "UMINUS" } ],
 			[ "+ e", "$$ = ($2).pos();", { "prec": "UPLUS" } ],
-			[ "e ( e ) ", "$$ = $1.call($3);" ],
 			[ "( e ) ", "$$ = ($2);" ],
 			[ "NUMBER", "$$ = new shore.Number(yytext);"],
-			[ "IDENTIFIER", "$$ = new shore.Identifier(yytext);"],
+			[ "IDENTIFIER", "$$ = new shore.Identifier(yytext);"]
 		]
 	}
 })).generate({moduleName: "parser"}))
