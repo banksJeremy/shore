@@ -25,16 +25,19 @@ sys.print((new require("jison").Parser({
 	"operators": [
 		[ "left", "EQUALS" ],
 		[ "left", "+", "-" ],
+		[ "left", "INTEGRATE", "DIFFERENTIATE" ],
 		[ "left", "*", "/" ],
 		[ "left", "^" ],
 		[ "left", "PLUSMINUS" ],
 		[ "left", "UMINUS", "UPLUS" ],
-		[ "left", "INTEGRATE", "DIFFERENTIATE" ],
-		[ "left", "SUB" ],
+		[ "right", "SUB" ],
 	],
 	
 	"bnf": {
-		"expressions": [[ "e EOF", "return $1;" ]],
+		"expressions": [
+			[ "e EOF", "return $1;" ],
+			[ "EOF", "return undefined;" ],
+		],
 		
 		"e": [
 			[ "e EQUALS e", "$$ = ($1).equals($3);" ],
@@ -43,7 +46,7 @@ sys.print((new require("jison").Parser({
 			[ "e * e", "$$ = ($1).times($3);" ],
 			[ "e / e", "$$ = ($1).over($3);" ],
 			[ "e ^ e", "$$ = ($1).to_the($3);" ],
-			[ "e INTEGRATE e", "$$ = ($1).integreate($3);" ],
+			[ "e INTEGRATE e", "$$ = ($1).integrate($3);" ],
 			[ "e DIFFERENTIATE e", "$$ = ($1).differentiate($3);" ],
 			[ "e PLUSMINUS e", "$$ = ($1).plus_minus($3);" ],
 			[ "e SUB e", "$$ = ($1).sub($3);" ],

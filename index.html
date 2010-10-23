@@ -49,6 +49,9 @@
 				
 				textarea.css "height", ems * emPixels
 			
+			escape_html = (raw) ->
+				raw.replace("&", "&amp").replace("<", "&lt;").replace(">", "&gt;")
+			
 			input_box = $("#input")
 			result_box = $("#results")
 			form = $("form")
@@ -67,8 +70,10 @@
 			input_box.keyup (event) -> scale_textarea input_box
 			
 			window.shore = shore =
+				type: "Thing"
+				
 				Thing: class Thing
-					toString: -> @to_string()
+					toString: -> "#{@type}{#{@to_string()}}"
 					
 					precedence: 0
 					
@@ -88,6 +93,8 @@
 							@to_free_string()
 					
 				Value: class Value extends Thing
+					type: "Value"
+					
 					plus: (other) -> new shore.Sum [this, other]
 					minus: (other) -> new shore.Sum [this, other.neg()]
 					times: (other) -> new shore.Product [this, other]
@@ -142,27 +149,28 @@
 				
 				Product: class Product extends CANOperation
 					type: "Product"
-					precedence: 3
+					precedence: 4
 					
 					string_symbol: " f "
 					tex_symbol: " \\cdot "
 				
 				Exponent: class Exponent extends Value
 					type: "Exponent"
-					precedence: 3
+					precedence: 5
 					
 					constructor: (@base, @exponent) ->
 					
 					to_free_tex: -> "{#{@base.to_tex(@precedence)}}^{#{@exponent.to_tex()}}"
 					to_free_string: -> "#{@base.to_string(@precedence)}^#{@exponent.to_string()}"
 				
-				UFunction: class UFunction extends Value
-					type: "UFunction"
-					precedence: 10
-					constructor: (@identifier, @f) ->
+				Integral: class Integral extends Value
+					type: "Integral"
+					precedence: 3
 					
-					to_free_tex: -> @identifier.to_free_tex()
-					to_free_string: -> @identifier.to_free_string()
+					constructor: (@expression, @variable) ->
+					
+					to_free_tex: ->
+						"\\int{#{@expression.to_tex(@precedence)}\\left[d#{@variable.to_tex()}\\right]}"
 				
 				Equality: class Equality extends Thing
 					precedence: 10
@@ -170,7 +178,7 @@
 					type: "Equality"
 					constructor: (@terms...) ->
 					string_symbol: " = "
-					tex_symbol: " = "
+					tex_symbol: " &= "
 					
 					to_free_tex: ->
 						(term.to_tex() for term in @terms).join(@tex_symbol)
@@ -185,10 +193,20 @@
 				
 			shore.NEGATIVE_ONE = new shore.Number(-1)
 			process_math = (input, output) ->
-				parsed_input = parser.parse input
-				console.log parsed_input.to_tex()
-				tex_output = "\\[" + parsed_input.to_tex() + "\\]"
-				output.text tex_output
+				parsed = [] 
+				for line in input.split("\n")
+					if line.length
+						parsed.push parser.parse line
+				
+				output_parts = []
+				
+				output_parts.push "<div><h3 class=tex2jax_ignore>Input</h3></div>"
+				output_parts.push "\\begin{align*}"
+				output_parts.push (escape_html line.to_tex() for line in parsed).join(" \\\\\n<br>")
+				output_parts.push "\\end{align*}"
+				
+				output.html output_parts.join ""
+				
 				MathJax.Hub.Queue ["Typeset", MathJax.Hub, output.get(0) ]
 			
 			form.submit window.__go = ->
@@ -206,7 +224,14 @@
 				</h1>
 				
 				<form>
-					<textarea id=input name=i>(3 + a) ^ (9 * F_b)</textarea>
+					<textarea id=input name=i>f = 5
+m = 10
+d_0 = 0
+v_0 = 0
+d = v ~ t + d_0
+v = A ~ t + v_0
+A = f/m
+</textarea>
 					<div class=buttons>
 						<input type=submit class=submit value="Calculate">
 					</div>
