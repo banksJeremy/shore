@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-require("sys").print((new require("jison").Parser({
+var sys = require("sys")
+sys.print((new require("jison").Parser({
 	"lex": {
 		"rules": [
 			[ "\\s+", "" ],
@@ -13,6 +14,8 @@ require("sys").print((new require("jison").Parser({
 			[ "\\(", "return '(';" ],
 			[ "\\)", "return ')';" ],
 			[ "(±|\\?)", "return 'PLUSMINUS';" ],
+			[ "~", "return 'INTEGRATE';" ],
+			[ "'", "return 'DIFFERENTIATE';" ],
 			[ "[_\\.]", "return 'SUB';" ],
 			[ "[a-zA-Z][a-zA-Z0-9]*", "return 'IDENTIFIER';" ],
 			[ "$", "return 'EOF';" ],
@@ -26,6 +29,7 @@ require("sys").print((new require("jison").Parser({
 		[ "left", "^" ],
 		[ "left", "PLUSMINUS" ],
 		[ "left", "UMINUS", "UPLUS" ],
+		[ "left", "INTEGRATE", "DIFFERENTIATE" ],
 		[ "left", "SUB" ],
 	],
 	
@@ -39,10 +43,13 @@ require("sys").print((new require("jison").Parser({
 			[ "e * e", "$$ = ($1).times($3);" ],
 			[ "e / e", "$$ = ($1).over($3);" ],
 			[ "e ^ e", "$$ = ($1).to_the($3);" ],
+			[ "e INTEGRATE e", "$$ = ($1).integreate($3);" ],
+			[ "e DIFFERENTIATE e", "$$ = ($1).differentiate($3);" ],
 			[ "e PLUSMINUS e", "$$ = ($1).plus_minus($3);" ],
 			[ "e SUB e", "$$ = ($1).sub($3);" ],
 			[ "- e", "$$ = ($2).neg();", { "prec": "UMINUS" } ],
 			[ "+ e", "$$ = ($2).pos();", { "prec": "UPLUS" } ],
+			[ "e ( e ) ", "$$ = $1.call($3);" ],
 			[ "( e ) ", "$$ = ($2);" ],
 			[ "NUMBER", "$$ = new shore.Number(yytext);"],
 			[ "IDENTIFIER", "$$ = new shore.Identifier(yytext);"],
