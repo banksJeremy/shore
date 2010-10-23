@@ -68,6 +68,7 @@
 						# where it most needs to be snappy
 			
 			input_box.keyup (event) -> scale_textarea input_box
+			scale_textarea input_box
 			
 			window.shore = shore =
 				type: "Thing"
@@ -111,7 +112,7 @@
 					precedence: 10
 					constructor: (@value) ->
 					
-					neg: -> new shore.Number -@value
+					neg: -> new shore.Number(-@value)
 					to_free_tex: -> "{#{String(@value)}}"
 					to_free_string: -> String(@value)
 				
@@ -153,6 +154,31 @@
 					
 					string_symbol: " f "
 					tex_symbol: " \\cdot "
+					
+					to_free_tex: ->
+						positive_exponents = []
+						negative_exponents = []
+						
+						for term in @operands
+							if term.type == "Exponent"
+								exponent = term.exponent
+								if exponent.type == "Number" and exponent.value < 0
+									negative_exponents.push new Exponent term.base, exponent.neg()
+								else
+									positive_exponents.push term
+							else
+								positive_exponents.push term
+						
+						positive_exponents ||= [new shore.Number 1]
+						
+						top = (operand.to_tex(@precedence) for operand in positive_exponents).join(@tex_symbol)
+						
+						if negative_exponents.length
+							bottom = (operand.to_tex(@precedence) for operand in negative_exponents).join(@tex_symbol)
+							"\\tfrac{#{top}}{#{bottom}}"
+						else
+							top
+							
 				
 				Exponent: class Exponent extends Value
 					type: "Exponent"
@@ -160,8 +186,16 @@
 					
 					constructor: (@base, @exponent) ->
 					
-					to_free_tex: -> "{#{@base.to_tex(@precedence)}}^{#{@exponent.to_tex()}}"
-					to_free_string: -> "#{@base.to_string(@precedence)}^#{@exponent.to_string()}"
+					to_free_tex: ->
+						if @exponent.type == "Number" and @exponent.value == 1
+							@base.to_tex @precedence
+						else
+							"{#{@base.to_tex @precedence}}^{#{@exponent.to_tex()}}"
+					to_free_string: ->
+						if @exponent.type == "Number" and @exponent.value == 1
+							@base.to_tex @precedence
+						else
+							"#{@base.to_string(@precedence)}^#{@exponent.to_string()}"
 				
 				Integral: class Integral extends Value
 					type: "Integral"
@@ -194,7 +228,7 @@
 			shore.NEGATIVE_ONE = new shore.Number(-1)
 			process_math = (input, output) ->
 				parsed = [] 
-				for line in input.split("\n")
+				for line in input.split /[\n;]/
 					if line.length
 						parsed.push parser.parse line
 				
@@ -224,14 +258,12 @@
 				</h1>
 				
 				<form>
-					<textarea id=input name=i>f = 5
-m = 10
-d_0 = 0
-v_0 = 0
-d = v ~ t + d_0
-v = A ~ t + v_0
+					<textarea id=input name=i>f = 5; m = 10
 A = f/m
-</textarea>
+v_0 = 0
+v = A ~ t + v_0
+d_0 = 0
+d = v ~ t + d_0</textarea>
 					<div class=buttons>
 						<input type=submit class=submit value="Calculate">
 					</div>
