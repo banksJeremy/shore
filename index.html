@@ -200,14 +200,23 @@
 							"#{@base.to_string @precedence}^#{@exponent.to_string()}"
 				
 				Integral: class Integral extends Value
-					type: "Integral"
+					type: "Integral" # Indefinite
 					precedence: 3
 					
 					constructor: (@expression, @variable) ->
 					
 					to_free_tex: ->
-						"\\int{#{@expression.to_tex @precedence}\\left[d#{@variable.to_tex()}\\right]}"
+						"\\int\\left[#{@expression.to_tex()}\\right]d#{@variable.to_tex()}"
 				
+				Derivative: class Derivative extends Value
+					type: "Derivative"
+					precedence: 3
+					
+					constructor: (@expression, @variable) ->
+					
+					to_free_tex: ->
+						"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
+
 				Equality: class Equality extends Thing
 					precedence: 10
 					
@@ -239,22 +248,46 @@
 					to_free_tex: ->
 						@expression.to_tex(0) + " \\;\\text{given}\\; " + @substitution.to_tex(15)
 				
-				
+			
+			texscapeify = (value) ->
+				(escape_html value.to_tex()).replace(/=/, "&=")
+			
 			shore.NEGATIVE_ONE = new shore.Number(-1)
 			process_math = (input, output) ->
-				parsed = [] 
-				for line in input.split /[\n;]/
+				parsed = []
+				for line in input.split /\n/
 					if line.length
-						parsed.push parser.parse line
+						parsed_line = []
+						for expression in line.split /;/
+							if expression.length
+								parsed_line.push parser.parse expression
+						parsed.push parsed_line
 				
 				output_parts = []
 				
-				output_parts.push "<div><h3 class=tex2jax_ignore>Input</h3></div>"
-				output_parts.push "\\begin{align}"
-				output_parts.push ((escape_html line.to_tex()).replace(/=/, "&=") for line in parsed).join(" \\\\\n<br>")
-				output_parts.push "\\end{align}"
+				output_parts.push "<h3><span class=tex2jax_ignore>Input</span></h3>"
+				output_parts.push "<div>\\begin{align}"
+				
+				for line in parsed
+					for expression in line
+						output_parts.push texscapeify expression
+						output_parts.push " & "
+					output_parts.push " \\\\\n<br>"
+				
+				output_parts.push "\\end{align}</div>"
+				
+				output_parts.push "<h3><span class=tex2jax_ignore>Steps</span></h3>"
+				output_parts.push "<div>\\begin{align}"
+				output_parts.push "\\end{align}</div>"
+				
+				output_parts.push "<h3><span class=tex2jax_ignore>Results</span></h3>"
+				output_parts.push "<div>\\begin{align}"
+				output_parts.push "\\end{align}</div>"
 				
 				output.html output_parts.join ""
+				
+				$("h3").css cursor: "pointer"
+				$("h3").toggle (-> $(this).next().hide 100), (-> $(this).next().show 100)
 				
 				MathJax.Hub.Queue ["Typeset", MathJax.Hub, output.get(0) ]
 			
@@ -273,13 +306,11 @@
 				</h1>
 				
 				<form>
-					<textarea id=input name=i>f = 5; m = 10
-A = f/m given (foo = bar)
-v_0 = 0
-v = A ~ t + v_0
-d_0 = 0
-d = v ~ t + d_0
-t = 10</textarea>
+					<textarea id=input name=i>f_net = 8 * t^2`t; m = 10
+A = f_net/m
+v = A ~ t + v_0; v_0 = 0
+d = v ~ t + d_0; d_0 = 0
+d_t = d given (t = t_f); t_f = 10</textarea>
 					<div class=buttons>
 						<input type=submit class=submit value="Calculate">
 					</div>

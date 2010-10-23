@@ -125,10 +125,6 @@ form .buttons {
 	text-align: center;
 }
 
-hr {
-	border-top: 1px solid gray;
-	margin: 1em;
-	-webkit-box-shadow: 0 0 2px gray;
-	-moz-box-shadow: 0 0 2px gray;
-	box-shadow: 0 0 2px gray;
+h3 {
+	text-shadow: rgba(48, 64, 92, .40) 1px 1px 2px;
 }
