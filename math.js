@@ -312,4 +312,7 @@
       return PendingSubstitution;
     })()
   });
+  shore.ZERO = new shore.Number(0);
+  shore.ONE = new shore.Number(1);
+  shore.NEGATIVE_ONE = new shore.Number() - 1;
 }).call(this);

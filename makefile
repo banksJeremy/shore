@@ -1,10 +1,10 @@
-all: CLEAN script.js parser.js main.js
+all: CLEAN parser.js math.js main.js
 
 open: all
 	open index.html
 
 CLEAN:
-	rm -f script.js parser.js main.js
+	rm -f math	.js parser.js main.js
 
 main.js:
 	./main.coffee # main.js - requires coffeescript
