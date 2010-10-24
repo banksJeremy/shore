@@ -1,0 +1,15 @@
+Shore Math Engine
+=================
+
+Some math in the browser.
+
+Credits
+-------
+
+Includes MathJax under Apache 2.0 Open Source License.
+Uses CoffeeScript.
+Uses Jison.
+Original code is by Jeremy Banks <jeremy@jeremybanks.com> and is released
+under the MIT license.
+
+Make this decent before showing off.
