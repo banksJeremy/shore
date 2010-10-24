@@ -158,9 +158,9 @@ window.shore = shore =
 		tex_symbol: " = "
 		
 		to_free_tex: ->
-			(term.to_tex() for term in @terms).join(@tex_symbol)
+			((term.to_tex() for term in @terms).join @tex_symbol)
 		to_free_string: ->
-			(term.to_string() for term in @terms).join(@string_symbol)
+			((term.to_string() for term in @terms).join @string_symbol)
 			
 		equals: (other) ->
 			if other.type == Equality
@@ -179,3 +179,7 @@ window.shore = shore =
 			(@expression.to_string 0) + " given " + (@substitution.to_string 15)
 		to_free_tex: ->
 			(@expression.to_tex 0) + " \\;\\text{given}\\; " + (@substitution.to_tex 15)
+
+shore.ZERO = new shore.Number 0
+shore.ONE = new shore.Number 1
+shore.NEGATIVE_ONE = new shore.Number -1

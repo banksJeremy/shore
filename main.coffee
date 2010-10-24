@@ -51,7 +51,6 @@ $ -> # jQuery on DOM ready...
 	texscapeify = (value) ->
 		((escape_html value.to_tex()).replace /=/, "&=")
 	
-	shore.NEGATIVE_ONE = new shore.Number(-1)
 	process_math = (input, output) ->
 		parsed = []
 		for line in input.split /\n/
@@ -85,8 +84,8 @@ $ -> # jQuery on DOM ready...
 		
 		output.html output_parts.join ""
 		
-		$("h3").css cursor: "pointer"
-		$("h3").toggle (-> ($ this).next().hide 100), (-> ($ this).next().show 100)
+		($ "h3").css cursor: "pointer"
+		($ "h3").toggle (-> ($ this).next().hide 100), (-> ($ this).next().show 100)
 		
 		MathJax.Hub.Queue ["Typeset", MathJax.Hub, (output.get 0) ]
 	
