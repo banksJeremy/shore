@@ -3,13 +3,12 @@ $ -> # jQuery on DOM ready...
 	emPixels = ((element) ->
 		"The approximate number of pixels per em in an element."
 		
-		test_element = $("<div>").css width: "10em"
-		test_element.appendTo(element)
-		result = parseFloat(test_element.css("width")) / 10
+		test_element = ($ "<div>").css width: "10em"
+		test_element.appendTo element
+		result = parseFloat(test_element.css "width") / 10
 		test_element.remove()
 		result
-	) $("body") # this element
-	
+	) ($ "body")
 	occurences = (string, target_character) ->
 		"The number of occurrences of a given character in a string."
 		
@@ -18,7 +17,6 @@ $ -> # jQuery on DOM ready...
 			if character == target_character
 				result += 1
 		result
-	
 	scale_textarea = (textarea, modifier) ->
 		"Set the height of a jQ textarea based on the newlines contained.
 		
@@ -26,23 +24,22 @@ $ -> # jQuery on DOM ready...
 		
 		modifier ?= 0
 		
-		ems = occurences(textarea.val(), "\n") + 2 + modifier
+		ems = (occurences textarea.val(), "\n") + 2 + modifier
 		
 		textarea.css "height", ems * emPixels
-	
 	escape_html = (raw) ->
 		raw.replace("&", "&amp").replace("<", "&lt;").replace(">", "&gt;")
 	
-	input_box = $("#input")
-	result_box = $("#results")
-	form = $("form")
+	input_box = $ "#input"
+	result_box = $ "#results"
+	form = $ "form"
 	
 	input_box.focus()
 	
 	input_box.keypress (event) ->
 		if event.which == 13 or event.which == 10
 			if event.shiftKey
-				$("form").submit()
+				($ "form").submit()
 				false
 			else
 				scale_textarea input_box, +1
@@ -94,9 +91,9 @@ $ -> # jQuery on DOM ready...
 			precedence: 10
 			constructor: (@value) ->
 			
-			neg: -> new shore.Number(-@value)
-			to_free_tex: -> "{#{String(@value)}}"
-			to_free_string: -> String(@value)
+			neg: -> new shore.Number -@value
+			to_free_tex: -> String @value
+			to_free_string: -> String @value
 		
 		Identifier: class Identifier extends Value
 			type: "Identifier"
@@ -119,9 +116,11 @@ $ -> # jQuery on DOM ready...
 			
 			constructor: (@operands) ->
 			to_free_tex: ->
-				(operand.to_tex(@precedence) for operand in @operands).join(@tex_symbol)
+				(((operand.to_tex @precedence) for operand in @operands)
+				 .join @tex_symbol)
 			to_free_string: ->
-				(operand.to_string(@precedence) for operand in @operands).join(@string_symbol)
+				(((operand.to_string @precedence) for operand in @operands)
+				 .join @string_symbol)
 		
 		Sum: class Sum extends CANOperation
 			type: "Sum"
@@ -153,14 +152,15 @@ $ -> # jQuery on DOM ready...
 				
 				positive_exponents ||= [new shore.Number 1]
 				
-				top = (operand.to_tex(@precedence) for operand in positive_exponents).join(@tex_symbol)
+				top = (((operand.to_tex @precedence) for operand in positive_exponents)
+				       .join @tex_symbol)
 				
 				if negative_exponents.length
-					bottom = (operand.to_tex(@precedence) for operand in negative_exponents).join(@tex_symbol)
+					bottom = (((operand.to_tex @precedence) for operand in negative_exponents)
+					          .join @tex_symbol)
 					"\\tfrac{#{top}}{#{bottom}}"
 				else
 					top
-					
 		
 		Exponent: class Exponent extends Value
 			type: "Exponent"
@@ -225,13 +225,13 @@ $ -> # jQuery on DOM ready...
 			constructor: (@expression, @substitution) ->
 			
 			to_free_string: ->
-				@expression.to_string(0) + " given " + @substitution.to_string(15)
+				(@expression.to_string 0) + " given " + (@substitution.to_string 15)
 			to_free_tex: ->
-				@expression.to_tex(0) + " \\;\\text{given}\\; " + @substitution.to_tex(15)
+				(@expression.to_tex 0) + " \\;\\text{given}\\; " + (@substitution.to_tex 15)
 		
 	
 	texscapeify = (value) ->
-		(escape_html value.to_tex()).replace(/=/, "&=")
+		((escape_html value.to_tex()).replace /=/, "&=")
 	
 	shore.NEGATIVE_ONE = new shore.Number(-1)
 	process_math = (input, output) ->
@@ -268,12 +268,12 @@ $ -> # jQuery on DOM ready...
 		output.html output_parts.join ""
 		
 		$("h3").css cursor: "pointer"
-		$("h3").toggle (-> $(this).next().hide 100), (-> $(this).next().show 100)
+		$("h3").toggle (-> ($ this).next().hide 100), (-> ($ this).next().show 100)
 		
-		MathJax.Hub.Queue ["Typeset", MathJax.Hub, output.get(0) ]
+		MathJax.Hub.Queue ["Typeset", MathJax.Hub, (output.get 0) ]
 	
 	form.submit window.__go = ->
-		input = $("#input").val()
+		input = ($ "#input").val()
 		process_math input, result_box
 		
 		false # prevent form from being submitted normally

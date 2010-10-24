@@ -12,7 +12,7 @@
     emPixels = (function(element) {
       var result, test_element;
       "The approximate number of pixels per em in an element.";
-      test_element = $("<div>").css({
+      test_element = ($("<div>")).css({
         width: "10em"
       });
       test_element.appendTo(element);
@@ -39,7 +39,7 @@
 		\
 		(2 + newlines) ems.";
       modifier = (typeof modifier !== "undefined" && modifier !== null) ? modifier : 0;
-      ems = occurences(textarea.val(), "\n") + 2 + modifier;
+      ems = (occurences(textarea.val(), "\n")) + 2 + modifier;
       return textarea.css("height", ems * emPixels);
     };
     escape_html = function(raw) {
@@ -52,7 +52,7 @@
     input_box.keypress(function(event) {
       if (event.which === 13 || event.which === 10) {
         if (event.shiftKey) {
-          $("form").submit();
+          ($("form")).submit();
           return false;
         } else {
           return scale_textarea(input_box, +1);
@@ -128,10 +128,10 @@
         Number.prototype.type = "Number";
         Number.prototype.precedence = 10;
         Number.prototype.neg = function() {
-          return new shore.Number(-this.value);
+          return new shore.Number() - this.value;
         };
         Number.prototype.to_free_tex = function() {
-          return "{" + (String(this.value)) + "}";
+          return String(this.value);
         };
         Number.prototype.to_free_string = function() {
           return String(this.value);
@@ -232,23 +232,23 @@
             }
           }
           positive_exponents || (positive_exponents = [new shore.Number(1)]);
-          top = (function() {
+          top = ((function() {
             _result = []; _ref = positive_exponents;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               operand = _ref[_i];
               _result.push(operand.to_tex(this.precedence));
             }
             return _result;
-          }).call(this).join(this.tex_symbol);
+          }).call(this).join(this.tex_symbol));
           if (negative_exponents.length) {
-            bottom = (function() {
+            bottom = ((function() {
               _result = []; _ref = negative_exponents;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 operand = _ref[_i];
                 _result.push(operand.to_tex(this.precedence));
               }
               return _result;
-            }).call(this).join(this.tex_symbol);
+            }).call(this).join(this.tex_symbol));
             return "\\tfrac{" + (top) + "}{" + (bottom) + "}";
           } else {
             return top;
@@ -359,10 +359,10 @@
         PendingSubstitution.prototype.precedence = 16;
         PendingSubstitution.prototype.thing = "PendingSubstitution";
         PendingSubstitution.prototype.to_free_string = function() {
-          return this.expression.to_string(0) + " given " + this.substitution.to_string(15);
+          return (this.expression.to_string(0)) + " given " + (this.substitution.to_string(15));
         };
         PendingSubstitution.prototype.to_free_tex = function() {
-          return this.expression.to_tex(0) + " \\;\\text{given}\\; " + this.substitution.to_tex(15);
+          return (this.expression.to_tex(0)) + " \\;\\text{given}\\; " + (this.substitution.to_tex(15));
         };
         return PendingSubstitution;
       })()
@@ -415,15 +415,15 @@
         cursor: "pointer"
       });
       $("h3").toggle(function() {
-        return $(this).next().hide(100);
+        return ($(this)).next().hide(100);
       }, function() {
-        return $(this).next().show(100);
+        return ($(this)).next().show(100);
       });
-      return MathJax.Hub.Queue(["Typeset", MathJax.Hub, output.get(0)]);
+      return MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output.get(0))]);
     };
     return form.submit(window.__go = function() {
       var input;
-      input = $("#input").val();
+      input = ($("#input")).val();
       process_math(input, result_box);
       return false;
     });
