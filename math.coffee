@@ -1,11 +1,28 @@
 #!/usr/bin/env coffee -c
 window.shore = shore =
-	type: "Thing"
-	
 	Thing: class Thing
 		toString: -> "#{@type}{#{@to_string()}}"
 		
-		precedence: 0
+		precedence: 0 # Used for output formatting, not parsing.
+		
+		constructor: (args...) ->
+			"We'll define .init on subclasses and they'll work with or without new."
+			
+			just_construct = args and args[0] == " _CONSTRUCT"
+			
+			if this !== undefined
+				self = new arguments.callee " _CONSTRUCT"
+			else
+				self = this
+			
+			if not just_construct
+				self.init args...
+			
+			`return self` # coffeescript requires we return this
+		
+		init: ->
+		to_free_string: -> "[Value]"
+		to_free_tex: -> "\\text{[Value]}"
 		
 		to_tex: (context) ->
 			context ?= 1
@@ -22,35 +39,31 @@ window.shore = shore =
 			else
 				@to_free_string()
 		
-	Value: class Value extends Thing
-		type: "Value"
+		toString: -> @to_string()
 		
-		plus: (other) -> new shore.Sum [this, other]
-		minus: (other) -> new shore.Sum [this, other.neg()]
-		times: (other) -> new shore.Product [this, other]
-		over: (other) -> new shore.Product [this, other.to_the shore.NEGATIVE_ONE]
+	Value: class Value extends Thing
+		plus: (other) -> shore.Sum [this, other]
+		minus: (other) -> shore.Sum [this, other.neg()]
+		times: (other) -> shore.Product [this, other]
+		over: (other) -> shore.Product [this, other.to_the shore.NEGATIVE_ONE]
 		pos: -> this
-		to_the: (other) -> new shore.Exponent this, other
-		equals: (other) -> new shore.Equality this, other
-		integrate: (variable) -> new shore.Integral this, variable
-		differentiate: (variable) -> new shore.Derivative this, variable
-		given: (substitution) -> new shore.PendingSubstitution this, substitution
+		to_the: (other) -> shore.Exponent this, other
+		equals: (other) -> shore.Equality this, other
+		integrate: (variable) -> shore.Integral this, variable
+		differentiate: (variable) -> shore.Derivative this, variable
+		given: (substitution) -> shore.PendingSubstitution this, substitution
 	
 	Number: class Number extends Value
-		type: "Number"
-		
 		precedence: 10
-		constructor: (@value) ->
+		init: (@value) ->
 		
-		neg: -> new shore.Number -@value
+		neg: -> shore.Number -@value
 		to_free_tex: -> String @value
 		to_free_string: -> String @value
 	
 	Identifier: class Identifier extends Value
-		type: "Identifier"
-		
 		precedence: 10
-		constructor: (@string_value, @tex_value) ->
+		init: (@string_value, @tex_value) ->
 			@tex_value ?= @string_value
 		
 		to_free_tex: -> @tex_value
@@ -58,14 +71,12 @@ window.shore = shore =
 		sub: (other) ->
 			string = "{#{@string_value}}_#{other.to_string()}"
 			tex = "{#{@tex_value}}_{#{other.to_tex()}}"
-			new Identifier string, tex
+			shore.Identifier string, tex
 	
 	CANOperation: class CANOperation extends Value
-		type: "CANOperation"
-		
 		# Commutitive, Assocative N-ary Operation
 		
-		constructor: (@operands) ->
+		init: (@operands) ->
 		to_free_tex: ->
 			(((operand.to_tex @precedence) for operand in @operands)
 			 .join @tex_symbol)
@@ -74,14 +85,12 @@ window.shore = shore =
 			 .join @string_symbol)
 	
 	Sum: class Sum extends CANOperation
-		type: "Sum"
 		precedence: 2
 		
 		string_symbol: " + "
 		tex_symbol: " + "
 	
 	Product: class Product extends CANOperation
-		type: "Product"
 		precedence: 4
 		
 		string_symbol: " f "
@@ -92,7 +101,7 @@ window.shore = shore =
 			negative_exponents = []
 			
 			for term in @operands
-				if term.type == "Exponent"
+				if typeof term == "Exponent"
 					exponent = term.exponent
 					if exponent.type == "Number" and exponent.value < 0
 						negative_exponents.push new Exponent term.base, exponent.neg()
@@ -114,10 +123,9 @@ window.shore = shore =
 				top
 	
 	Exponent: class Exponent extends Value
-		type: "Exponent"
 		precedence: 5
 		
-		constructor: (@base, @exponent) ->
+		init: (@base, @exponent) ->
 		
 		to_free_tex: ->
 			if @exponent.type == "Number" and @exponent.value == 1
@@ -131,20 +139,18 @@ window.shore = shore =
 			else
 				"#{@base.to_string @precedence}^#{@exponent.to_string()}"
 	
-	Integral: class Integral extends Value
-		type: "Integral" # Indefinite
+	Integral: class Integral extends Value # Indefinite Intergral
 		precedence: 3
 		
-		constructor: (@expression, @variable) ->
+		init: (@expression, @variable) ->
 		
 		to_free_tex: ->
 			"\\int\\left[#{@expression.to_tex()}\\right]d#{@variable.to_tex()}"
 	
 	Derivative: class Derivative extends Value
-		type: "Derivative"
 		precedence: 3
 		
-		constructor: (@expression, @variable) ->
+		init: (@expression, @variable) ->
 		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
@@ -152,8 +158,7 @@ window.shore = shore =
 	Equality: class Equality extends Thing
 		precedence: 10
 		
-		type: "Equality"
-		constructor: (@terms...) ->
+		init: (@terms...) ->
 		string_symbol: " = "
 		tex_symbol: " = "
 		
@@ -173,7 +178,7 @@ window.shore = shore =
 		
 		thing: "PendingSubstitution"
 		
-		constructor: (@expression, @substitution) ->
+		init: (@expression, @substitution) ->
 		
 		to_free_string: ->
 			(@expression.to_string 0) + " given " + (@substitution.to_string 15)
