@@ -215,6 +215,9 @@
       Value.prototype.given = function(substitution) {
         return shore.pending_substitution(this, substitution);
       };
+      Value.prototype._then = function(other) {
+        return other.type === "Equality" ? this.given(other) : this.times(other);
+      };
       return Value;
     })(),
     Number: (function() {

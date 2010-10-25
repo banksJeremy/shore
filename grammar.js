@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 var sys = require("sys")
-
+puts = sys.puts // fix an incompetability between jison and node versions
 sys.print((new require("jison").Parser({
 	"lex": {
 		"rules": [
 			[ "\\s+", "" ],
-			[ "([0-9]*\\.[0-9]+|[0-9]+)\\b", "return 'NUMBER';" ],
+			[ "([0-9]*\\.[0-9]+|[0-9]+)", "return 'NUMBER';" ],
 			[ "=", "return 'EQUALS';" ],
 			[ "\\*", "return '*';" ],
 			[ "\\/", "return '/';" ],
@@ -18,7 +18,7 @@ sys.print((new require("jison").Parser({
 			[ "~", "return 'INTEGRATE';" ],
 			[ "`", "return 'DIFFERENTIATE';" ],
 			[ "[_\\.]", "return 'SUB';" ],
-			[ "(\\bgiven\\b|\\|)", "return 'GIVEN';" ],
+			[ "\\|", "return 'GIVEN';" ],
 			[ "[a-zA-Z][a-zA-Z0-9]*'*", "return 'IDENTIFIER';" ],
 			[ "$", "return 'EOF';" ],
 		]
@@ -57,8 +57,13 @@ sys.print((new require("jison").Parser({
 			[ "- e", "$$ = ($2).neg();", { "prec": "UMINUS" } ],
 			[ "+ e", "$$ = ($2).pos();", { "prec": "UPLUS" } ],
 			[ "( e ) ", "$$ = ($2);" ],
+			[ "literal literal", "$$ = $1._then($2);" ],
+			[ "literal", "$$ = $1;" ],
+		],
+		
+		"literal": [
 			[ "NUMBER", "$$ = shore.number(yytext);"],
-			[ "IDENTIFIER", "$$ = shore.identifier(yytext);"]
+			[ "IDENTIFIER", "$$ = shore.identifier(yytext);"],
 		]
 	}
 })).generate({moduleName: "parser"}))

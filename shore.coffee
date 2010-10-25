@@ -156,6 +156,12 @@ for name, value of { # contents of module
 		integrate: (variable) -> shore.integral this, variable
 		differentiate: (variable) -> shore.derivative this, variable
 		given: (substitution) -> shore.pending_substitution this, substitution
+		
+		_then: (other) ->
+			if other.type is "Equality"
+				this.given other
+			else
+				this.times other
 	
 	Number: class Number extends Value
 		type: "Number"

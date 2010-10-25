@@ -33,3 +33,14 @@ Let's start with a relatively minimal set.
 - Margin of error
 - Equalities
 
+Scrawl:
+- Parse a(b) to a._then(b), for f(x = 1) or 2(b).
+- Load the parser after shore into shore.parser.
+- If parser is found then (P "a + b") should work, but short-circuit (S 1) 
+  and (S "x") the same with or without the parser.
+- Don't require whitespace termination unnecessarily, so that things like
+  (S "2b") are permitted. (Remember negative lookaheads!)
+- Put canonizers separate from other method definitions...
+  for class_name, canonizer_getter in {
+  	...
+  } shore[class_name]._get_canonizer = canonizer_getter
