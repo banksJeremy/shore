@@ -77,47 +77,90 @@
         }
       }
       output_parts = [];
-      output_parts.push("<h3><span class=tex2jax_ignore>Input</span></h3>");
-      output_parts.push("<div>\\begin{align}");
-      _ref = parsed;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
-        _ref2 = line;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          expression = _ref2[_j];
-          output_parts.push(texscapeify(expression));
-          output_parts.push(" & ");
+      if (MathJax) {
+        output_parts.push("<h3><span class=tex2jax_ignore>Input</span></h3>");
+        output_parts.push("<div>\\begin{align}");
+        _ref = parsed;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
+          _ref2 = line;
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            expression = _ref2[_j];
+            output_parts.push(texscapeify(expression));
+            output_parts.push(" & ");
+          }
+          output_parts.push(" \\\\\n<br>");
         }
-        output_parts.push(" \\\\\n<br>");
-      }
-      output_parts.push("\\end{align}</div>");
-      output_parts.push("<h3><span class=tex2jax_ignore>Steps</span></h3>");
-      output_parts.push("<div>\\begin{align}");
-      output_parts.push("\\end{align}</div>");
-      output_parts.push("<h3><span class=tex2jax_ignore>Results</span></h3>");
-      output_parts.push("<div>\\begin{align}");
-      _ref = parsed;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
-        _ref2 = line;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          expression = _ref2[_j];
-          output_parts.push(texscapeify(expression.canonize()));
-          output_parts.push(" & ");
+        output_parts.push("\\end{align}</div>");
+        output_parts.push("<h3><span class=tex2jax_ignore>Steps</span></h3>");
+        output_parts.push("<div>\\begin{align}");
+        output_parts.push("\\end{align}</div>");
+        output_parts.push("<h3><span class=tex2jax_ignore>Results</span></h3>");
+        output_parts.push("<div>\\begin{align}");
+        _ref = parsed;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
+          _ref2 = line;
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            expression = _ref2[_j];
+            output_parts.push(texscapeify(expression.canonize()));
+            output_parts.push(" & ");
+          }
+          output_parts.push(" \\\\\n<br>");
         }
-        output_parts.push(" \\\\\n<br>");
+        output_parts.push("\\end{align}</div>");
+      } else {
+        output_parts.push("<h3>Input</h3>");
+        output_parts.push("<pre>");
+        _ref = parsed;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
+          _ref2 = line;
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            expression = _ref2[_j];
+            output_parts.push(escape_html(expression.to_string()));
+            output_parts.push("\t");
+          }
+          output_parts.push("\n");
+        }
+        output_parts.push("</pre>");
+        output_parts.push("<h3>Steps</h3>");
+        output_parts.push("<pre>");
+        output_parts.push("</pre>");
+        output_parts.push("<h3>Results</h3>");
+        output_parts.push("<pre>");
+        _ref = parsed;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
+          _ref2 = line;
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            expression = _ref2[_j];
+            output_parts.push(escape_html(expression.canonize().to_string()));
+            output_parts.push("\t");
+          }
+          output_parts.push("\n");
+        }
+        output_parts.push("</pre>");
       }
-      output_parts.push("\\end{align}</div>");
       output.html(output_parts.join(""));
       ($("h3")).css({
         cursor: "pointer"
+      });
+      ($("h3")).hover(function() {
+        return ($(this)).css({
+          backgroundColor: "rgba(0,0,0,.1)"
+        });
+      }, function() {
+        return ($(this)).css({
+          backgroundColor: "transparent"
+        });
       });
       ($("h3")).toggle(function() {
         return ($(this)).next().hide(300);
       }, function() {
         return ($(this)).next().show(300);
       });
-      return MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output.get(0))]);
+      return MathJax ? MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output.get(0))]) : null;
     };
     return form.submit(window.__go = function() {
       var input;

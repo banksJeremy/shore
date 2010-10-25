@@ -2,9 +2,10 @@ Shore Math Engine
 =================
 
 Some math implemented in CoffeeScript, with a browser interface. The 
-compiled JavaScript version is included. The interface requires that you
-download MathJax and put it in ./dep/MathJax/. node.js and jison are required
-if you want to modify the parser in the interface.
+compiled JavaScript version is included. I recommend you download MathJax and
+put it in ./dep/MathJax/ to use the interface but it can fall back to plain
+text without out it. node.js and jison are required if you want to modify the
+parser in the interface.
 
 Credits
 -------

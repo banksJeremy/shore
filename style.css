@@ -127,4 +127,5 @@ form .buttons {
 
 h3 {
 	text-shadow: rgba(48, 64, 92, .40) 1px 1px 2px;
+	padding: .25em;
 }
