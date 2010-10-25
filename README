@@ -15,3 +15,15 @@ Original code is by Jeremy Banks <jeremy@jeremybanks.com> and is released
 under the MIT license.
 
 Make this decent before showing off.
+Every time I try to get something done I fall victim to terrible feature
+creep, so I need to decide in advance what the scope of this should be.
+
+TODO
+----
+
+Let's start with a relatively minimal set.
+- Arithmatic, exponents
+- Differentiation, possibly trivial integration
+- Margin of error
+- Equalities
+
