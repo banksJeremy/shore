@@ -35,7 +35,6 @@ sys.print((new require("jison").Parser({
 		[ "left", "PLUSMINUS" ],
 		[ "left", "UMINUS", "UPLUS" ],
 		[ "right", "SUB" ],
-		[ "right", "CALL" ],
 	],
 	
 	"bnf": {
@@ -62,8 +61,8 @@ sys.print((new require("jison").Parser({
 			[ "literal", "$$ = $1;" ],
 			[ "parenthesized", "$$ = $1;" ],
 			
-			[ "literal parenthesized", "$$ = $1._then($2)", { "prec": "CALL" }],
-			
+			// this should all be a single rule that works properly!
+			[ "literal parenthesized", "$$ = $1._then($2)", { "prec": "THEN" }],
 			[ "literal literal", "$$ = $1._then($2)", { "prec": "THEN" }],
 			// can't get this to take the right precedence :(
 		],
