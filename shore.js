@@ -480,8 +480,8 @@
       PendingSubstitution.prototype._eq = function(other) {
         return this.expression.eq(other.expression) && this.substitution.eq(other.substitution);
       };
-      PendingSubstitution.prototype.string_symbol = " | ";
-      PendingSubstitution.prototype.tex_symbol = " \\;|\\; ";
+      PendingSubstitution.prototype.string_symbol = "";
+      PendingSubstitution.prototype.tex_symbol = "";
       PendingSubstitution.prototype.to_free_string = function() {
         return (this.expression.to_string(0)) + this.string_symbol + (this.substitution.to_string(15));
       };
