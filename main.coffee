@@ -1,5 +1,17 @@
 #!/usr/bin/env coffee -c
 $ -> # jQuery on DOM ready...
+	get_qs = ->
+		result = {}
+		queryString = window.location.search.substring 1
+		re = /([^&=]+)=([^&]*)/g
+		
+		while match = re.exec queryString
+			result[decodeURIComponent match[1]] = decodeURIComponent match[2]
+		
+		return result
+	
+	qs = get_qs()
+	
 	emPixels = ((element) ->
 		"The approximate number of pixels per em in an element."
 		
@@ -63,7 +75,7 @@ $ -> # jQuery on DOM ready...
 		
 		output_parts = []
 		
-		if MathJax
+		if MathJax?
 			output_parts.push "<h3><span class=tex2jax_ignore>Input</span></h3>"
 			output_parts.push "<div>\\begin{align}"
 			
@@ -131,3 +143,9 @@ $ -> # jQuery on DOM ready...
 		process_math input, result_box
 		
 		false # prevent form from being submitted normally
+		
+	if qs.i
+		input_box.val qs.i
+		process_math qs.i, result_box
+	
+	(input_box.get 0).selectionEnd = input_box.val().length

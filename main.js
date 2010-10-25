@@ -1,6 +1,17 @@
 (function() {
   $(function() {
-    var emPixels, escape_html, form, input_box, occurences, process_math, result_box, scale_textarea, texscapeify;
+    var emPixels, escape_html, form, get_qs, input_box, occurences, process_math, qs, result_box, scale_textarea, texscapeify;
+    get_qs = function() {
+      var match, queryString, re, result;
+      result = {};
+      queryString = window.location.search.substring(1);
+      re = /([^&=]+)=([^&]*)/g;
+      while (match = re.exec(queryString)) {
+        result[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
+      }
+      return result;
+    };
+    qs = get_qs();
     emPixels = (function(element) {
       var result, test_element;
       "The approximate number of pixels per em in an element.";
@@ -77,7 +88,7 @@
         }
       }
       output_parts = [];
-      if (MathJax) {
+      if (typeof MathJax !== "undefined" && MathJax !== null) {
         output_parts.push("<h3><span class=tex2jax_ignore>Input</span></h3>");
         output_parts.push("<div>\\begin{align}");
         _ref = parsed;
@@ -162,11 +173,16 @@
       });
       return MathJax ? MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output.get(0))]) : null;
     };
-    return form.submit(window.__go = function() {
+    form.submit(window.__go = function() {
       var input;
       input = ($("#input")).val();
       process_math(input, result_box);
       return false;
     });
+    if (qs.i) {
+      input_box.val(qs.i);
+      process_math(qs.i, result_box);
+    }
+    return ((input_box.get(0)).selectionEnd = input_box.val().length);
   });
 }).call(this);
