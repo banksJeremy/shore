@@ -113,9 +113,9 @@
         cursor: "pointer"
       });
       ($("h3")).toggle(function() {
-        return ($(this)).next().hide(100);
+        return ($(this)).next().hide(300);
       }, function() {
-        return ($(this)).next().show(100);
+        return ($(this)).next().show(300);
       });
       return MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output.get(0))]);
     };

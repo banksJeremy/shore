@@ -117,7 +117,7 @@
         result = this;
         while (true) {
           next = result.next_canonization();
-          if (!next) {
+          if (!next.length) {
             break;
           }
           _ref2 = next;
@@ -384,7 +384,6 @@
       Exponent = function(_arg, _arg2) {
         this.exponent = _arg2;
         this.base = _arg;
-        console.log(arguments);
         return this;
       };
       __extends(Exponent, Value);

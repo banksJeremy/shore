@@ -92,7 +92,7 @@ $ -> # jQuery on DOM ready...
 		output.html output_parts.join ""
 		
 		($ "h3").css cursor: "pointer"
-		($ "h3").toggle (-> ($ this).next().hide 100), (-> ($ this).next().show 100)
+		($ "h3").toggle (-> ($ this).next().hide 300), (-> ($ this).next().show 300)
 		
 		MathJax.Hub.Queue ["Typeset", MathJax.Hub, (output.get 0) ]
 	

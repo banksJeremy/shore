@@ -88,7 +88,7 @@ for name, value of { # contents of module
 			
 			loop
 				next = result.next_canonization()
-				if not next then break
+				if not next.length then break
 				[{significance: significance}, value] = next
 				
 				if significance >= excess then break
@@ -252,7 +252,6 @@ for name, value of { # contents of module
 		precedence: 5
 		
 		constructor: (@base, @exponent) ->
-			console.log arguments
 		
 		_eq: (other) -> @base.eq(other.base) and @exponent.eq(other.exponent)
 		
