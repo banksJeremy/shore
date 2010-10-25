@@ -80,6 +80,13 @@ $ -> # jQuery on DOM ready...
 		
 		output_parts.push "<h3><span class=tex2jax_ignore>Results</span></h3>"
 		output_parts.push "<div>\\begin{align}"
+		
+		for line in parsed
+			for expression in line
+				output_parts.push texscapeify expression.canonize()
+				output_parts.push " & "
+			output_parts.push " \\\\\n<br>"
+		
 		output_parts.push "\\end{align}</div>"
 		
 		output.html output_parts.join ""

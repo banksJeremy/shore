@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, shore, unmemosig;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, _ref, canonization, name, shore, utility, value;
   var __slice = Array.prototype.slice, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -8,20 +8,46 @@
     if (typeof parent.extended === "function") parent.extended(child);
     child.__super__ = parent.prototype;
   }, __hasProp = Object.prototype.hasOwnProperty;
-  window.shore = (shore = {
-    _provider: function(cls) {
-      "For now just like new, but later will memoize and such.";
+  shore = function() {
+    var _i, _len, _ref, _result, arg, args;
+    args = __slice.call(arguments, 0);
+    if (args.length === 1) {
+      arg = args[0];
+      if (typeof arg === "number") {
+        return shore.number(arg);
+      }
+      if (typeof arg === "string") {
+        return shore.identifier(arg);
+      }
+      throw new Error("Shore does not know what to do with " + (arg) + ".");
+    } else {
+      _result = []; _ref = args;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        arg = _ref[_i];
+        _result.push(shore(arg));
+      }
+      return _result;
+    }
+  };
+  shore.utility = (utility = {
+    nullary_proto_memo: function(id, f) {
+      "memoizes a nullary function on a prototype";
       return function() {
-        var _ctor, _ref, _result, args;
-        args = __slice.call(arguments, 0);
-        return (function() {
-          var ctor = function(){};
-          __extends(ctor, _ctor = cls);
-          return typeof (_result = _ctor.apply(_ref = new ctor, args)) === "object" ? _result : _ref;
-        }).call(this);
+        var _i, _len, key, prototype;
+        key = "proto-memory of nullary " + id;
+        prototype = this.constructor.prototype;
+        return !(function(){ for (var _i=0, _len=prototype.length; _i<_len; _i++) { if (prototype[_i] === key) return true; } return false; }).call(this) ? (prototype[key] = f.apply(this)) : prototype[key];
       };
     },
-    _uncamel: function(string) {
+    nullary_memo: function(id, f) {
+      "memoizes a nullary function on an instance";
+      return function() {
+        var _i, _len, key;
+        key = "memory of nullary " + id;
+        return !(function(){ for (var _i=0, _len=this.length; _i<_len; _i++) { if (this[_i] === key) return true; } return false; }).call(this) ? (this[key] = f.apply(this)) : this[key];
+      };
+    },
+    uncamel: function(string) {
       var _i, _len, _ref, _result, part, parts;
       "Converts CamelBack (not ALLCAPS) string to this_thing.";
       if ((/^[A-Z]/.test(string)) && (/[a-z]/.test(string))) {
@@ -35,32 +61,42 @@
         })();
         return parts.join("_");
       }
+    }
+  });
+  _ref = {
+    _make_provider: function(cls) {
+      "For now just like new, but later will memoize and such.";
+      return function() {
+        var _ctor, _ref2, _result, args;
+        args = __slice.call(arguments, 0);
+        return (function() {
+          var ctor = function(){};
+          __extends(ctor, _ctor = cls);
+          return typeof (_result = _ctor.apply(_ref2 = new ctor, args)) === "object" ? _result : _ref2;
+        }).call(this);
+      };
     },
-    _add_providers_to: function(module) {
-      var _i, _ref, _result, new_name, old_name;
-      "For each FooBar in module define foo_bar = module._provider FooBar.";
-      _result = []; _ref = module;
-      for (old_name in _ref) {
-        if (!__hasProp.call(_ref, old_name)) continue;
-        _i = _ref[old_name];
-        _result.push((new_name = shore._uncamel(old_name)) ? (module[new_name] = module._provider(module[old_name])) : null);
+    _make_providers: function() {
+      var _i, _ref2, _result, new_name, old_name;
+      "For each FooBar in this define foo_bar = this._provider FooBar.";
+      _result = []; _ref2 = this;
+      for (old_name in _ref2) {
+        if (!__hasProp.call(_ref2, old_name)) continue;
+        _i = _ref2[old_name];
+        _result.push((new_name = utility.uncamel(old_name)) ? (this[new_name] = this._make_provider(this[old_name])) : null);
       }
       return _result;
     },
     _significance: function(x) {
-      var _i, _len, _ref;
-      return (function(){ for (var _i=0, _len=(_ref = this._significations).length; _i<_len; _i++) { if (_ref[_i] === x) return true; } return false; }).call(this) ? this._significations[x] : x;
+      var _i, _len, _ref2;
+      return (function(){ for (var _i=0, _len=(_ref2 = shore._significations).length; _i<_len; _i++) { if (_ref2[_i] === x) return true; } return false; }).call(this) ? this._significations[x] : x;
     },
     _signified: function(significance, f) {
-      f.significance = (_significance(significance));
+      f.significance = (shore._significance(significance));
       return f;
     },
-    _unmemosig: function(significance, name, f) {
-      return shore._signified(significance(function(object) {
-        var _i, _len, key;
-        key = "memory of " + name;
-        return (function(){ for (var _i=0, _len=object.length; _i<_len; _i++) { if (object[_i] === key) return true; } return false; }).call(this) ? object[key] : (object[key] = f(object));
-      }));
+    _canonization: function(significance, name, f) {
+      return shore._signified(significance, utility.nullary_memo("canonization (" + (name) + ")", f));
     },
     _significations: {
       minor: 0,
@@ -75,19 +111,19 @@
         return this.type === other.type && this._eq(other);
       };
       Thing.prototype.canonize = function(enough, excess) {
-        var _ref, _ref2, next, result, significance, value;
-        enough = _significance(enough || 0);
-        excess = _significance(excess || 0);
+        var _ref2, _ref3, next, result, significance;
+        enough = shore._significance(enough || 0);
+        excess = shore._significance(excess || 0);
         result = this;
         while (true) {
           next = result.next_canonization();
           if (!next) {
             break;
           }
-          _ref = next;
-          _ref2 = _ref[0];
-          significance = _ref2.significance;
-          value = _ref[1];
+          _ref2 = next;
+          _ref3 = _ref2[0];
+          significance = _ref3.significance;
+          value = _ref2[1];
           if (significance >= excess) {
             break;
           }
@@ -99,18 +135,21 @@
         return result;
       };
       Thing.prototype.next_canonization = function() {
-        var _i, _len, _ref, _result, canonization, value;
-        _result = []; _ref = this.get_canonizations;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          canonization = _ref[_i];
-          value = canonization(this);
+        var _i, _len, _ref2, _result, canonization;
+        _result = []; _ref2 = this.get_canonizations();
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          canonization = _ref2[_i];
+          value = canonization.apply(this);
           if (value && !this.eq(value)) {
             return [canonization, value];
           }
         }
         return _result;
       };
-      Thing.prototype.get_canonizations = function() {
+      Thing.prototype.get_canonizations = (utility.nullary_proto_memo("get_canonizations", function() {
+        return this._get_canonizations();
+      }));
+      Thing.prototype._get_canonizations = function() {
         return [];
       };
       Thing.prototype.to_tex = function(context) {
@@ -122,7 +161,7 @@
         return this.precedence < context ? ("(" + (this.to_free_string()) + ")") : this.to_free_string();
       };
       Thing.prototype.toString = function() {
-        return "" + (this.type) + "{" + (this.to_string()) + "}";
+        return this.to_js ? this.to_js() : ("#shore{" + (this.to_string()) + "}");
       };
       return Thing;
     })(),
@@ -142,13 +181,13 @@
         return shore.product([this, other]);
       };
       Value.prototype.over = function(other) {
-        return shore.product([this, other.to_the(shore.NEGATIVE_ONE)]);
+        return shore.product([this, other.to_the(shore(-1))]);
       };
       Value.prototype.pos = function() {
         return this;
       };
       Value.prototype.neg = function() {
-        return shore.ZERO.minus(this);
+        return (shore(0)).minus(this);
       };
       Value.prototype.to_the = function(other) {
         return shore.exponent(this, other);
@@ -187,6 +226,9 @@
       Number.prototype.to_free_string = function() {
         return String(this.value);
       };
+      Number.prototype.to_js = function() {
+        return "S(" + (this.value) + ")";
+      };
       return Number;
     })(),
     Identifier: (function() {
@@ -208,6 +250,9 @@
       Identifier.prototype.to_free_string = function() {
         return this.string_value;
       };
+      Identifier.prototype.to_js = function() {
+        return "S(\"" + (this.value) + "\")";
+      };
       Identifier.prototype.sub = function(other) {
         var string, tex;
         string = ("{" + (this.string_value) + "}_" + (other.to_string()));
@@ -224,21 +269,21 @@
       __extends(CANOperation, Value);
       CANOperation.prototype.type = "CANOperation";
       CANOperation.prototype._eq = function(other) {
-        var _ref, i;
+        var _ref2, i;
         if (this.operands.length !== other.operands.length) {
           return false;
         }
-        _ref = this.operands.length;
-        for (i = 0; (0 <= _ref ? i <= _ref : i >= _ref); (0 <= _ref ? i += 1 : i -= 1)) {
+        _ref2 = this.operands.length;
+        for (i = 0; (0 <= _ref2 ? i <= _ref2 : i >= _ref2); (0 <= _ref2 ? i += 1 : i -= 1)) {
           if (!(this.operands[i].eq(other.operands[i]))) {
             return false;
           }
         }
         return true;
       };
-      CANOperation.prototype.get_canonizations = function() {
-        return CANOperation.__super__.get_canonizations.call(this).concat([
-          unmemosig("minor", "single argument", function() {
+      CANOperation.prototype._get_canonizations = function() {
+        return CANOperation.__super__._get_canonizations.call(this).concat([
+          canonization("minor", "single argument", function() {
             if (this.operands.length === 1) {
               return this.operands[0];
             }
@@ -246,26 +291,29 @@
         ]);
       };
       CANOperation.prototype.to_free_tex = function() {
-        var _i, _len, _ref, _result, operand;
+        var _i, _len, _ref2, _result, operand;
         return (function() {
-          _result = []; _ref = this.operands;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            operand = _ref[_i];
+          _result = []; _ref2 = this.operands;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            operand = _ref2[_i];
             _result.push(operand.to_tex(this.precedence));
           }
           return _result;
         }).call(this).join(this.tex_symbol);
       };
       CANOperation.prototype.to_free_string = function() {
-        var _i, _len, _ref, _result, operand;
+        var _i, _len, _ref2, _result, operand;
         return (function() {
-          _result = []; _ref = this.operands;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            operand = _ref[_i];
+          _result = []; _ref2 = this.operands;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            operand = _ref2[_i];
             _result.push(operand.to_string(this.precedence));
           }
           return _result;
         }).call(this).join(this.string_symbol);
+      };
+      CANOperation.prototype.to_js = function() {
+        return "S." + (this.type.toLowerCase()) + "([" + (this.operands.join(", ")) + "])";
       };
       return CANOperation;
     })(),
@@ -290,12 +338,12 @@
       Product.prototype.string_symbol = " f ";
       Product.prototype.tex_symbol = " \\cdot ";
       Product.prototype.to_free_tex = function() {
-        var _i, _len, _ref, _result, bottom, exponent, negative_exponents, operand, positive_exponents, term, top;
+        var _i, _len, _ref2, _result, bottom, exponent, negative_exponents, operand, positive_exponents, term, top;
         positive_exponents = [];
         negative_exponents = [];
-        _ref = this.operands;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          term = _ref[_i];
+        _ref2 = this.operands;
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          term = _ref2[_i];
           if (term.type === "Exponent") {
             exponent = term.exponent;
             if (exponent.type === "Number" && exponent.value < 0) {
@@ -307,20 +355,20 @@
             positive_exponents.push(term);
           }
         }
-        positive_exponents || (positive_exponents = [shore.ONE]);
+        positive_exponents || (positive_exponents = [shore(1)]);
         top = ((function() {
-          _result = []; _ref = positive_exponents;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            operand = _ref[_i];
+          _result = []; _ref2 = positive_exponents;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            operand = _ref2[_i];
             _result.push(operand.to_tex(this.precedence));
           }
           return _result;
         }).call(this).join(this.tex_symbol));
         if (negative_exponents.length) {
           bottom = ((function() {
-            _result = []; _ref = negative_exponents;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              operand = _ref[_i];
+            _result = []; _ref2 = negative_exponents;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              operand = _ref2[_i];
               _result.push(operand.to_tex(this.precedence));
             }
             return _result;
@@ -336,6 +384,7 @@
       Exponent = function(_arg, _arg2) {
         this.exponent = _arg2;
         this.base = _arg;
+        console.log(arguments);
         return this;
       };
       __extends(Exponent, Value);
@@ -417,13 +466,17 @@
       };
       return PendingSubstitution;
     })()
-  });
-  unmemosig = shore._unmemosig;
-  shore._add_providers_to(shore);
-  shore.ZERO = shore.number(0);
-  shore.ONE = shore.number(1);
-  shore.NEGATIVE_ONE = shore.number(-1);
-  shore.X = shore.identifier("x");
-  shore.Y = shore.identifier("y");
-  shore.Z = shore.identifier("z");
+  };
+  for (name in _ref) {
+    if (!__hasProp.call(_ref, name)) continue;
+    value = _ref[name];
+    shore[name] = value;
+  }
+  canonization = shore._canonization;
+  shore._make_providers();
+  if (window) {
+    window.shore = shore;
+    window._S = window.S;
+    window.S = shore;
+  }
 }).call(this);

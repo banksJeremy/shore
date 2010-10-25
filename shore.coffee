@@ -1,42 +1,72 @@
 #!/usr/bin/env coffee -c
-window.shore = shore =
-	_provider: (cls) ->
-		"For now just like new, but later will memoize and such."
-		(args...) -> new cls args...
+shore = (args...) ->
+	if args.length is 1
+		arg = args[0]
+		
+		if typeof arg is "number"
+			return shore.number arg
+		if typeof arg is "string"
+			return shore.identifier arg
+		throw new Error "Shore does not know what to do with #{arg}."
+	else
+		for arg in args
+			shore arg
+
+shore.utility = utility = 
+	nullary_proto_memo: (id, f) ->
+		"memoizes a nullary function on a prototype"
+		-> 
+			key = "proto-memory of nullary " + id
+			prototype = this.constructor.prototype
+			
+			if key not in prototype
+				prototype[key] = f.apply this
+			else
+				prototype[key]
 	
-	_uncamel: (string) ->
+	nullary_memo: (id, f) ->
+		"memoizes a nullary function on an instance"
+		->
+			key = "memory of nullary " + id
+		
+			if key not in this
+				this[key] = f.apply this
+			else
+				this[key]
+	
+	uncamel: (string) ->
 		"Converts CamelBack (not ALLCAPS) string to this_thing."
 		
 		if (/^[A-Z]/.test string) and (/[a-z]/.test string)
 			parts = (for part in string.split /(?=[A-Z0-9])/
 				if part then part.toLowerCase())
 			return parts.join "_"
+
+for name, value of { # contents of module
+	_make_provider: (cls) ->
+		"For now just like new, but later will memoize and such."
+		(args...) -> new cls args...
 	
-	_add_providers_to: (module) ->
-		"For each FooBar in module define foo_bar = module._provider FooBar."
+	_make_providers: ->
+		"For each FooBar in this define foo_bar = this._provider FooBar."
 		
-		for old_name of module
-			if new_name = shore._uncamel old_name
-				module[new_name] = module._provider module[old_name]
+		for old_name of this
+			if new_name = utility.uncamel old_name
+				this[new_name] = @_make_provider this[old_name]
 	
 	_significance: (x) ->
-		if x in @_significations
+		if x in shore._significations
 			@_significations[x]
 		else
 			x
 	
 	_signified: (significance, f) ->
-		f.significance = (_significance significance)
+		f.significance = (shore._significance significance)
 		f
 	
-	_unmemosig: (significance, name, f) ->
-		(shore._signified significance (object) ->
-			key = "memory of " + name
-			if key in object
-				object[key]
-			else
-				object[key] = f(object)
-		)
+	_canonization: (significance, name, f) ->
+		(shore._signified significance,
+			                (utility.nullary_memo "canonization (#{name})", f))
 	
 	_significations:
 		minor: 0
@@ -51,8 +81,8 @@ window.shore = shore =
 			@type == other.type and @_eq other
 		
 		canonize: (enough, excess) ->
-			enough = _significance (enough || 0)
-			excess = _significance (excess || 0)
+			enough = shore._significance (enough || 0)
+			excess = shore._significance (excess || 0)
 			
 			result = this
 			
@@ -68,13 +98,16 @@ window.shore = shore =
 			result
 		
 		next_canonization: ->
-			for canonization in @get_canonizations
-				value = canonization this
+			for canonization in @get_canonizations()
+				value = canonization.apply this
 				
 				if value and not @eq(value)
 					return [canonization, value]
 		
-		get_canonizations: -> []
+		get_canonizations: (utility.nullary_proto_memo "get_canonizations", ->
+			@_get_canonizations())
+		
+		_get_canonizations: -> []
 		
 		to_tex: (context) ->
 			context ?= 1
@@ -91,7 +124,11 @@ window.shore = shore =
 			else
 				@to_free_string()
 		
-		toString: -> "#{@type}{#{@to_string()}}"
+		toString: ->
+			if @to_js
+				@to_js()
+			else
+				"#shore{#{@to_string()}}"
 		
 	Value: class Value extends Thing
 		type: "Value"
@@ -99,9 +136,9 @@ window.shore = shore =
 		plus: (other) -> shore.sum [this, other]
 		minus: (other) -> shore.sum [this, other.neg()]
 		times: (other) -> shore.product [this, other]
-		over: (other) -> shore.product [this, other.to_the shore.NEGATIVE_ONE]
+		over: (other) -> shore.product [this, other.to_the shore (- 1)]
 		pos: -> this
-		neg: -> shore.ZERO.minus(this)
+		neg: -> (shore 0).minus(this)
 		to_the: (other) -> shore.exponent this, other
 		equals: (other) -> shore.equality [this, other]
 		integrate: (variable) -> shore.integral this, variable
@@ -118,6 +155,7 @@ window.shore = shore =
 		neg: -> shore.number (- @value)
 		to_free_tex: -> String @value
 		to_free_string: -> String @value
+		to_js: -> "S(#{@value})"
 	
 	Identifier: class Identifier extends Value
 		type: "Identifier"
@@ -129,6 +167,8 @@ window.shore = shore =
 		_eq: (other) -> @value == other.value
 		to_free_tex: -> @tex_value
 		to_free_string: -> @string_value
+		to_js: -> "S(\"#{@value}\")"
+		
 		sub: (other) ->
 			string = "{#{@string_value}}_#{other.to_string()}"
 			tex = "{#{@tex_value}}_{#{other.to_tex()}}"
@@ -149,19 +189,23 @@ window.shore = shore =
 			
 			true
 		
-		get_canonizations: ->
+		_get_canonizations: ->
 			super().concat [
-				unmemosig "minor", "single argument", ->
+				canonization "minor", "single argument", ->
 					@operands[0] if @operands.length == 1
 			]
 		
 		constructor: (@operands) ->
+		
 		to_free_tex: ->
 			(((operand.to_tex @precedence) for operand in @operands)
 			 .join @tex_symbol)
+		
 		to_free_string: ->
 			(((operand.to_string @precedence) for operand in @operands)
 			 .join @string_symbol)
+		
+		to_js: -> "S.#{@type.toLowerCase()}([#{@operands.join ", "}])"
 	
 	Sum: class Sum extends CANOperation
 		type: "Sum"
@@ -191,7 +235,7 @@ window.shore = shore =
 				else
 					positive_exponents.push term
 			
-			positive_exponents ||= [shore.ONE]
+			positive_exponents ||= [shore 1]
 			
 			top = (((operand.to_tex @precedence) for operand in positive_exponents)
 			       .join @tex_symbol)
@@ -208,6 +252,7 @@ window.shore = shore =
 		precedence: 5
 		
 		constructor: (@base, @exponent) ->
+			console.log arguments
 		
 		_eq: (other) -> @base.eq(other.base) and @exponent.eq(other.exponent)
 		
@@ -269,13 +314,13 @@ window.shore = shore =
 			(@expression.to_string 0) + " given " + (@substitution.to_string 15)
 		to_free_tex: ->
 			(@expression.to_tex 0) + " \\;\\text{given}\\; " + (@substitution.to_tex 15)
+}
+	shore[name] = value
 
-unmemosig = shore._unmemosig
-shore._add_providers_to shore
+canonization = shore._canonization
+shore._make_providers()
 
-shore.ZERO = shore.number 0
-shore.ONE = shore.number 1
-shore.NEGATIVE_ONE = shore.number (-1)
-shore.X = shore.identifier "x"
-shore.Y = shore.identifier "y"
-shore.Z = shore.identifier "z"
+if window
+	window.shore = shore
+	window._S = window.S
+	window.S = shore

@@ -96,6 +96,17 @@
       output_parts.push("\\end{align}</div>");
       output_parts.push("<h3><span class=tex2jax_ignore>Results</span></h3>");
       output_parts.push("<div>\\begin{align}");
+      _ref = parsed;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        line = _ref[_i];
+        _ref2 = line;
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          expression = _ref2[_j];
+          output_parts.push(texscapeify(expression.canonize()));
+          output_parts.push(" & ");
+        }
+        output_parts.push(" \\\\\n<br>");
+      }
       output_parts.push("\\end{align}</div>");
       output.html(output_parts.join(""));
       ($("h3")).css({
