@@ -33,18 +33,18 @@
     nullary_proto_memo: function(id, f) {
       "memoizes a nullary function on a prototype";
       return function() {
-        var _i, _len, key, prototype;
+        var key, prototype;
         key = "proto-memory of nullary " + id;
         prototype = this.constructor.prototype;
-        return !(function(){ for (var _i=0, _len=prototype.length; _i<_len; _i++) { if (prototype[_i] === key) return true; } return false; }).call(this) ? (prototype[key] = f.apply(this)) : prototype[key];
+        return !(key in prototype) ? (prototype[key] = f.apply(this)) : prototype[key];
       };
     },
     nullary_memo: function(id, f) {
       "memoizes a nullary function on an instance";
       return function() {
-        var _i, _len, key;
+        var key;
         key = "memory of nullary " + id;
-        return !(function(){ for (var _i=0, _len=this.length; _i<_len; _i++) { if (this[_i] === key) return true; } return false; }).call(this) ? (this[key] = f.apply(this)) : this[key];
+        return !(key in this) ? (this[key] = f.apply(this)) : this[key];
       };
     },
     uncamel: function(string) {
@@ -65,10 +65,16 @@
   });
   _ref = {
     _special_identifiers: {
-      "theta": ["θ", "\\theta"],
-      "pi": ["π", "\\pi"],
-      "tau": ["τ", "\\tau"],
-      "mu": ["μ", "\\mu"]
+      theta: ["θ", "\\theta"],
+      pi: ["π", "\\pi"],
+      tau: ["τ", "\\tau"],
+      mu: ["μ", "\\mu"],
+      sin: ["sin", "\\sin"],
+      cos: ["cos", "\\cos"],
+      tan: ["tan", "\\tan"],
+      arcsin: ["arcsin", "\\arcsin"],
+      arccos: ["arccos", "\\arccos"],
+      arctan: ["arctan", "\\arctan"]
     },
     _make_provider: function(cls) {
       "For now just like new, but later will memoize and such.";
@@ -94,8 +100,7 @@
       return _result;
     },
     _significance: function(x) {
-      var _i, _len, _ref2;
-      return (function(){ for (var _i=0, _len=(_ref2 = shore._significations).length; _i<_len; _i++) { if (_ref2[_i] === x) return true; } return false; }).call(this) ? this._significations[x] : x;
+      return x in shore._significations ? this._significations[x] : x;
     },
     _signified: function(significance, f) {
       f.significance = (shore._significance(significance));

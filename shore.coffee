@@ -19,7 +19,7 @@ shore.utility = utility =
 			key = "proto-memory of nullary " + id
 			prototype = this.constructor.prototype
 			
-			if key not in prototype
+			if key not of prototype
 				prototype[key] = f.apply this
 			else
 				prototype[key]
@@ -29,7 +29,7 @@ shore.utility = utility =
 		->
 			key = "memory of nullary " + id
 		
-			if key not in this
+			if key not of this
 				this[key] = f.apply this
 			else
 				this[key]
@@ -44,10 +44,16 @@ shore.utility = utility =
 
 for name, value of { # contents of module
 	_special_identifiers:
-		"theta": [ "θ", "\\theta" ]
-		"pi": [ "π", "\\pi" ]
-		"tau": [ "τ" , "\\tau" ]
-		"mu": [ "μ", "\\mu" ]
+		theta: [ "θ", "\\theta" ]
+		pi: [ "π", "\\pi" ]
+		tau: [ "τ" , "\\tau" ]
+		mu: [ "μ", "\\mu" ]
+		sin: [ "sin", "\\sin" ]
+		cos: [ "cos", "\\cos" ]
+		tan: [ "tan", "\\tan" ]
+		arcsin: [ "arcsin", "\\arcsin" ]
+		arccos: [ "arccos", "\\arccos" ]
+		arctan: [ "arctan", "\\arctan" ]
 	
 	_make_provider: (cls) ->
 		"For now just like new, but later will memoize and such."
@@ -61,7 +67,7 @@ for name, value of { # contents of module
 				this[new_name] = @_make_provider this[old_name]
 	
 	_significance: (x) ->
-		if x in shore._significations
+		if x of shore._significations
 			@_significations[x]
 		else
 			x
