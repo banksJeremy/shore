@@ -2,10 +2,14 @@ Shore Math Engine
 =================
 
 Some math implemented in CoffeeScript, with a browser interface. The 
-compiled JavaScript version is included. I recommend you download MathJax and
-put it in ./dep/MathJax/ to use the interface but it can fall back to plain
-text without out it. node.js and jison are required if you want to modify the
-parser in the interface.
+compiled JavaScript version is included.
+
+Developed with Chrome, should work the same in Safari, a bit less polished in 
+Firefox and Opera, and remain functional in IE.
+
+I recommend you download MathJax and put it in ./dep/MathJax/ to use the
+interface but should can fall back to a plain text output without it. node.js
+and jison are required if you want to modify the parser used by the interface.
 
 Credits
 -------
@@ -23,7 +27,6 @@ creep, so I need to decide in advance what the scope of this should be.
 
 TODO
 ----
-
 Let's start with a relatively minimal set.
 - Arithmatic, exponents
 - Differentiation, possibly trivial integration

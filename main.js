@@ -173,7 +173,7 @@
         return ($(this)).next().hide(300);
       });
       ($("h3 + div")).hide();
-      (($("h3")).eq - 1).click();
+      (($("h3")).eq(2)).click();
       return MathJax ? MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output.get(0))]) : null;
     };
     form.submit(window.__go = function() {
