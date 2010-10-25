@@ -19,10 +19,14 @@ window.shore = shore =
 			if new_name = shore._uncamel old_name
 				module[new_name] = module._provider module[old_name]
 	
+	_significance: (x) ->
+		if x in @_significations
+			@_significations[x]
+		else
+			x
+	
 	_signified: (significance, f) ->
-		if significance in @_significations
-			significance = @_significations[significance]
-		f.significance = significance
+		f.significance = (_significance significance)
 		f
 	
 	_significations:
@@ -37,11 +41,30 @@ window.shore = shore =
 		eq: (other) ->
 			@type == other.type and @_eq other
 		
-		canonize: (minimum, excess) ->
-			minimum ?= null
-			excess ?= null
+		canonize: (enough, excess) ->
+			enough = _significance (enough || 0)
+			excess = _significance (excess || 0)
+			
+			result = this
+			
+			loop
+				next = this.next_canonization()
+				if not next then break
+				[{significance: significance}, value] = next
+				
+				if significance >= excess then break
+				result = value
+				if significance >= enough then break
+			
+			result
 		
-		next_canonization: -> null
+		next_canonization: ->
+			for canonization in @get_canonizations
+				value = canonization this
+				
+				if value and not @eq(value)
+					return [canonization, value]
+		
 		get_canonizations: -> []
 		
 		to_tex: (context) ->

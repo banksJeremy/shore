@@ -47,12 +47,12 @@
       }
       return _result;
     },
-    _signified: function(significance, f) {
+    _significance: function(x) {
       var _i, _len, _ref;
-      if ((function(){ for (var _i=0, _len=(_ref = this._significations).length; _i<_len; _i++) { if (_ref[_i] === significance) return true; } return false; }).call(this)) {
-        significance = this._significations[significance];
-      }
-      f.significance = significance;
+      return (function(){ for (var _i=0, _len=(_ref = this._significations).length; _i<_len; _i++) { if (_ref[_i] === x) return true; } return false; }).call(this) ? this._significations[x] : x;
+    },
+    _signified: function(significance, f) {
+      f.significance = (_significance(significance));
       return f;
     },
     _significations: {
@@ -67,12 +67,41 @@
       Thing.prototype.eq = function(other) {
         return this.type === other.type && this._eq(other);
       };
-      Thing.prototype.canonize = function(minimum, excess) {
-        minimum = (typeof minimum !== "undefined" && minimum !== null) ? minimum : null;
-        return excess = (typeof excess !== "undefined" && excess !== null) ? excess : null;
+      Thing.prototype.canonize = function(enough, excess) {
+        var _ref, _ref2, next, result, significance, value;
+        enough = _significance(enough || 0);
+        excess = _significance(excess || 0);
+        result = this;
+        while (true) {
+          next = this.next_canonization();
+          if (!next) {
+            break;
+          }
+          _ref = next;
+          _ref2 = _ref[0];
+          significance = _ref2.significance;
+          value = _ref[1];
+          if (significance >= excess) {
+            break;
+          }
+          result = value;
+          if (significance >= enough) {
+            break;
+          }
+        }
+        return result;
       };
       Thing.prototype.next_canonization = function() {
-        return null;
+        var _i, _len, _ref, _result, canonization, value;
+        _result = []; _ref = this.get_canonizations;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          canonization = _ref[_i];
+          value = canonization(this);
+          if (value && !this.eq(value)) {
+            return [canonization, value];
+          }
+        }
+        return _result;
       };
       Thing.prototype.get_canonizations = function() {
         return [];
