@@ -57,8 +57,9 @@ sys.print((new require("jison").Parser({
 			[ "- e", "$$ = ($2).neg();", { "prec": "UMINUS" } ],
 			[ "+ e", "$$ = ($2).pos();", { "prec": "UPLUS" } ],
 			[ "( e ) ", "$$ = ($2);" ],
-			[ "literal literal", "$$ = $1._then($2);" ],
 			[ "literal", "$$ = $1;" ],
+			[ "literal literal", "$$ = $1._then($2);", { "prec": "*" } ],
+			// this is apparently not how I make this precedence work
 		],
 		
 		"literal": [
