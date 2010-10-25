@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, shore, signified;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, shore, unmemosig;
   var __slice = Array.prototype.slice, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -55,6 +55,13 @@
       f.significance = (_significance(significance));
       return f;
     },
+    _unmemosig: function(significance, name, f) {
+      return shore._signified(significance(function(object) {
+        var _i, _len, key;
+        key = "memory of " + name;
+        return (function(){ for (var _i=0, _len=object.length; _i<_len; _i++) { if (object[_i] === key) return true; } return false; }).call(this) ? object[key] : (object[key] = f(object));
+      }));
+    },
     _significations: {
       minor: 0,
       moderate: 1,
@@ -73,7 +80,7 @@
         excess = _significance(excess || 0);
         result = this;
         while (true) {
-          next = this.next_canonization();
+          next = result.next_canonization();
           if (!next) {
             break;
           }
@@ -231,7 +238,7 @@
       };
       CANOperation.prototype.get_canonizations = function() {
         return CANOperation.__super__.get_canonizations.call(this).concat([
-          signified("minor", function() {
+          unmemosig("minor", "single argument", function() {
             if (this.operands.length === 1) {
               return this.operands[0];
             }
@@ -411,7 +418,7 @@
       return PendingSubstitution;
     })()
   });
-  signified = shore._signified;
+  unmemosig = shore._unmemosig;
   shore._add_providers_to(shore);
   shore.ZERO = shore.number(0);
   shore.ONE = shore.number(1);

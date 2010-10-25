@@ -29,6 +29,15 @@ window.shore = shore =
 		f.significance = (_significance significance)
 		f
 	
+	_unmemosig: (significance, name, f) ->
+		(shore._signified significance (object) ->
+			key = "memory of " + name
+			if key in object
+				object[key]
+			else
+				object[key] = f(object)
+		)
+	
 	_significations:
 		minor: 0
 		moderate: 1
@@ -48,7 +57,7 @@ window.shore = shore =
 			result = this
 			
 			loop
-				next = this.next_canonization()
+				next = result.next_canonization()
 				if not next then break
 				[{significance: significance}, value] = next
 				
@@ -142,7 +151,8 @@ window.shore = shore =
 		
 		get_canonizations: ->
 			super().concat [
-				signified "minor", -> @operands[0] if @operands.length == 1
+				unmemosig "minor", "single argument", ->
+					@operands[0] if @operands.length == 1
 			]
 		
 		constructor: (@operands) ->
@@ -260,7 +270,7 @@ window.shore = shore =
 		to_free_tex: ->
 			(@expression.to_tex 0) + " \\;\\text{given}\\; " + (@substitution.to_tex 15)
 
-signified = shore._signified
+unmemosig = shore._unmemosig
 shore._add_providers_to shore
 
 shore.ZERO = shore.number 0
