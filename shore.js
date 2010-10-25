@@ -64,6 +64,12 @@
     }
   });
   _ref = {
+    _special_identifiers: {
+      "theta": ["θ", "\\theta"],
+      "pi": ["π", "\\pi"],
+      "tau": ["τ", "\\tau"],
+      "mu": ["μ", "\\mu"]
+    },
     _make_provider: function(cls) {
       "For now just like new, but later will memoize and such.";
       return function() {
@@ -233,9 +239,18 @@
     })(),
     Identifier: (function() {
       Identifier = function(_arg, _arg2) {
+        var _ref2;
         this.tex_value = _arg2;
         this.string_value = _arg;
-        this.tex_value = (typeof this.tex_value !== "undefined" && this.tex_value !== null) ? this.tex_value : this.string_value;
+        if (!(typeof (_ref2 = this.tex_value) !== "undefined" && _ref2 !== null)) {
+          if (this.string_value in shore._special_identifiers) {
+            _ref2 = shore._special_identifiers[this.string_value];
+            this.string_value = _ref2[0];
+            this.tex_value = _ref2[1];
+          } else {
+            this.tex_value = this.string_value;
+          }
+        }
         return this;
       };
       __extends(Identifier, Value);
@@ -457,11 +472,13 @@
       PendingSubstitution.prototype._eq = function(other) {
         return this.expression.eq(other.expression) && this.substitution.eq(other.substitution);
       };
+      PendingSubstitution.prototype.string_symbol = " | ";
+      PendingSubstitution.prototype.tex_symbol = " \\;|\\; ";
       PendingSubstitution.prototype.to_free_string = function() {
-        return (this.expression.to_string(0)) + " given " + (this.substitution.to_string(15));
+        return (this.expression.to_string(0)) + this.string_symbol + (this.substitution.to_string(15));
       };
       PendingSubstitution.prototype.to_free_tex = function() {
-        return (this.expression.to_tex(0)) + " \\;\\text{given}\\; " + (this.substitution.to_tex(15));
+        return (this.expression.to_tex(0)) + this.tex_symbol + (this.substitution.to_tex(15));
       };
       return PendingSubstitution;
     })()

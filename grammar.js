@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 var sys = require("sys")
+
 sys.print((new require("jison").Parser({
 	"lex": {
 		"rules": [
@@ -17,7 +18,7 @@ sys.print((new require("jison").Parser({
 			[ "~", "return 'INTEGRATE';" ],
 			[ "`", "return 'DIFFERENTIATE';" ],
 			[ "[_\\.]", "return 'SUB';" ],
-			[ "\\bgiven\\b", "return 'GIVEN';" ],
+			[ "(\\bgiven\\b|\\|)", "return 'GIVEN';" ],
 			[ "[a-zA-Z][a-zA-Z0-9]*'*", "return 'IDENTIFIER';" ],
 			[ "$", "return 'EOF';" ],
 		]
