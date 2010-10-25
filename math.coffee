@@ -15,7 +15,6 @@ window.shore = shore =
 	_add_providers_to: (module) ->
 		"For each FooBar in module define foo_bar = module._provider FooBar."
 		
-		console.log "adding to"
 		for old_name of module
 			if new_name = shore._uncamel old_name
 				module[new_name] = module._provider module[old_name]
@@ -23,6 +22,9 @@ window.shore = shore =
 	Thing: class Thing
 		type: "Thing"
 		precedence: 0
+		
+		eq: (other) ->
+			@type == other.type and @_eq other
 		
 		to_tex: (context) ->
 			context ?= 1
@@ -51,7 +53,7 @@ window.shore = shore =
 		pos: -> this
 		neg: -> shore.ZERO.minus(this)
 		to_the: (other) -> shore.exponent this, other
-		equals: (other) -> shore.equality this, other
+		equals: (other) -> shore.equality [this, other]
 		integrate: (variable) -> shore.integral this, variable
 		differentiate: (variable) -> shore.derivative this, variable
 		given: (substitution) -> shore.pending_substitution this, substitution
@@ -62,6 +64,7 @@ window.shore = shore =
 		precedence: 10
 		constructor: (@value) ->
 		
+		_eq: (other) -> @value == other.value
 		neg: -> shore.number (- @value)
 		to_free_tex: -> String @value
 		to_free_string: -> String @value
@@ -73,6 +76,7 @@ window.shore = shore =
 		constructor: (@string_value, @tex_value) ->
 			@tex_value ?= @string_value
 		
+		_eq: (other) -> @value == other.value
 		to_free_tex: -> @tex_value
 		to_free_string: -> @string_value
 		sub: (other) ->
@@ -84,6 +88,16 @@ window.shore = shore =
 		type: "CANOperation"
 		
 		# Commutitive, Assocative N-ary Operation
+		
+		_eq: (other) ->
+			if @operands.length != other.operands.length
+				return false
+			
+			for i in [0..@operands.length]
+				if not @operands[i].equals(other.operands[i])
+					return false
+			
+			true
 		
 		constructor: (@operands) ->
 		to_free_tex: ->
@@ -139,6 +153,8 @@ window.shore = shore =
 		
 		constructor: (@base, @exponent) ->
 		
+		_eq: (other) -> @base.eq(other.base) and @exponent.eq(other.exponent)
+		
 		to_free_tex: ->
 			if @exponent.type == "Number" and @exponent.value == 1
 				@base.to_tex @precedence
@@ -157,6 +173,9 @@ window.shore = shore =
 		
 		constructor: (@expression, @variable) ->
 		
+		_eq: (other) ->
+			@expression.eq(other.expression) and @variable.eq(other.variable)
+		
 		to_free_tex: ->
 			"\\int\\left[#{@expression.to_tex()}\\right]d#{@variable.to_tex()}"
 	
@@ -166,27 +185,19 @@ window.shore = shore =
 		
 		constructor: (@expression, @variable) ->
 		
+		_eq: (other) ->
+			@expression.eq(other.expression) and @exponent.eq(other.variable)
+		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
 	
-	Equality: class Equality extends Thing
-		precedence: 10
+	Equality: class Equality extends CANOperation
+		precedence: 1
 		
 		type: "Equality"
-		constructor: (@terms...) ->
+		
 		string_symbol: " = "
 		tex_symbol: " = "
-		
-		to_free_tex: ->
-			((term.to_tex() for term in @terms).join @tex_symbol)
-		to_free_string: ->
-			((term.to_string() for term in @terms).join @string_symbol)
-			
-		equals: (other) ->
-			if other.type == Equality
-				shore.equality @terms..., other.terms...
-			else
-				shore.equality @terms..., other
 	
 	PendingSubstitution: class PendingSubstitution extends Value
 		precedence: 16
@@ -194,6 +205,9 @@ window.shore = shore =
 		thing: "PendingSubstitution"
 		
 		constructor: (@expression, @substitution) ->
+		
+		_eq: (other) ->
+			@expression.eq(other.expression) and @substitution.eq(other.substitution)
 		
 		to_free_string: ->
 			(@expression.to_string 0) + " given " + (@substitution.to_string 15)

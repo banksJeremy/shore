@@ -39,7 +39,6 @@
     _add_providers_to: function(module) {
       var _i, _ref, _result, new_name, old_name;
       "For each FooBar in module define foo_bar = module._provider FooBar.";
-      console.log("adding to");
       _result = []; _ref = module;
       for (old_name in _ref) {
         if (!__hasProp.call(_ref, old_name)) continue;
@@ -52,6 +51,9 @@
       Thing = function() {};
       Thing.prototype.type = "Thing";
       Thing.prototype.precedence = 0;
+      Thing.prototype.eq = function(other) {
+        return this.type === other.type && this._eq(other);
+      };
       Thing.prototype.to_tex = function(context) {
         context = (typeof context !== "undefined" && context !== null) ? context : 1;
         return this.precedence < context ? ("\\left(" + (this.to_free_tex()) + "\\right)") : this.to_free_tex();
@@ -93,7 +95,7 @@
         return shore.exponent(this, other);
       };
       Value.prototype.equals = function(other) {
-        return shore.equality(this, other);
+        return shore.equality([this, other]);
       };
       Value.prototype.integrate = function(variable) {
         return shore.integral(this, variable);
@@ -114,6 +116,9 @@
       __extends(Number, Value);
       Number.prototype.type = "Number";
       Number.prototype.precedence = 10;
+      Number.prototype._eq = function(other) {
+        return this.value === other.value;
+      };
       Number.prototype.neg = function() {
         return shore.number(-this.value);
       };
@@ -135,6 +140,9 @@
       __extends(Identifier, Value);
       Identifier.prototype.type = "Identifier";
       Identifier.prototype.precedence = 10;
+      Identifier.prototype._eq = function(other) {
+        return this.value === other.value;
+      };
       Identifier.prototype.to_free_tex = function() {
         return this.tex_value;
       };
@@ -156,6 +164,19 @@
       };
       __extends(CANOperation, Value);
       CANOperation.prototype.type = "CANOperation";
+      CANOperation.prototype._eq = function(other) {
+        var _ref, i;
+        if (this.operands.length !== other.operands.length) {
+          return false;
+        }
+        _ref = this.operands.length;
+        for (i = 0; (0 <= _ref ? i <= _ref : i >= _ref); (0 <= _ref ? i += 1 : i -= 1)) {
+          if (!this.operands[i].equals(other.operands[i])) {
+            return false;
+          }
+        }
+        return true;
+      };
       CANOperation.prototype.to_free_tex = function() {
         var _i, _len, _ref, _result, operand;
         return (function() {
@@ -252,6 +273,9 @@
       __extends(Exponent, Value);
       Exponent.prototype.type = "Exponent";
       Exponent.prototype.precedence = 5;
+      Exponent.prototype._eq = function(other) {
+        return this.base.eq(other.base) && this.exponent.eq(other.exponent);
+      };
       Exponent.prototype.to_free_tex = function() {
         return this.exponent.type === "Number" && this.exponent.value === 1 ? this.base.to_tex(this.precedence) : ("{" + (this.base.to_tex(this.precedence)) + "}^{" + (this.exponent.to_tex()) + "}");
       };
@@ -269,6 +293,9 @@
       __extends(Integral, Value);
       Integral.prototype.type = "Integral";
       Integral.prototype.precedence = 3;
+      Integral.prototype._eq = function(other) {
+        return this.expression.eq(other.expression) && this.variable.eq(other.variable);
+      };
       Integral.prototype.to_free_tex = function() {
         return "\\int\\left[" + (this.expression.to_tex()) + "\\right]d" + (this.variable.to_tex());
       };
@@ -283,6 +310,9 @@
       __extends(Derivative, Value);
       Derivative.prototype.type = "Derivative";
       Derivative.prototype.precedence = 3;
+      Derivative.prototype._eq = function(other) {
+        return this.expression.eq(other.expression) && this.exponent.eq(other.variable);
+      };
       Derivative.prototype.to_free_tex = function() {
         return "\\tfrac{d}{d" + (this.variable.to_tex()) + "}\\left[" + (this.expression.to_tex()) + "\\right]";
       };
@@ -290,41 +320,13 @@
     })(),
     Equality: (function() {
       Equality = function() {
-        var _arg;
-        _arg = __slice.call(arguments, 0);
-        this.terms = _arg;
-        return this;
+        return CANOperation.apply(this, arguments);
       };
-      __extends(Equality, Thing);
-      Equality.prototype.precedence = 10;
+      __extends(Equality, CANOperation);
+      Equality.prototype.precedence = 1;
       Equality.prototype.type = "Equality";
       Equality.prototype.string_symbol = " = ";
       Equality.prototype.tex_symbol = " = ";
-      Equality.prototype.to_free_tex = function() {
-        var _i, _len, _ref, _result, term;
-        return (function() {
-          _result = []; _ref = this.terms;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            term = _ref[_i];
-            _result.push(term.to_tex());
-          }
-          return _result;
-        }).call(this).join(this.tex_symbol);
-      };
-      Equality.prototype.to_free_string = function() {
-        var _i, _len, _ref, _result, term;
-        return (function() {
-          _result = []; _ref = this.terms;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            term = _ref[_i];
-            _result.push(term.to_string());
-          }
-          return _result;
-        }).call(this).join(this.string_symbol);
-      };
-      Equality.prototype.equals = function(other) {
-        return other.type === Equality ? shore.equality.apply(shore, this.terms.concat(other.terms)) : shore.equality.apply(shore, this.terms.concat([other]));
-      };
       return Equality;
     })(),
     PendingSubstitution: (function() {
@@ -336,6 +338,9 @@
       __extends(PendingSubstitution, Value);
       PendingSubstitution.prototype.precedence = 16;
       PendingSubstitution.prototype.thing = "PendingSubstitution";
+      PendingSubstitution.prototype._eq = function(other) {
+        return this.expression.eq(other.expression) && this.substitution.eq(other.substitution);
+      };
       PendingSubstitution.prototype.to_free_string = function() {
         return (this.expression.to_string(0)) + " given " + (this.substitution.to_string(15));
       };
