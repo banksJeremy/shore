@@ -136,7 +136,7 @@ $ -> # jQuery on DOM ready...
 		               (-> ($ this).css backgroundColor: "transparent")
 		($ "h3").toggle (-> ($ this).next().show 300), (-> ($ this).next().hide 300)
 		($ "h3 + div").hide()
-		($ ($ "h3").get 2).click()
+		(($ "h3").eq -1).click()
 		
 		if MathJax
 			MathJax.Hub.Queue ["Typeset", MathJax.Hub, (output.get 0) ]
