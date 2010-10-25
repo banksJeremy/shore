@@ -33,18 +33,18 @@
     nullary_proto_memo: function(id, f) {
       "memoizes a nullary function on a prototype";
       return function() {
-        var _i, _len, key, prototype;
+        var key, prototype;
         key = "proto-memory of nullary " + id;
         prototype = this.constructor.prototype;
-        return !(function(){ for (var _i=0, _len=prototype.length; _i<_len; _i++) { if (prototype[_i] === key) return true; } return false; }).call(this) ? (prototype[key] = f.apply(this)) : prototype[key];
+        return !(key in prototype) ? (prototype[key] = f.apply(this)) : prototype[key];
       };
     },
     nullary_memo: function(id, f) {
       "memoizes a nullary function on an instance";
       return function() {
-        var _i, _len, key;
+        var key;
         key = "memory of nullary " + id;
-        return !(function(){ for (var _i=0, _len=this.length; _i<_len; _i++) { if (this[_i] === key) return true; } return false; }).call(this) ? (this[key] = f.apply(this)) : this[key];
+        return !(key in this) ? (this[key] = f.apply(this)) : this[key];
       };
     },
     uncamel: function(string) {
@@ -64,6 +64,18 @@
     }
   });
   _ref = {
+    _special_identifiers: {
+      theta: ["θ", "\\theta"],
+      pi: ["π", "\\pi"],
+      tau: ["τ", "\\tau"],
+      mu: ["μ", "\\mu"],
+      sin: ["sin", "\\sin"],
+      cos: ["cos", "\\cos"],
+      tan: ["tan", "\\tan"],
+      arcsin: ["arcsin", "\\arcsin"],
+      arccos: ["arccos", "\\arccos"],
+      arctan: ["arctan", "\\arctan"]
+    },
     _make_provider: function(cls) {
       "For now just like new, but later will memoize and such.";
       return function() {
@@ -88,8 +100,7 @@
       return _result;
     },
     _significance: function(x) {
-      var _i, _len, _ref2;
-      return (function(){ for (var _i=0, _len=(_ref2 = shore._significations).length; _i<_len; _i++) { if (_ref2[_i] === x) return true; } return false; }).call(this) ? this._significations[x] : x;
+      return x in shore._significations ? this._significations[x] : x;
     },
     _signified: function(significance, f) {
       f.significance = (shore._significance(significance));
@@ -204,6 +215,9 @@
       Value.prototype.given = function(substitution) {
         return shore.pending_substitution(this, substitution);
       };
+      Value.prototype._then = function(other) {
+        return other.type === "Equality" ? this.given(other) : this.times(other);
+      };
       return Value;
     })(),
     Number: (function() {
@@ -233,9 +247,18 @@
     })(),
     Identifier: (function() {
       Identifier = function(_arg, _arg2) {
+        var _ref2;
         this.tex_value = _arg2;
         this.string_value = _arg;
-        this.tex_value = (typeof this.tex_value !== "undefined" && this.tex_value !== null) ? this.tex_value : this.string_value;
+        if (!(typeof (_ref2 = this.tex_value) !== "undefined" && _ref2 !== null)) {
+          if (this.string_value in shore._special_identifiers) {
+            _ref2 = shore._special_identifiers[this.string_value];
+            this.string_value = _ref2[0];
+            this.tex_value = _ref2[1];
+          } else {
+            this.tex_value = this.string_value;
+          }
+        }
         return this;
       };
       __extends(Identifier, Value);
@@ -457,11 +480,13 @@
       PendingSubstitution.prototype._eq = function(other) {
         return this.expression.eq(other.expression) && this.substitution.eq(other.substitution);
       };
+      PendingSubstitution.prototype.string_symbol = " | ";
+      PendingSubstitution.prototype.tex_symbol = " \\;|\\; ";
       PendingSubstitution.prototype.to_free_string = function() {
-        return (this.expression.to_string(0)) + " given " + (this.substitution.to_string(15));
+        return (this.expression.to_string(0)) + this.string_symbol + (this.substitution.to_string(15));
       };
       PendingSubstitution.prototype.to_free_tex = function() {
-        return (this.expression.to_tex(0)) + " \\;\\text{given}\\; " + (this.substitution.to_tex(15));
+        return (this.expression.to_tex(0)) + this.tex_symbol + (this.substitution.to_tex(15));
       };
       return PendingSubstitution;
     })()

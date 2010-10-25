@@ -19,7 +19,7 @@ shore.utility = utility =
 			key = "proto-memory of nullary " + id
 			prototype = this.constructor.prototype
 			
-			if key not in prototype
+			if key not of prototype
 				prototype[key] = f.apply this
 			else
 				prototype[key]
@@ -29,7 +29,7 @@ shore.utility = utility =
 		->
 			key = "memory of nullary " + id
 		
-			if key not in this
+			if key not of this
 				this[key] = f.apply this
 			else
 				this[key]
@@ -43,6 +43,18 @@ shore.utility = utility =
 			return parts.join "_"
 
 for name, value of { # contents of module
+	_special_identifiers:
+		theta: [ "θ", "\\theta" ]
+		pi: [ "π", "\\pi" ]
+		tau: [ "τ" , "\\tau" ]
+		mu: [ "μ", "\\mu" ]
+		sin: [ "sin", "\\sin" ]
+		cos: [ "cos", "\\cos" ]
+		tan: [ "tan", "\\tan" ]
+		arcsin: [ "arcsin", "\\arcsin" ]
+		arccos: [ "arccos", "\\arccos" ]
+		arctan: [ "arctan", "\\arctan" ]
+	
 	_make_provider: (cls) ->
 		"For now just like new, but later will memoize and such."
 		(args...) -> new cls args...
@@ -55,7 +67,7 @@ for name, value of { # contents of module
 				this[new_name] = @_make_provider this[old_name]
 	
 	_significance: (x) ->
-		if x in shore._significations
+		if x of shore._significations
 			@_significations[x]
 		else
 			x
@@ -144,6 +156,12 @@ for name, value of { # contents of module
 		integrate: (variable) -> shore.integral this, variable
 		differentiate: (variable) -> shore.derivative this, variable
 		given: (substitution) -> shore.pending_substitution this, substitution
+		
+		_then: (other) ->
+			if other.type is "Equality"
+				this.given other
+			else
+				this.times other
 	
 	Number: class Number extends Value
 		type: "Number"
@@ -162,7 +180,11 @@ for name, value of { # contents of module
 		
 		precedence: 10
 		constructor: (@string_value, @tex_value) ->
-			@tex_value ?= @string_value
+			if not @tex_value?
+				if @string_value of shore._special_identifiers
+					[@string_value, @tex_value] = shore._special_identifiers[@string_value]
+				else
+					@tex_value = @string_value
 		
 		_eq: (other) -> @value == other.value
 		to_free_tex: -> @tex_value
@@ -309,10 +331,13 @@ for name, value of { # contents of module
 		_eq: (other) ->
 			@expression.eq(other.expression) and @substitution.eq(other.substitution)
 		
+		string_symbol: " | "
+		tex_symbol: " \\;|\\; "
+		
 		to_free_string: ->
-			(@expression.to_string 0) + " given " + (@substitution.to_string 15)
+			(@expression.to_string 0) + @string_symbol + (@substitution.to_string 15)
 		to_free_tex: ->
-			(@expression.to_tex 0) + " \\;\\text{given}\\; " + (@substitution.to_tex 15)
+			(@expression.to_tex 0) + @tex_symbol + (@substitution.to_tex 15)
 }
 	shore[name] = value
 

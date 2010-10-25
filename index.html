@@ -15,7 +15,8 @@
 				tex2jax: {
 					inlineMath: [["\\(", "\\)"]],
 					displayMath: [["\\[", "\\]"]]
-				}
+				},
+				menuSettings: { zoom: "Click" }
 			})
 		</script>
 		<script type="text/javascript" src="parser.js"></script>
@@ -34,7 +35,8 @@
 A = f_net/m
 v = A ~ t + v_0; v_0 = 0
 d = v ~ t + d_0; d_0 = 0
-d_t = d given (t = t_f); t_f = 10</textarea>
+d_t = d | (t = t_f); t_f = 10
+y = sin | (theta = 2pi)</textarea>
 					<div class=buttons>
 						<input type=submit class=submit value="Calculate">
 					</div>
@@ -43,7 +45,7 @@ d_t = d given (t = t_f); t_f = 10</textarea>
 			<div class="result box" id="results" style="display: none;"></div>
 			
 			<div class=footer>
-				<a href="http://jeremybanks.github.com/shore/">Shore</a> is developed by <a href="mailto:jeremy@jeremybanks.ca">Jeremy Banks</a>, the source and full credits are on <a href="http://github.com/jeremybanks/shore">on GitHub</a>.
+				<a href="http://jeremybanks.github.com/shore/">Shore</a> is developed by <a href="mailto:jeremy@jeremybanks.ca">Jeremy Banks</a>, the source and full credits are <a href="http://github.com/jeremybanks/shore">on GitHub</a>.
 			</div>
 		</div>
 	</body>
