@@ -71,6 +71,7 @@
     };
     process_math = function(input, output) {
       var _i, _j, _len, _len2, _ref, _ref2, expression, line, output_parts, parsed, parsed_line;
+      result_box.show(300);
       parsed = [];
       _ref = input.split(/\n/);
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -167,10 +168,12 @@
         });
       });
       ($("h3")).toggle(function() {
-        return ($(this)).next().hide(300);
-      }, function() {
         return ($(this)).next().show(300);
+      }, function() {
+        return ($(this)).next().hide(300);
       });
+      ($("h3 + div")).hide();
+      ($(($("h3")).get(2))).click();
       return MathJax ? MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output.get(0))]) : null;
     };
     form.submit(window.__go = function() {
