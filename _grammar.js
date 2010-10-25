@@ -4,7 +4,7 @@ sys.print((new require("jison").Parser({
 	"lex": {
 		"rules": [
 			[ "\\s+", "" ],
-			[ "∆*([0-9]*\\.[0-9]+|[0-9]+)'*\\b", "return 'NUMBER';" ],
+			[ "([0-9]*\\.[0-9]+|[0-9]+)\\b", "return 'NUMBER';" ],
 			[ "=", "return 'EQUALS';" ],
 			[ "\\*", "return '*';" ],
 			[ "\\/", "return '/';" ],

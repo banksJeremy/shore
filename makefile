@@ -4,7 +4,7 @@ open: all
 	open index.html
 
 CLEAN:
-	rm -f math.js parser.js main.js
+	rm -f math	.js parser.js main.js
 
 main.js:
 	./main.coffee # main.js - requires coffeescript
@@ -13,4 +13,4 @@ math.js:
 	./math.coffee # math.js - requires coffeescript
 
 parser.js:
-	./grammar.js > parser.js # - requires node.js, jison
+	./_grammar.js > parser.js # - requires node.js, jison
