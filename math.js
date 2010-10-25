@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, shore;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, shore, signified;
   var __slice = Array.prototype.slice, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -47,12 +47,35 @@
       }
       return _result;
     },
+    _signified: function(significance, f) {
+      var _i, _len, _ref;
+      if ((function(){ for (var _i=0, _len=(_ref = this._significations).length; _i<_len; _i++) { if (_ref[_i] === significance) return true; } return false; }).call(this)) {
+        significance = this._significations[significance];
+      }
+      f.significance = significance;
+      return f;
+    },
+    _significations: {
+      minor: 0,
+      moderate: 1,
+      major: 2
+    },
     Thing: (function() {
       Thing = function() {};
       Thing.prototype.type = "Thing";
       Thing.prototype.precedence = 0;
       Thing.prototype.eq = function(other) {
         return this.type === other.type && this._eq(other);
+      };
+      Thing.prototype.canonize = function(minimum, excess) {
+        minimum = (typeof minimum !== "undefined" && minimum !== null) ? minimum : null;
+        return excess = (typeof excess !== "undefined" && excess !== null) ? excess : null;
+      };
+      Thing.prototype.next_canonization = function() {
+        return null;
+      };
+      Thing.prototype.get_canonizations = function() {
+        return [];
       };
       Thing.prototype.to_tex = function(context) {
         context = (typeof context !== "undefined" && context !== null) ? context : 1;
@@ -171,11 +194,20 @@
         }
         _ref = this.operands.length;
         for (i = 0; (0 <= _ref ? i <= _ref : i >= _ref); (0 <= _ref ? i += 1 : i -= 1)) {
-          if (!this.operands[i].equals(other.operands[i])) {
+          if (!(this.operands[i].eq(other.operands[i]))) {
             return false;
           }
         }
         return true;
+      };
+      CANOperation.prototype.get_canonizations = function() {
+        return CANOperation.__super__.get_canonizations.call(this).concat([
+          signified("minor", function() {
+            if (this.operands.length === 1) {
+              return this.operands[0];
+            }
+          })
+        ]);
       };
       CANOperation.prototype.to_free_tex = function() {
         var _i, _len, _ref, _result, operand;
@@ -350,6 +382,7 @@
       return PendingSubstitution;
     })()
   });
+  signified = shore._signified;
   shore._add_providers_to(shore);
   shore.ZERO = shore.number(0);
   shore.ONE = shore.number(1);

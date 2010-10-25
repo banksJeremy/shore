@@ -19,12 +19,30 @@ window.shore = shore =
 			if new_name = shore._uncamel old_name
 				module[new_name] = module._provider module[old_name]
 	
+	_signified: (significance, f) ->
+		if significance in @_significations
+			significance = @_significations[significance]
+		f.significance = significance
+		f
+	
+	_significations:
+		minor: 0
+		moderate: 1
+		major: 2
+	
 	Thing: class Thing
 		type: "Thing"
 		precedence: 0
 		
 		eq: (other) ->
 			@type == other.type and @_eq other
+		
+		canonize: (minimum, excess) ->
+			minimum ?= null
+			excess ?= null
+		
+		next_canonization: -> null
+		get_canonizations: -> []
 		
 		to_tex: (context) ->
 			context ?= 1
@@ -94,10 +112,15 @@ window.shore = shore =
 				return false
 			
 			for i in [0..@operands.length]
-				if not @operands[i].equals(other.operands[i])
+				if not (@operands[i].eq other.operands[i])
 					return false
 			
 			true
+		
+		get_canonizations: ->
+			super().concat [
+				signified "minor", -> @operands[0] if @operands.length == 1
+			]
 		
 		constructor: (@operands) ->
 		to_free_tex: ->
@@ -214,6 +237,7 @@ window.shore = shore =
 		to_free_tex: ->
 			(@expression.to_tex 0) + " \\;\\text{given}\\; " + (@substitution.to_tex 15)
 
+signified = shore._signified
 shore._add_providers_to shore
 
 shore.ZERO = shore.number 0
