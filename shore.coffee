@@ -331,8 +331,8 @@ for name, value of { # contents of module
 		_eq: (other) ->
 			@expression.eq(other.expression) and @substitution.eq(other.substitution)
 		
-		string_symbol: " | "
-		tex_symbol: " \\;|\\; "
+		string_symbol: ""
+		tex_symbol: ""
 		
 		to_free_string: ->
 			(@expression.to_string 0) + @string_symbol + (@substitution.to_string 15)
