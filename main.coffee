@@ -63,7 +63,8 @@ $ -> # jQuery on DOM ready...
 	texscapeify = (value) ->
 		((escape_html value.to_tex()).replace /=/, "&=")
 	
-	process_math = (input, output) ->
+	process_math = (input, output) ->	
+		result_box.show 300
 		parsed = []
 		for line in input.split /\n/
 			if line.length
@@ -133,7 +134,9 @@ $ -> # jQuery on DOM ready...
 		($ "h3").css cursor: "pointer"
 		($ "h3").hover (-> ($ this).css backgroundColor: "rgba(0,0,0,.1)"),
 		               (-> ($ this).css backgroundColor: "transparent")
-		($ "h3").toggle (-> ($ this).next().hide 300), (-> ($ this).next().show 300)
+		($ "h3").toggle (-> ($ this).next().show 300), (-> ($ this).next().hide 300)
+		($ "h3 + div").hide()
+		($ ($ "h3").get 2).click()
 		
 		if MathJax
 			MathJax.Hub.Queue ["Typeset", MathJax.Hub, (output.get 0) ]
