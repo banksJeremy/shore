@@ -41,9 +41,9 @@ case 15:this.$ = ($$[$0-2+2-1]).pos();
 break;
 case 16:this.$ = ($$[$0-3+2-1]);
 break;
-case 17:this.$ = new shore.Number(yytext);
+case 17:this.$ = shore.number(yytext);
 break;
-case 18:this.$ = new shore.Identifier(yytext);
+case 18:this.$ = shore.identifier(yytext);
 break;
 }
 },

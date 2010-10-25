@@ -1,10 +1,27 @@
 #!/usr/bin/env coffee -c
 window.shore = shore =
-	type: "Thing"
+	_provider: (cls) ->
+		"For now just like new, but later will memoize and such."
+		(args...) -> new cls args...
+	
+	_uncamel: (string) ->
+		"Converts CamelBack (not ALLCAPS) string to this_thing."
+		
+		if (/^[A-Z]/.test string) and (/[a-z]/.test string)
+			parts = (for part in string.split /(?=[A-Z0-9])/
+				if part then part.toLowerCase())
+			return parts.join "_"
+	
+	_add_providers_to: (module) ->
+		"For each FooBar in module define foo_bar = module._provider FooBar."
+		
+		console.log "adding to"
+		for old_name of module
+			if new_name = shore._uncamel old_name
+				module[new_name] = module._provider module[old_name]
 	
 	Thing: class Thing
-		toString: -> "#{@type}{#{@to_string()}}"
-		
+		type: "Thing"
 		precedence: 0
 		
 		to_tex: (context) ->
@@ -22,19 +39,22 @@ window.shore = shore =
 			else
 				@to_free_string()
 		
+		toString: -> "#{@type}{#{@to_string()}}"
+		
 	Value: class Value extends Thing
 		type: "Value"
 		
-		plus: (other) -> new shore.Sum [this, other]
-		minus: (other) -> new shore.Sum [this, other.neg()]
-		times: (other) -> new shore.Product [this, other]
-		over: (other) -> new shore.Product [this, other.to_the shore.NEGATIVE_ONE]
+		plus: (other) -> shore.sum [this, other]
+		minus: (other) -> shore.sum [this, other.neg()]
+		times: (other) -> shore.product [this, other]
+		over: (other) -> shore.product [this, other.to_the shore.NEGATIVE_ONE]
 		pos: -> this
-		to_the: (other) -> new shore.Exponent this, other
-		equals: (other) -> new shore.Equality this, other
-		integrate: (variable) -> new shore.Integral this, variable
-		differentiate: (variable) -> new shore.Derivative this, variable
-		given: (substitution) -> new shore.PendingSubstitution this, substitution
+		neg: -> shore.ZERO.minus(this)
+		to_the: (other) -> shore.exponent this, other
+		equals: (other) -> shore.equality this, other
+		integrate: (variable) -> shore.integral this, variable
+		differentiate: (variable) -> shore.derivative this, variable
+		given: (substitution) -> shore.pending_substitution this, substitution
 	
 	Number: class Number extends Value
 		type: "Number"
@@ -42,7 +62,7 @@ window.shore = shore =
 		precedence: 10
 		constructor: (@value) ->
 		
-		neg: -> new shore.Number -@value
+		neg: -> shore.number (- @value)
 		to_free_tex: -> String @value
 		to_free_string: -> String @value
 	
@@ -58,7 +78,7 @@ window.shore = shore =
 		sub: (other) ->
 			string = "{#{@string_value}}_#{other.to_string()}"
 			tex = "{#{@tex_value}}_{#{other.to_tex()}}"
-			new Identifier string, tex
+			shore.identifier string, tex
 	
 	CANOperation: class CANOperation extends Value
 		type: "CANOperation"
@@ -95,13 +115,13 @@ window.shore = shore =
 				if term.type == "Exponent"
 					exponent = term.exponent
 					if exponent.type == "Number" and exponent.value < 0
-						negative_exponents.push new Exponent term.base, exponent.neg()
+						negative_exponents.push shore.exponent term.base, exponent.neg()
 					else
 						positive_exponents.push term
 				else
 					positive_exponents.push term
 			
-			positive_exponents ||= [new shore.Number 1]
+			positive_exponents ||= [shore.ONE]
 			
 			top = (((operand.to_tex @precedence) for operand in positive_exponents)
 			       .join @tex_symbol)
@@ -148,7 +168,7 @@ window.shore = shore =
 		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
-
+	
 	Equality: class Equality extends Thing
 		precedence: 10
 		
@@ -164,9 +184,9 @@ window.shore = shore =
 			
 		equals: (other) ->
 			if other.type == Equality
-				new shore.Equality @terms..., other.terms...
+				shore.equality @terms..., other.terms...
 			else
-				new shore.Equality @terms..., other
+				shore.equality @terms..., other
 	
 	PendingSubstitution: class PendingSubstitution extends Value
 		precedence: 16
@@ -180,6 +200,11 @@ window.shore = shore =
 		to_free_tex: ->
 			(@expression.to_tex 0) + " \\;\\text{given}\\; " + (@substitution.to_tex 15)
 
-shore.ZERO = new shore.Number 0
-shore.ONE = new shore.Number 1
-shore.NEGATIVE_ONE = new shore.Number -1
+shore._add_providers_to shore
+
+shore.ZERO = shore.number 0
+shore.ONE = shore.number 1
+shore.NEGATIVE_ONE = shore.number (-1)
+shore.X = shore.identifier "x"
+shore.Y = shore.identifier "y"
+shore.Z = shore.identifier "z"

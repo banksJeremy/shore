@@ -1,20 +1,56 @@
 (function() {
   var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, shore;
-  var __extends = function(child, parent) {
+  var __slice = Array.prototype.slice, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
     child.prototype = new ctor();
     child.prototype.constructor = child;
     if (typeof parent.extended === "function") parent.extended(child);
     child.__super__ = parent.prototype;
-  }, __slice = Array.prototype.slice;
+  }, __hasProp = Object.prototype.hasOwnProperty;
   window.shore = (shore = {
-    type: "Thing",
+    _provider: function(cls) {
+      "For now just like new, but later will memoize and such.";
+      return function() {
+        var _ctor, _ref, _result, args;
+        args = __slice.call(arguments, 0);
+        return (function() {
+          var ctor = function(){};
+          __extends(ctor, _ctor = cls);
+          return typeof (_result = _ctor.apply(_ref = new ctor, args)) === "object" ? _result : _ref;
+        }).call(this);
+      };
+    },
+    _uncamel: function(string) {
+      var _i, _len, _ref, _result, part, parts;
+      "Converts CamelBack (not ALLCAPS) string to this_thing.";
+      if ((/^[A-Z]/.test(string)) && (/[a-z]/.test(string))) {
+        parts = (function() {
+          _result = []; _ref = string.split(/(?=[A-Z0-9])/);
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            part = _ref[_i];
+            _result.push(part ? part.toLowerCase() : null);
+          }
+          return _result;
+        })();
+        return parts.join("_");
+      }
+    },
+    _add_providers_to: function(module) {
+      var _i, _ref, _result, new_name, old_name;
+      "For each FooBar in module define foo_bar = module._provider FooBar.";
+      console.log("adding to");
+      _result = []; _ref = module;
+      for (old_name in _ref) {
+        if (!__hasProp.call(_ref, old_name)) continue;
+        _i = _ref[old_name];
+        _result.push((new_name = shore._uncamel(old_name)) ? (module[new_name] = module._provider(module[old_name])) : null);
+      }
+      return _result;
+    },
     Thing: (function() {
       Thing = function() {};
-      Thing.prototype.toString = function() {
-        return "" + (this.type) + "{" + (this.to_string()) + "}";
-      };
+      Thing.prototype.type = "Thing";
       Thing.prototype.precedence = 0;
       Thing.prototype.to_tex = function(context) {
         context = (typeof context !== "undefined" && context !== null) ? context : 1;
@@ -23,6 +59,9 @@
       Thing.prototype.to_string = function(context) {
         context = (typeof context !== "undefined" && context !== null) ? context : 0;
         return this.precedence < context ? ("(" + (this.to_free_string()) + ")") : this.to_free_string();
+      };
+      Thing.prototype.toString = function() {
+        return "" + (this.type) + "{" + (this.to_string()) + "}";
       };
       return Thing;
     })(),
@@ -33,34 +72,37 @@
       __extends(Value, Thing);
       Value.prototype.type = "Value";
       Value.prototype.plus = function(other) {
-        return new shore.Sum([this, other]);
+        return shore.sum([this, other]);
       };
       Value.prototype.minus = function(other) {
-        return new shore.Sum([this, other.neg()]);
+        return shore.sum([this, other.neg()]);
       };
       Value.prototype.times = function(other) {
-        return new shore.Product([this, other]);
+        return shore.product([this, other]);
       };
       Value.prototype.over = function(other) {
-        return new shore.Product([this, other.to_the(shore.NEGATIVE_ONE)]);
+        return shore.product([this, other.to_the(shore.NEGATIVE_ONE)]);
       };
       Value.prototype.pos = function() {
         return this;
       };
+      Value.prototype.neg = function() {
+        return shore.ZERO.minus(this);
+      };
       Value.prototype.to_the = function(other) {
-        return new shore.Exponent(this, other);
+        return shore.exponent(this, other);
       };
       Value.prototype.equals = function(other) {
-        return new shore.Equality(this, other);
+        return shore.equality(this, other);
       };
       Value.prototype.integrate = function(variable) {
-        return new shore.Integral(this, variable);
+        return shore.integral(this, variable);
       };
       Value.prototype.differentiate = function(variable) {
-        return new shore.Derivative(this, variable);
+        return shore.derivative(this, variable);
       };
       Value.prototype.given = function(substitution) {
-        return new shore.PendingSubstitution(this, substitution);
+        return shore.pending_substitution(this, substitution);
       };
       return Value;
     })(),
@@ -73,7 +115,7 @@
       Number.prototype.type = "Number";
       Number.prototype.precedence = 10;
       Number.prototype.neg = function() {
-        return new shore.Number() - this.value;
+        return shore.number(-this.value);
       };
       Number.prototype.to_free_tex = function() {
         return String(this.value);
@@ -103,7 +145,7 @@
         var string, tex;
         string = ("{" + (this.string_value) + "}_" + (other.to_string()));
         tex = ("{" + (this.tex_value) + "}_{" + (other.to_tex()) + "}");
-        return new Identifier(string, tex);
+        return shore.identifier(string, tex);
       };
       return Identifier;
     })(),
@@ -168,7 +210,7 @@
           if (term.type === "Exponent") {
             exponent = term.exponent;
             if (exponent.type === "Number" && exponent.value < 0) {
-              negative_exponents.push(new Exponent(term.base, exponent.neg()));
+              negative_exponents.push(shore.exponent(term.base, exponent.neg()));
             } else {
               positive_exponents.push(term);
             }
@@ -176,7 +218,7 @@
             positive_exponents.push(term);
           }
         }
-        positive_exponents || (positive_exponents = [new shore.Number(1)]);
+        positive_exponents || (positive_exponents = [shore.ONE]);
         top = ((function() {
           _result = []; _ref = positive_exponents;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -281,16 +323,7 @@
         }).call(this).join(this.string_symbol);
       };
       Equality.prototype.equals = function(other) {
-        var _ctor, _ctor2, _ref, _ref2, _result, _result2;
-        return other.type === Equality ? (function() {
-          var ctor = function(){};
-          __extends(ctor, _ctor2 = shore.Equality);
-          return typeof (_result2 = _ctor2.apply(_ref2 = new ctor, this.terms.concat(other.terms))) === "object" ? _result2 : _ref2;
-        }).call(this) : (function() {
-          var ctor = function(){};
-          __extends(ctor, _ctor = shore.Equality);
-          return typeof (_result = _ctor.apply(_ref = new ctor, this.terms.concat([other]))) === "object" ? _result : _ref;
-        }).call(this);
+        return other.type === Equality ? shore.equality.apply(shore, this.terms.concat(other.terms)) : shore.equality.apply(shore, this.terms.concat([other]));
       };
       return Equality;
     })(),
@@ -312,7 +345,11 @@
       return PendingSubstitution;
     })()
   });
-  shore.ZERO = new shore.Number(0);
-  shore.ONE = new shore.Number(1);
-  shore.NEGATIVE_ONE = new shore.Number() - 1;
+  shore._add_providers_to(shore);
+  shore.ZERO = shore.number(0);
+  shore.ONE = shore.number(1);
+  shore.NEGATIVE_ONE = shore.number(-1);
+  shore.X = shore.identifier("x");
+  shore.Y = shore.identifier("y");
+  shore.Z = shore.identifier("z");
 }).call(this);

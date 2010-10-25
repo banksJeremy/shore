@@ -56,8 +56,8 @@ sys.print((new require("jison").Parser({
 			[ "- e", "$$ = ($2).neg();", { "prec": "UMINUS" } ],
 			[ "+ e", "$$ = ($2).pos();", { "prec": "UPLUS" } ],
 			[ "( e ) ", "$$ = ($2);" ],
-			[ "NUMBER", "$$ = new shore.Number(yytext);"],
-			[ "IDENTIFIER", "$$ = new shore.Identifier(yytext);"]
+			[ "NUMBER", "$$ = shore.number(yytext);"],
+			[ "IDENTIFIER", "$$ = shore.identifier(yytext);"]
 		]
 	}
 })).generate({moduleName: "parser"}))
