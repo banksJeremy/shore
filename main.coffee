@@ -71,7 +71,7 @@ $ -> # jQuery on DOM ready...
 				parsed_line = []
 				for expression in line.split /;/
 					if expression.length
-						parsed_line.push parser.parse expression
+						parsed_line.push shore.parser.parse expression
 				parsed.push parsed_line
 		
 		output_parts = []

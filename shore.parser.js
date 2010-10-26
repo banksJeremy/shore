@@ -1,5 +1,5 @@
 /* Jison generated parser */
-var parser = (function(){
+shore.parser = (function(){
 var parser = {trace: function trace() { },
 yy: {},
 symbols_: {"error":2,"expressions":3,"e":4,"EOF":5,"EQUALS":6,"+":7,"-":8,"*":9,"GIVEN":10,"/":11,"^":12,"INTEGRATE":13,"DIFFERENTIATE":14,"PLUSMINUS":15,"SUB":16,"literal":17,"parenthesized":18,"(":19,")":20,"NUMBER":21,"IDENTIFIER":22,"$accept":0,"$end":1},
@@ -43,9 +43,9 @@ case 16:this.$ = $$[$0-1+1-1];
 break;
 case 17:this.$ = $$[$0-1+1-1];
 break;
-case 18:this.$ = $$[$0-2+1-1]._then($$[$0-2+2-1])
+case 18:this.$ = $$[$0-2+1-1]._then($$[$0-2+2-1]);
 break;
-case 19:this.$ = $$[$0-2+1-1]._then($$[$0-2+2-1])
+case 19:this.$ = $$[$0-2+1-1]._then($$[$0-2+2-1]);
 break;
 case 20:this.$ = $$[$0-3+2-1];
 break;
@@ -372,8 +372,8 @@ parser.lexer = lexer;
 return parser;
 })();
 if (typeof require !== 'undefined') {
-exports.parser = parser;
-exports.parse = function () { return parser.parse.apply(parser, arguments); }
+exports.parser = shore.parser;
+exports.parse = function () { return shore.parser.parse.apply(shore.parser, arguments); }
 exports.main = function commonjsMain(args) {
     if (!args[1])
         throw new Error('Usage: '+args[0]+' FILE');

@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, _ref, canonization, name, shore, utility, value;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, _len, _ref, canonization, getter_of_canonizers, name, shore, utility, value;
   var __slice = Array.prototype.slice, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -15,11 +15,19 @@
       arg = args[0];
       if (typeof arg === "number") {
         return shore.number(arg);
+      } else if (typeof arg === "string") {
+        if (/^[a-zA-Z][a-zA-Z0-9]*'*$/.test(arg)) {
+          return shore.identifier(arg);
+        } else {
+          if (typeof (_ref = shore.parser) !== "undefined" && _ref !== null) {
+            return shore.parser.parse(arg);
+          } else {
+            throw new Error("shore.parser is not available to interpret expression: " + (arg));
+          }
+        }
+      } else {
+        throw new Error("Unable to handle argument of type " + (typeof arg) + ".");
       }
-      if (typeof arg === "string") {
-        return shore.identifier(arg);
-      }
-      throw new Error("Shore does not know what to do with " + (arg) + ".");
     } else {
       _result = []; _ref = args;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -158,9 +166,9 @@
         return _result;
       };
       Thing.prototype.get_canonizations = (utility.nullary_proto_memo("get_canonizations", function() {
-        return this._get_canonizations();
+        return this._get_canonizers();
       }));
-      Thing.prototype._get_canonizations = function() {
+      Thing.prototype._get_canonizers = function() {
         return [];
       };
       Thing.prototype.to_tex = function(context) {
@@ -303,15 +311,6 @@
           }
         }
         return true;
-      };
-      CANOperation.prototype._get_canonizations = function() {
-        return CANOperation.__super__._get_canonizations.call(this).concat([
-          canonization("minor", "single argument", function() {
-            if (this.operands.length === 1) {
-              return this.operands[0];
-            }
-          })
-        ]);
       };
       CANOperation.prototype.to_free_tex = function() {
         var _i, _len, _ref2, _result, operand;
@@ -495,6 +494,21 @@
     if (!__hasProp.call(_ref, name)) continue;
     value = _ref[name];
     shore[name] = value;
+  }
+  _ref = {
+    CANOperation: function() {
+      return CANOperation.__super__.constructor.call(this).concat([
+        canonization("minor", "single argument", function() {
+          if (this.operands.length === 1) {
+            return this.operands[0];
+          }
+        })
+      ]);
+    }
+  };
+  for (getter_of_canonizers = 0, _len = _ref.length; getter_of_canonizers < _len; getter_of_canonizers++) {
+    name = _ref[getter_of_canonizers];
+    shore[name]._get_canonizers = getter_of_canonizers;
   }
   canonization = shore._canonization;
   shore._make_providers();
