@@ -13,4 +13,4 @@ shore.js:
 	./shore.coffee # shore.js - requires coffeescript
 
 parser.js:
-	./grammar.js > shore.parser.js # - requires node.js, jison
+	./shore.grammar.js > shore.parser.js # - requires node.js, jison

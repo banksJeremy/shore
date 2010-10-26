@@ -1,13 +1,19 @@
 (function() {
+  var default_input;
+  default_input = "f_net = 8t^2`t; m = 10\nA = f_net/m\nv = A ~ t + v_0; v_0 = 0\nd = v ~ t + d_0; d_0 = 0\nd_t = d(t = t_f); t_f = 10\ny = sin(theta = 2pi)";
   $(function() {
-    var emPixels, escape_html, form, get_qs, input_box, occurences, process_math, qs, result_box, scale_textarea, texscapeify;
+    var decode, emPixels, encode, escape_html, form, get_qs, input, input_box, occurences, process_math, provided_input, qs, result_box, scale_textarea, texscapeify;
+    decode = function(s) {
+      return decodeURIComponent(s.replace(/\+/g, " "));
+    };
+    encode = encodeURIComponent;
     get_qs = function() {
-      var match, queryString, re, result;
+      var match, query_string, re, result;
       result = {};
-      queryString = window.location.search.substring(1);
+      query_string = window.location.search.substring(1);
       re = /([^&=]+)=([^&]*)/g;
-      while (match = re.exec(queryString)) {
-        result[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
+      while (match = re.exec(query_string)) {
+        result[decode(match[1])] = decode(match[2]);
       }
       return result;
     };
@@ -180,12 +186,17 @@
       var input;
       input = ($("#input")).val();
       process_math(input, result_box);
+      window.location.hash = ("i=" + (encode(input)));
       return false;
     });
-    if (qs.i) {
-      input_box.val(qs.i);
-      process_math(qs.i, result_box);
+    provided_input = (window.location.hash.slice(0, 3)) === "#i=" ? decode(window.location.hash.slice(3)) : qs.i;
+    input = provided_input || default_input;
+    input_box.val(input);
+    scale_textarea(input_box);
+    if (provided_input) {
+      process_math(input, result_box);
     }
+    (input_box.get(0)).selectionStart = 0;
     return ((input_box.get(0)).selectionEnd = input_box.val().length);
   });
 }).call(this);

@@ -1,12 +1,22 @@
 #!/usr/bin/env coffee -c
+default_input = """f_net = 8t^2`t; m = 10
+A = f_net/m
+v = A ~ t + v_0; v_0 = 0
+d = v ~ t + d_0; d_0 = 0
+d_t = d(t = t_f); t_f = 10
+y = sin(theta = 2pi)"""
+
 $ -> # jQuery on DOM ready...
+	decode = (s) -> decodeURIComponent s.replace(/\+/g, " ")
+	encode = encodeURIComponent
+	
 	get_qs = ->
 		result = {}
-		queryString = window.location.search.substring 1
+		query_string = window.location.search.substring 1
 		re = /([^&=]+)=([^&]*)/g
 		
-		while match = re.exec queryString
-			result[decodeURIComponent match[1]] = decodeURIComponent match[2]
+		while match = re.exec query_string
+			result[decode match[1]] = decode match[2]
 		
 		return result
 	
@@ -144,11 +154,17 @@ $ -> # jQuery on DOM ready...
 	form.submit window.__go = ->
 		input = ($ "#input").val()
 		process_math input, result_box
+		window.location.hash = "i=#{encode input}"
 		
 		false # prevent form from being submitted normally
-		
-	if qs.i
-		input_box.val qs.i
-		process_math qs.i, result_box
 	
+	provided_input = if (window.location.hash.slice 0, 3) is "#i="
+		decode window.location.hash.slice 3
+	else qs.i
+	
+	input = provided_input || default_input
+	input_box.val input
+	scale_textarea input_box
+	process_math input, result_box if provided_input
+	(input_box.get 0).selectionStart = 0
 	(input_box.get 0).selectionEnd = input_box.val().length

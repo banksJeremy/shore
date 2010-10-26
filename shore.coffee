@@ -26,7 +26,7 @@ shore.utility = utility =
 			key = "proto-memory of nullary " + id
 			prototype = this.constructor.prototype
 			
-			if key not of prototype
+			if not prototype.hasOwnProperty key
 				prototype[key] = f.apply this
 			else
 				prototype[key]
@@ -85,7 +85,7 @@ for name, value of { # contents of module
 	
 	_canonization: (significance, name, f) ->
 		(shore._signified significance,
-			                (utility.nullary_memo "canonization (#{name})", f))
+											(utility.nullary_memo "canonization (#{name})", f))
 	
 	_significations:
 		minor: 0
@@ -93,7 +93,6 @@ for name, value of { # contents of module
 		major: 2
 	
 	Thing: class Thing
-		type: "Thing"
 		precedence: 0
 		
 		eq: (other) ->
@@ -117,13 +116,13 @@ for name, value of { # contents of module
 			result
 		
 		next_canonization: ->
-			for canonization in @get_canonizations()
+			for canonization in @get_canonizers()
 				value = canonization.apply this
 				
 				if value and not @eq(value)
 					return [canonization, value]
 		
-		get_canonizations: (utility.nullary_proto_memo "get_canonizations", ->
+		get_canonizers: (utility.nullary_proto_memo "get_canonizers", ->
 			@_get_canonizers())
 		
 		_get_canonizers: -> []
@@ -149,30 +148,32 @@ for name, value of { # contents of module
 			else
 				"#shore{#{@to_string()}}"
 		
+		to_free_string: -> "SHORE PRIVATE TYPE"
+		to_free_tex: -> "\\text{SHORE PRIVATE TYPE}"
+		
 	Value: class Value extends Thing
-		type: "Value"
+		is_a_value: true
 		
 		plus: (other) -> shore.sum [this, other]
 		minus: (other) -> shore.sum [this, other.neg()]
 		times: (other) -> shore.product [this, other]
 		over: (other) -> shore.product [this, other.to_the shore (- 1)]
 		pos: -> this
-		neg: -> (shore 0).minus(this)
+		neg: -> (shore (-1)).times(this)
 		to_the: (other) -> shore.exponent this, other
 		equals: (other) -> shore.equality [this, other]
 		integrate: (variable) -> shore.integral this, variable
 		differentiate: (variable) -> shore.derivative this, variable
 		given: (substitution) -> shore.pending_substitution this, substitution
+		plus_minus: (other) -> shore.with_margin_of_error this, other
 		
 		_then: (other) ->
-			if other.type is "Equality"
-				this.given other
-			else
+			if other.is_a_value
 				this.times other
+			else
+				this.given other
 	
 	Number: class Number extends Value
-		type: "Number"
-		
 		precedence: 10
 		constructor: (@value) ->
 		
@@ -183,8 +184,6 @@ for name, value of { # contents of module
 		to_js: -> "S(#{@value})"
 	
 	Identifier: class Identifier extends Value
-		type: "Identifier"
-		
 		precedence: 10
 		constructor: (@string_value, @tex_value) ->
 			if not @tex_value?
@@ -196,7 +195,11 @@ for name, value of { # contents of module
 		_eq: (other) -> @value == other.value
 		to_free_tex: -> @tex_value
 		to_free_string: -> @string_value
-		to_js: -> "S(\"#{@value}\")"
+		to_js: ->
+			if @string_value != @tex_value
+				"S(\"#{@string_value}\", \"#{@tex_value}\")"
+			else
+				"S(\"#{@string_value}\")"
 		
 		sub: (other) ->
 			string = "{#{@string_value}}_#{other.to_string()}"
@@ -204,8 +207,6 @@ for name, value of { # contents of module
 			shore.identifier string, tex
 	
 	CANOperation: class CANOperation extends Value
-		type: "CANOperation"
-		
 		# Commutitive, Assocative N-ary Operation
 		
 		_eq: (other) ->
@@ -231,15 +232,15 @@ for name, value of { # contents of module
 		to_js: -> "S.#{@type.toLowerCase()}([#{@operands.join ", "}])"
 	
 	Sum: class Sum extends CANOperation
-		type: "Sum"
 		precedence: 2
+		get_nullary: -> shore 0
 		
 		string_symbol: " + "
 		tex_symbol: " + "
 	
 	Product: class Product extends CANOperation
-		type: "Product"
 		precedence: 4
+		get_nullary: -> shore 1
 		
 		string_symbol: " f "
 		tex_symbol: " \\cdot "
@@ -261,17 +262,16 @@ for name, value of { # contents of module
 			positive_exponents ||= [shore 1]
 			
 			top = (((operand.to_tex @precedence) for operand in positive_exponents)
-			       .join @tex_symbol)
+						 .join @tex_symbol)
 			
 			if negative_exponents.length
 				bottom = (((operand.to_tex @precedence) for operand in negative_exponents)
-				          .join @tex_symbol)
+									.join @tex_symbol)
 				"\\tfrac{#{top}}{#{bottom}}"
 			else
 				top
 	
 	Exponent: class Exponent extends Value
-		type: "Exponent"
 		precedence: 5
 		
 		constructor: (@base, @exponent) ->
@@ -291,7 +291,6 @@ for name, value of { # contents of module
 				"#{@base.to_string @precedence}^#{@exponent.to_string()}"
 	
 	Integral: class Integral extends Value
-		type: "Integral" # Indefinite
 		precedence: 3
 		
 		constructor: (@expression, @variable) ->
@@ -303,7 +302,6 @@ for name, value of { # contents of module
 			"\\int\\left[#{@expression.to_tex()}\\right]d#{@variable.to_tex()}"
 	
 	Derivative: class Derivative extends Value
-		type: "Derivative"
 		precedence: 3
 		
 		constructor: (@expression, @variable) ->
@@ -314,20 +312,41 @@ for name, value of { # contents of module
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
 	
+	WithMarginOfError: class WithMarginOfError extends Value
+		precedence: 1.5
+		
+		constructor: (@value, @margin) ->
+		
+		tex_symbol: " \\pm "
+		string_symbol: " ± "
+		
+		to_free_string: ->
+			if not @margin.eq (shore 0)
+				"#{@value.to_string @precedence} #{@string_symbol} #{@margin.to_string @precedence}"
+			else
+				@value.to_string @precedence
+		
+		to_free_tex: ->
+			if not @margin.eq (shore 0)
+				"#{@value.to_tex @precedence} #{@tex_symbol} #{@margin.to_tex @precedence}"
+			else
+				@value.to_tex @precedence
+	
 	Equality: class Equality extends CANOperation
 		precedence: 1
 		
-		type: "Equality"
+		is_a_value: false # ><
 		
 		string_symbol: " = "
 		tex_symbol: " = "
 	
 	PendingSubstitution: class PendingSubstitution extends Value
-		precedence: 16
+		precedence: 2.5
 		
 		thing: "PendingSubstitution"
 		
 		constructor: (@expression, @substitution) ->
+			@is_a_value = @expression.is_a_value
 		
 		_eq: (other) ->
 			@expression.eq(other.expression) and @substitution.eq(other.substitution)
@@ -336,20 +355,46 @@ for name, value of { # contents of module
 		tex_symbol: ""
 		
 		to_free_string: ->
-			(@expression.to_string 0) + @string_symbol + (@substitution.to_string 15)
+			(@expression.to_string @precedence) + @string_symbol + (@substitution.to_string @precedence)
 		to_free_tex: ->
-			(@expression.to_tex 0) + @tex_symbol + (@substitution.to_tex 15)
+			(@expression.to_tex @precedence) + @tex_symbol + (@substitution.to_tex @precedence)
 }
 	shore[name] = value
+	
+	if utility.uncamel name # if it's CamelCase to begin with
+		shore[name].type = name
 
 # Canonizers follow here, to keep the logic of math as seperate
 # from the logic of programming as I can.
 
-for name, getter_of_canonizers in {
+for name, getter_of_canonizers of {
 	CANOperation: ->
-		super().concat [
+		@__super__._get_canonizers.apply(this).concat [
 			canonization "minor", "single argument", ->
 				@operands[0] if @operands.length == 1
+			canonization "minor", "no arguments", ->
+				@get_nullary() if @operands.length == 0 and @get_nullary
+		]
+	
+	Sum: ->
+		console.log "GETTING SUMS CANONIZERS"
+		@__super__._get_canonizers.apply(this).concat [
+			canonization "major", "numbers in sum", ->
+				numbers = []
+				not_numbers = []
+				
+				for operand in @operands
+					if operand.type is "Number"
+						numbers.push operand
+					else
+						not_numbers.push operand
+				
+				if numbers.length > 1
+					sum = @nullary()
+					while numbers.length
+						sum = sum.plus numbers.pop()
+					
+					shore.sum [ sum ].concat not_numbers
 		]
 }
 	shore[name]._get_canonizers = getter_of_canonizers

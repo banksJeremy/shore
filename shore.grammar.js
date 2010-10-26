@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 var sys = require("sys")
-puts = sys.puts // fix an incompetability between jison and node versions
-sys.print((new require("jison").Parser({
+puts = sys.debug
+
+var jison  = new require("jison")
+
+var parser = jison.Parser({
 	"lex": {
 		"rules": [
 			[ "\\s+", "" ],
@@ -18,7 +21,6 @@ sys.print((new require("jison").Parser({
 			[ "~", "return 'INTEGRATE';" ],
 			[ "`", "return 'DIFFERENTIATE';" ],
 			[ "[_\\.]", "return 'SUB';" ],
-			[ "\\|", "return 'GIVEN';" ],
 			[ "[a-zA-Z][a-zA-Z0-9]*'*", "return 'IDENTIFIER';" ],
 			[ "$", "return 'EOF';" ],
 		]
@@ -26,7 +28,6 @@ sys.print((new require("jison").Parser({
 	
 	"operators": [
 		[ "left", "EQUALS" ],
-		[ "left", "GIVEN" ],
 		[ "left", "+", "-" ],
 		[ "left", "INTEGRATE", "DIFFERENTIATE" ],
 		[ "left", "*", "/" ],
@@ -48,7 +49,6 @@ sys.print((new require("jison").Parser({
 			[ "e + e", "$$ = $1.plus($3);" ],
 			[ "e - e", "$$ = $1.minus($3);" ],
 			[ "e * e", "$$ = $1.times($3);" ],
-			[ "e GIVEN e", "$$ = $1.given($3);" ],
 			[ "e / e", "$$ = $1.over($3);" ],
 			[ "e ^ e", "$$ = $1.to_the($3);" ],
 			[ "e INTEGRATE e", "$$ = $1.integrate($3);" ],
@@ -58,13 +58,10 @@ sys.print((new require("jison").Parser({
 			[ "- e", "$$ = $2.neg();", { "prec": "UMINUS" } ],
 			[ "+ e", "$$ = $2.pos();", { "prec": "UPLUS" } ],
 			
+			[ "e e", "$$ = $1._then($2);", { "prec": "THEN" } ],
+			
 			[ "literal", "$$ = $1;" ],
 			[ "parenthesized", "$$ = $1;" ],
-			
-			// this should all be a single rule that works properly!
-			[ "literal parenthesized", "$$ = $1._then($2);", { "prec": "THEN" }],
-			[ "literal literal", "$$ = $1._then($2);", { "prec": "THEN" }],
-			// can't get this to take the right precedence :(
 		],
 		
 		"parenthesized": [
@@ -76,4 +73,8 @@ sys.print((new require("jison").Parser({
 			[ "IDENTIFIER", "$$ = shore.identifier(yytext);"],
 		]
 	}
-})).generate({moduleName: "shore.parser"}))
+})
+
+var source = parser.generate({moduleName: "shore.parser"})
+
+sys.print(source)
