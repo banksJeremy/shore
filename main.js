@@ -1,6 +1,8 @@
 (function() {
+  var default_input;
+  default_input = "f_net = 8t^2`t; m = 10\nA = f_net/m\nv = A ~ t + v_0; v_0 = 0\nd = v ~ t + d_0; d_0 = 0\nd_t = d(t = t_f); t_f = 10\ny = sin(theta = 2pi)";
   $(function() {
-    var emPixels, escape_html, form, get_qs, input_box, occurences, process_math, qs, result_box, scale_textarea, texscapeify;
+    var emPixels, escape_html, form, get_qs, input, input_box, occurences, process_math, qs, result_box, scale_textarea, texscapeify;
     get_qs = function() {
       var match, queryString, re, result;
       result = {};
@@ -182,10 +184,13 @@
       process_math(input, result_box);
       return false;
     });
+    input = qs.i || default_input;
+    input_box.val(input);
+    scale_textarea(input_box);
     if (qs.i) {
-      input_box.val(qs.i);
-      process_math(qs.i, result_box);
+      process_math(input, result_box);
     }
+    (input_box.get(0)).selectionStart = 0;
     return ((input_box.get(0)).selectionEnd = input_box.val().length);
   });
 }).call(this);

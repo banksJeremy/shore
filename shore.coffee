@@ -26,7 +26,9 @@ shore.utility = utility =
 			key = "proto-memory of nullary " + id
 			prototype = this.constructor.prototype
 			
-			if key not of prototype
+			console.log key, String this
+			
+			if not prototype.hasOwnProperty key
 				prototype[key] = f.apply this
 			else
 				prototype[key]
@@ -85,7 +87,7 @@ for name, value of { # contents of module
 	
 	_canonization: (significance, name, f) ->
 		(shore._signified significance,
-			                (utility.nullary_memo "canonization (#{name})", f))
+											(utility.nullary_memo "canonization (#{name})", f))
 	
 	_significations:
 		minor: 0
@@ -117,13 +119,13 @@ for name, value of { # contents of module
 			result
 		
 		next_canonization: ->
-			for canonization in @get_canonizations()
+			for canonization in @get_canonizers()
 				value = canonization.apply this
 				
 				if value and not @eq(value)
 					return [canonization, value]
 		
-		get_canonizations: (utility.nullary_proto_memo "get_canonizations", ->
+		get_canonizers: (utility.nullary_proto_memo "get_canonizers", ->
 			@_get_canonizers())
 		
 		_get_canonizers: -> []
@@ -148,6 +150,9 @@ for name, value of { # contents of module
 				@to_js()
 			else
 				"#shore{#{@to_string()}}"
+		
+		to_free_string: -> "SHORE PRIVATE TYPE"
+		to_free_tex: -> "\\text{SHORE PRIVATE TYPE}"
 		
 	Value: class Value extends Thing
 		type: "Value"
@@ -196,7 +201,11 @@ for name, value of { # contents of module
 		_eq: (other) -> @value == other.value
 		to_free_tex: -> @tex_value
 		to_free_string: -> @string_value
-		to_js: -> "S(\"#{@value}\")"
+		to_js: ->
+			if @string_value != @tex_value
+				"S(\"#{@string_value}\", \"#{@tex_value}\")"
+			else
+				"S(\"#{@string_value}\")"
 		
 		sub: (other) ->
 			string = "{#{@string_value}}_#{other.to_string()}"
@@ -233,6 +242,7 @@ for name, value of { # contents of module
 	Sum: class Sum extends CANOperation
 		type: "Sum"
 		precedence: 2
+		get_nullary: -> shore 0
 		
 		string_symbol: " + "
 		tex_symbol: " + "
@@ -240,6 +250,7 @@ for name, value of { # contents of module
 	Product: class Product extends CANOperation
 		type: "Product"
 		precedence: 4
+		get_nullary: -> shore 1
 		
 		string_symbol: " f "
 		tex_symbol: " \\cdot "
@@ -261,11 +272,11 @@ for name, value of { # contents of module
 			positive_exponents ||= [shore 1]
 			
 			top = (((operand.to_tex @precedence) for operand in positive_exponents)
-			       .join @tex_symbol)
+						 .join @tex_symbol)
 			
 			if negative_exponents.length
 				bottom = (((operand.to_tex @precedence) for operand in negative_exponents)
-				          .join @tex_symbol)
+									.join @tex_symbol)
 				"\\tfrac{#{top}}{#{bottom}}"
 			else
 				top
@@ -345,11 +356,33 @@ for name, value of { # contents of module
 # Canonizers follow here, to keep the logic of math as seperate
 # from the logic of programming as I can.
 
-for name, getter_of_canonizers in {
+for name, getter_of_canonizers of {
 	CANOperation: ->
-		super().concat [
+		@__super__._get_canonizers.apply(this).concat [
 			canonization "minor", "single argument", ->
 				@operands[0] if @operands.length == 1
+			canonization "minor", "no arguments", ->
+				@get_nullary() if @operands.length == 0 and @get_nullary
+		]
+	
+	Sum: ->
+		@__super__._get_canonizers.apply(this).concat [
+			canonization "major", "numbers in sum", ->
+				numbers = []
+				not_numbers = []
+				
+				for operand in @operands
+					if operand.type is "Number"
+						numbers.push operand
+					else
+						not_numbers.push operand
+				
+				if numbers.length > 1
+					sum = @nullary()
+					while numbers.length
+						sum = sum.plus numbers.pop()
+					
+					shore.sum [ sum ].concat not_numbers
 		]
 }
 	shore[name]._get_canonizers = getter_of_canonizers

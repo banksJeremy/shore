@@ -1,4 +1,11 @@
 #!/usr/bin/env coffee -c
+default_input = """f_net = 8t^2`t; m = 10
+A = f_net/m
+v = A ~ t + v_0; v_0 = 0
+d = v ~ t + d_0; d_0 = 0
+d_t = d(t = t_f); t_f = 10
+y = sin(theta = 2pi)"""
+
 $ -> # jQuery on DOM ready...
 	get_qs = ->
 		result = {}
@@ -146,9 +153,10 @@ $ -> # jQuery on DOM ready...
 		process_math input, result_box
 		
 		false # prevent form from being submitted normally
-		
-	if qs.i
-		input_box.val qs.i
-		process_math qs.i, result_box
 	
+	input = qs.i || default_input
+	input_box.val input
+	scale_textarea input_box
+	process_math input, result_box if qs.i
+	(input_box.get 0).selectionStart = 0
 	(input_box.get 0).selectionEnd = input_box.val().length
