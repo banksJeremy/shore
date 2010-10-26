@@ -228,6 +228,9 @@
       Value.prototype.given = function(substitution) {
         return shore.pending_substitution(this, substitution);
       };
+      Value.prototype.plus_minus = function(other) {
+        return shore.with_margin_of_error(this, other);
+      };
       Value.prototype._then = function(other) {
         return other.is_a_value ? this.times(other) : this.given(other);
       };
@@ -516,7 +519,7 @@
     if (!__hasProp.call(_ref, name)) continue;
     value = _ref[name];
     shore[name] = value;
-    if (uncamel(name)) {
+    if (utility.uncamel(name)) {
       shore[name].type = name;
     }
   }

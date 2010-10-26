@@ -165,6 +165,7 @@ for name, value of { # contents of module
 		integrate: (variable) -> shore.integral this, variable
 		differentiate: (variable) -> shore.derivative this, variable
 		given: (substitution) -> shore.pending_substitution this, substitution
+		plus_minus: (other) -> shore.with_margin_of_error this, other
 		
 		_then: (other) ->
 			if other.is_a_value
@@ -360,7 +361,7 @@ for name, value of { # contents of module
 }
 	shore[name] = value
 	
-	if uncamel name # if it's CamelCase to begin with
+	if utility.uncamel name # if it's CamelCase to begin with
 		shore[name].type = name
 
 # Canonizers follow here, to keep the logic of math as seperate
