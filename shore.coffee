@@ -4,10 +4,17 @@ shore = (args...) ->
 		arg = args[0]
 		
 		if typeof arg is "number"
-			return shore.number arg
-		if typeof arg is "string"
-			return shore.identifier arg
-		throw new Error "Shore does not know what to do with #{arg}."
+			shore.number arg
+		else if typeof arg is "string"
+			if /^[a-zA-Z][a-zA-Z0-9]*'*$/.test arg
+				shore.identifier arg
+			else
+				if shore.parser?
+					shore.parser.parse arg
+				else
+					throw new Error "shore.parser is not available to interpret expression: #{arg}"
+		else
+			throw new Error "Unable to handle argument of type #{typeof arg}."
 	else
 		for arg in args
 			shore arg
@@ -117,9 +124,9 @@ for name, value of { # contents of module
 					return [canonization, value]
 		
 		get_canonizations: (utility.nullary_proto_memo "get_canonizations", ->
-			@_get_canonizations())
+			@_get_canonizers())
 		
-		_get_canonizations: -> []
+		_get_canonizers: -> []
 		
 		to_tex: (context) ->
 			context ?= 1
@@ -210,12 +217,6 @@ for name, value of { # contents of module
 					return false
 			
 			true
-		
-		_get_canonizations: ->
-			super().concat [
-				canonization "minor", "single argument", ->
-					@operands[0] if @operands.length == 1
-			]
 		
 		constructor: (@operands) ->
 		
@@ -340,6 +341,18 @@ for name, value of { # contents of module
 			(@expression.to_tex 0) + @tex_symbol + (@substitution.to_tex 15)
 }
 	shore[name] = value
+
+# Canonizers follow here, to keep the logic of math as seperate
+# from the logic of programming as I can.
+
+for name, getter_of_canonizers in {
+	CANOperation: ->
+		super().concat [
+			canonization "minor", "single argument", ->
+				@operands[0] if @operands.length == 1
+		]
+}
+	shore[name]._get_canonizers = getter_of_canonizers
 
 canonization = shore._canonization
 shore._make_providers()

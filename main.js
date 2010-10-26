@@ -82,7 +82,7 @@
           for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
             expression = _ref2[_j];
             if (expression.length) {
-              parsed_line.push(parser.parse(expression));
+              parsed_line.push(shore.parser.parse(expression));
             }
           }
           parsed.push(parsed_line);

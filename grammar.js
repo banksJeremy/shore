@@ -62,8 +62,8 @@ sys.print((new require("jison").Parser({
 			[ "parenthesized", "$$ = $1;" ],
 			
 			// this should all be a single rule that works properly!
-			[ "literal parenthesized", "$$ = $1._then($2)", { "prec": "THEN" }],
-			[ "literal literal", "$$ = $1._then($2)", { "prec": "THEN" }],
+			[ "literal parenthesized", "$$ = $1._then($2);", { "prec": "THEN" }],
+			[ "literal literal", "$$ = $1._then($2);", { "prec": "THEN" }],
 			// can't get this to take the right precedence :(
 		],
 		
@@ -76,4 +76,4 @@ sys.print((new require("jison").Parser({
 			[ "IDENTIFIER", "$$ = shore.identifier(yytext);"],
 		]
 	}
-})).generate({moduleName: "parser"}))
+})).generate({moduleName: "shore.parser"}))
