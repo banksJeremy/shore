@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, _ref, canonization, getter_of_canonizers, name, shore, utility, value;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, _ref, canonization, getter_of_canonizers, name, shore, utility, value;
   var __slice = Array.prototype.slice, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -44,7 +44,6 @@
         var key, prototype;
         key = "proto-memory of nullary " + id;
         prototype = this.constructor.prototype;
-        console.log(key, String(this));
         return !prototype.hasOwnProperty(key) ? (prototype[key] = f.apply(this)) : prototype[key];
       };
     },
@@ -125,7 +124,6 @@
     },
     Thing: (function() {
       Thing = function() {};
-      Thing.prototype.type = "Thing";
       Thing.prototype.precedence = 0;
       Thing.prototype.eq = function(other) {
         return this.type === other.type && this._eq(other);
@@ -196,7 +194,7 @@
         return Thing.apply(this, arguments);
       };
       __extends(Value, Thing);
-      Value.prototype.type = "Value";
+      Value.prototype.is_a_value = true;
       Value.prototype.plus = function(other) {
         return shore.sum([this, other]);
       };
@@ -213,7 +211,7 @@
         return this;
       };
       Value.prototype.neg = function() {
-        return (shore(0)).minus(this);
+        return (shore(-1)).times(this);
       };
       Value.prototype.to_the = function(other) {
         return shore.exponent(this, other);
@@ -231,7 +229,7 @@
         return shore.pending_substitution(this, substitution);
       };
       Value.prototype._then = function(other) {
-        return other.type === "Equality" ? this.given(other) : this.times(other);
+        return other.is_a_value ? this.times(other) : this.given(other);
       };
       return Value;
     })(),
@@ -241,7 +239,6 @@
         return this;
       };
       __extends(Number, Value);
-      Number.prototype.type = "Number";
       Number.prototype.precedence = 10;
       Number.prototype._eq = function(other) {
         return this.value === other.value;
@@ -277,7 +274,6 @@
         return this;
       };
       __extends(Identifier, Value);
-      Identifier.prototype.type = "Identifier";
       Identifier.prototype.precedence = 10;
       Identifier.prototype._eq = function(other) {
         return this.value === other.value;
@@ -305,7 +301,6 @@
         return this;
       };
       __extends(CANOperation, Value);
-      CANOperation.prototype.type = "CANOperation";
       CANOperation.prototype._eq = function(other) {
         var _ref2, i;
         if (this.operands.length !== other.operands.length) {
@@ -351,7 +346,6 @@
         return CANOperation.apply(this, arguments);
       };
       __extends(Sum, CANOperation);
-      Sum.prototype.type = "Sum";
       Sum.prototype.precedence = 2;
       Sum.prototype.get_nullary = function() {
         return shore(0);
@@ -365,7 +359,6 @@
         return CANOperation.apply(this, arguments);
       };
       __extends(Product, CANOperation);
-      Product.prototype.type = "Product";
       Product.prototype.precedence = 4;
       Product.prototype.get_nullary = function() {
         return shore(1);
@@ -422,7 +415,6 @@
         return this;
       };
       __extends(Exponent, Value);
-      Exponent.prototype.type = "Exponent";
       Exponent.prototype.precedence = 5;
       Exponent.prototype._eq = function(other) {
         return this.base.eq(other.base) && this.exponent.eq(other.exponent);
@@ -442,7 +434,6 @@
         return this;
       };
       __extends(Integral, Value);
-      Integral.prototype.type = "Integral";
       Integral.prototype.precedence = 3;
       Integral.prototype._eq = function(other) {
         return this.expression.eq(other.expression) && this.variable.eq(other.variable);
@@ -459,7 +450,6 @@
         return this;
       };
       __extends(Derivative, Value);
-      Derivative.prototype.type = "Derivative";
       Derivative.prototype.precedence = 3;
       Derivative.prototype._eq = function(other) {
         return this.expression.eq(other.expression) && this.exponent.eq(other.variable);
@@ -469,13 +459,31 @@
       };
       return Derivative;
     })(),
+    WithMarginOfError: (function() {
+      WithMarginOfError = function(_arg, _arg2) {
+        this.margin = _arg2;
+        this.value = _arg;
+        return this;
+      };
+      __extends(WithMarginOfError, Value);
+      WithMarginOfError.prototype.precedence = 1.5;
+      WithMarginOfError.prototype.tex_symbol = " \\pm ";
+      WithMarginOfError.prototype.string_symbol = " ± ";
+      WithMarginOfError.prototype.to_free_string = function() {
+        return !this.margin.eq(shore(0)) ? ("" + (this.value.to_string(this.precedence)) + " " + (this.string_symbol) + " " + (this.margin.to_string(this.precedence))) : this.value.to_string(this.precedence);
+      };
+      WithMarginOfError.prototype.to_free_tex = function() {
+        return !this.margin.eq(shore(0)) ? ("" + (this.value.to_tex(this.precedence)) + " " + (this.tex_symbol) + " " + (this.margin.to_tex(this.precedence))) : this.value.to_tex(this.precedence);
+      };
+      return WithMarginOfError;
+    })(),
     Equality: (function() {
       Equality = function() {
         return CANOperation.apply(this, arguments);
       };
       __extends(Equality, CANOperation);
       Equality.prototype.precedence = 1;
-      Equality.prototype.type = "Equality";
+      Equality.prototype.is_a_value = false;
       Equality.prototype.string_symbol = " = ";
       Equality.prototype.tex_symbol = " = ";
       return Equality;
@@ -484,10 +492,11 @@
       PendingSubstitution = function(_arg, _arg2) {
         this.substitution = _arg2;
         this.expression = _arg;
+        this.is_a_value = this.expression.is_a_value;
         return this;
       };
       __extends(PendingSubstitution, Value);
-      PendingSubstitution.prototype.precedence = 16;
+      PendingSubstitution.prototype.precedence = 2.5;
       PendingSubstitution.prototype.thing = "PendingSubstitution";
       PendingSubstitution.prototype._eq = function(other) {
         return this.expression.eq(other.expression) && this.substitution.eq(other.substitution);
@@ -495,10 +504,10 @@
       PendingSubstitution.prototype.string_symbol = "";
       PendingSubstitution.prototype.tex_symbol = "";
       PendingSubstitution.prototype.to_free_string = function() {
-        return (this.expression.to_string(0)) + this.string_symbol + (this.substitution.to_string(15));
+        return (this.expression.to_string(this.precedence)) + this.string_symbol + (this.substitution.to_string(this.precedence));
       };
       PendingSubstitution.prototype.to_free_tex = function() {
-        return (this.expression.to_tex(0)) + this.tex_symbol + (this.substitution.to_tex(15));
+        return (this.expression.to_tex(this.precedence)) + this.tex_symbol + (this.substitution.to_tex(this.precedence));
       };
       return PendingSubstitution;
     })()
@@ -507,6 +516,9 @@
     if (!__hasProp.call(_ref, name)) continue;
     value = _ref[name];
     shore[name] = value;
+    if (uncamel(name)) {
+      shore[name].type = name;
+    }
   }
   _ref = {
     CANOperation: function() {
@@ -523,6 +535,7 @@
       ]);
     },
     Sum: function() {
+      console.log("GETTING SUMS CANONIZERS");
       return this.__super__._get_canonizers.apply(this).concat([
         canonization("major", "numbers in sum", function() {
           var _i, _len, _ref2, not_numbers, numbers, operand, sum;

@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 var sys = require("sys")
-puts = sys.puts // fix an incompetability between jison and node versions
-sys.print((new require("jison").Parser({
+puts = sys.debug
+
+var jison  = new require("jison")
+
+var parser = jison.Parser({
 	"lex": {
 		"rules": [
 			[ "\\s+", "" ],
@@ -55,13 +58,10 @@ sys.print((new require("jison").Parser({
 			[ "- e", "$$ = $2.neg();", { "prec": "UMINUS" } ],
 			[ "+ e", "$$ = $2.pos();", { "prec": "UPLUS" } ],
 			
+			[ "e e", "$$ = $1._then($2);", { "prec": "THEN" } ],
+			
 			[ "literal", "$$ = $1;" ],
 			[ "parenthesized", "$$ = $1;" ],
-			
-			// this should all be a single rule that works properly!
-			[ "literal parenthesized", "$$ = $1._then($2);", { "prec": "THEN" }],
-			[ "literal literal", "$$ = $1._then($2);", { "prec": "THEN" }],
-			// can't get this to take the right precedence :(
 		],
 		
 		"parenthesized": [
@@ -73,4 +73,8 @@ sys.print((new require("jison").Parser({
 			[ "IDENTIFIER", "$$ = shore.identifier(yytext);"],
 		]
 	}
-})).generate({moduleName: "shore.parser"}))
+})
+
+var source = parser.generate({moduleName: "shore.parser"})
+
+sys.print(source)
