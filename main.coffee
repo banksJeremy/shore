@@ -1,13 +1,13 @@
 #!/usr/bin/env coffee -c
-default_input = """f_net = (8t^2)`t; m = 5 + 5
-A = f_net/m
-v = A ~ t + v_0; v_0 = 0
-d = v ~ t + d_0; d_0 = 0
-d_t = d(t = t_f); t_f = 10"""
-
 $ -> # jQuery on DOM ready...
 	decode = (s) -> decodeURIComponent s.replace(/\+/g, " ")
 	encode = encodeURIComponent
+	
+	default_input = """f_net = (8t^2)`t; m = 5 + 5
+	A = f_net/m
+	v = A ~ t + v_0; v_0 = 0
+	d = v ~ t + d_0; d_0 = 0
+	d_t = d(t = t_f); t_f = 10"""
 	
 	get_qs = ->
 		result = {}
@@ -154,6 +154,7 @@ $ -> # jQuery on DOM ready...
 		               (-> ($ this).css backgroundColor: "transparent")
 		($ "h3").toggle (-> ($ this).next().show 300), (-> ($ this).next().hide 300)
 		($ "h3 + div").hide()
+		(($ "h3").eq 0).click()
 		(($ "h3").eq 2).click()
 		
 		if MathJax

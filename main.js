@@ -1,12 +1,11 @@
 (function() {
-  var default_input;
-  default_input = "f_net = (8t^2)`t; m = 5 + 5\nA = f_net/m\nv = A ~ t + v_0; v_0 = 0\nd = v ~ t + d_0; d_0 = 0\nd_t = d(t = t_f); t_f = 10";
   $(function() {
-    var decode, emPixels, encode, escape_html, form, get_qs, input, input_box, occurences, process_math, provided_input, qs, result_box, scale_textarea, texscapeify;
+    var decode, default_input, emPixels, encode, escape_html, form, get_qs, input, input_box, occurences, process_math, provided_input, qs, result_box, scale_textarea, texscapeify;
     decode = function(s) {
       return decodeURIComponent(s.replace(/\+/g, " "));
     };
     encode = encodeURIComponent;
+    default_input = "f_net = (8t^2)`t; m = 5 + 5\nA = f_net/m\nv = A ~ t + v_0; v_0 = 0\nd = v ~ t + d_0; d_0 = 0\nd_t = d(t = t_f); t_f = 10";
     get_qs = function() {
       var match, query_string, re, result;
       result = {};
@@ -191,6 +190,7 @@
         return ($(this)).next().hide(300);
       });
       ($("h3 + div")).hide();
+      (($("h3")).eq(0)).click();
       (($("h3")).eq(2)).click();
       return MathJax ? MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output.get(0))]) : null;
     };
