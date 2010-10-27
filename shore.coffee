@@ -1,4 +1,6 @@
 #!/usr/bin/env coffee -c
+console = { log: -> } if not console? # so as to not except
+
 shore = (args...) ->
 	if args.length is 1
 		arg = args[0]
@@ -146,7 +148,7 @@ for name, value of { # contents of module
 			if @to_js
 				@to_js()
 			else
-				"#shore{#{@to_string()}}"
+				"S{#{@to_string()}}"
 		
 		to_free_string: -> "SHORE PRIVATE TYPE"
 		to_free_tex: -> "\\text{SHORE PRIVATE TYPE}"
@@ -197,12 +199,12 @@ for name, value of { # contents of module
 		to_free_string: -> @string_value
 		to_js: ->
 			if @string_value != @tex_value
-				"S(\"#{@string_value}\", \"#{@tex_value}\")"
+				"S.identifier(\"#{@string_value}\", \"#{@tex_value}\")"
 			else
 				"S(\"#{@string_value}\")"
 		
 		sub: (other) ->
-			string = "{#{@string_value}}_#{other.to_string()}"
+			string = "#{@string_value}_#{other.to_string()}"
 			tex = "{#{@tex_value}}_{#{other.to_tex()}}"
 			shore.identifier string, tex
 	
@@ -252,6 +254,7 @@ for name, value of { # contents of module
 			for term in @operands
 				if term.type == "Exponent"
 					exponent = term.exponent
+					
 					if exponent.type == "Number" and exponent.value < 0
 						negative_exponents.push shore.exponent term.base, exponent.neg()
 					else
@@ -260,6 +263,8 @@ for name, value of { # contents of module
 					positive_exponents.push term
 			
 			positive_exponents ||= [shore 1]
+			
+			# console.log (o.to_string() for o in @operands)
 			
 			top = (((operand.to_tex @precedence) for operand in positive_exponents)
 						 .join @tex_symbol)
@@ -289,6 +294,9 @@ for name, value of { # contents of module
 				@base.to_tex @precedence
 			else
 				"#{@base.to_string @precedence}^#{@exponent.to_string()}"
+		
+		to_js: ->
+			return "S(#{@base.to_js()}, #{@exponent.to_js()})"
 	
 	Integral: class Integral extends Value
 		precedence: 3
@@ -362,7 +370,7 @@ for name, value of { # contents of module
 	shore[name] = value
 	
 	if utility.uncamel name # if it's CamelCase to begin with
-		shore[name].type = name
+		shore[name]::type = name
 
 # Canonizers follow here, to keep the logic of math as seperate
 # from the logic of programming as I can.
