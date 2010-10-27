@@ -99,7 +99,7 @@
         if (!/^Parse error/.test(e.message)) {
           throw e;
         }
-        output.empty;
+        output.empty();
         output.append((($("<pre>")).css({
           whiteSpace: "pre-line"
         })).text(e.message.replace("on line 1", "in \"" + (expression) + "\"")));
