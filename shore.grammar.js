@@ -17,6 +17,8 @@ var parser = jison.Parser({
 			[ "\\^", "return '^';" ],
 			[ "\\(", "return '(';" ],
 			[ "\\)", "return ')';" ],
+			[ "\\[", "return '[';" ],
+			[ "\\]", "return ']';" ],
 			[ "(±|\\?)", "return 'PLUSMINUS';" ],
 			[ "~", "return 'INTEGRATE';" ],
 			[ "`", "return 'DIFFERENTIATE';" ],
@@ -29,13 +31,13 @@ var parser = jison.Parser({
 	"operators": [
 		[ "left", "EQUALS" ],
 		[ "left", "+", "-" ],
-		[ "left", "INTEGRATE", "DIFFERENTIATE" ],
 		[ "left", "*", "/" ],
 		[ "right", "THEN" ],
 		[ "left", "^" ],
 		[ "left", "PLUSMINUS" ],
 		[ "left", "UMINUS", "UPLUS" ],
 		[ "right", "SUB" ],
+		[ "left", "INTEGRATE", "DIFFERENTIATE" ],
 	],
 	
 	"bnf": {
@@ -65,7 +67,8 @@ var parser = jison.Parser({
 		],
 		
 		"parenthesized": [
-			[ "( e )", "$$ = $2;" ]
+			[ "( e )", "$$ = $2;" ],
+			[ "[ e ]", "$$ = $2;" ],
 		],
 		
 		"literal": [

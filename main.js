@@ -79,20 +79,32 @@
       var _i, _j, _len, _len2, _ref, _ref2, expression, line, output_parts, parsed, parsed_line;
       result_box.show(300);
       parsed = [];
-      _ref = input.split(/\n/);
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
-        if (line.length) {
-          parsed_line = [];
-          _ref2 = line.split(/;/);
-          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-            expression = _ref2[_j];
-            if (expression.length) {
-              parsed_line.push(shore.parser.parse(expression));
+      try {
+        _ref = input.split(/\n/);
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
+          if (line.length) {
+            parsed_line = [];
+            _ref2 = line.split(/;/);
+            for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+              expression = _ref2[_j];
+              if (expression.length) {
+                parsed_line.push(shore.parser.parse(expression));
+              }
             }
+            parsed.push(parsed_line);
           }
-          parsed.push(parsed_line);
         }
+      } catch (e) {
+        if (!/^Parse error/.test(e.message)) {
+          throw e;
+        }
+        output.empty;
+        output.append((($("<pre>")).css({
+          whiteSpace: "pre-line"
+        })).text(e.message.replace("on line 1", "in \"" + (expression) + "\"")));
+        output.show();
+        return null;
       }
       output_parts = [];
       if (typeof MathJax !== "undefined" && MathJax !== null) {

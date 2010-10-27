@@ -247,7 +247,7 @@ for name, value of { # contents of module
 		precedence: 4
 		get_nullary: -> shore 1
 		
-		string_symbol: " f "
+		string_symbol: " * "
 		tex_symbol: " \\cdot "
 		
 		_to_free_tex: (operands) ->

@@ -377,7 +377,7 @@
       Product.prototype.get_nullary = function() {
         return shore(1);
       };
-      Product.prototype.string_symbol = " f ";
+      Product.prototype.string_symbol = " * ";
       Product.prototype.tex_symbol = " \\cdot ";
       Product.prototype._to_free_tex = function(operands) {
         var _i, _len, _ref2, _result, operand;
