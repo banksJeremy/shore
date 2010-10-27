@@ -96,7 +96,7 @@
           }
         }
       } catch (e) {
-        if (!/^Parse error/.test(e.message)) {
+        if (!/^(Parse|Lexical) error/.test(e.message)) {
           throw e;
         }
         output.empty();
