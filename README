@@ -26,8 +26,8 @@ Full details including copyright and licensing info are in LICENSE.
 
 TODO
 ----
-- Make canonization work (critical)
 - Canonize sums, products
+  - Commutativity! Do it!
 - Unify products and exponents as originally?
 - Error calculations
 - Differentiation
