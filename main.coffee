@@ -1,10 +1,9 @@
 #!/usr/bin/env coffee -c
-default_input = """f_net = 8t^2`t; m = 10
+default_input = """f_net = (8t^2)`t; m = 5 + 5
 A = f_net/m
 v = A ~ t + v_0; v_0 = 0
 d = v ~ t + d_0; d_0 = 0
-d_t = d(t = t_f); t_f = 10
-y = sin(theta = 2pi)"""
+d_t = d(t = t_f); t_f = 10"""
 
 $ -> # jQuery on DOM ready...
 	decode = (s) -> decodeURIComponent s.replace(/\+/g, " ")
@@ -167,9 +166,8 @@ $ -> # jQuery on DOM ready...
 		
 		false # prevent form from being submitted normally
 	
-	provided_input = if (window.location.hash.slice 0, 3) is "#i="
+	provided_input = qs.i or if (window.location.hash.slice 0, 3) is "#i="
 		decode window.location.hash.slice 3
-	else qs.i
 	
 	input = provided_input || default_input
 	input_box.val input
