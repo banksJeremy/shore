@@ -9,35 +9,35 @@ var parser = jison.Parser({
 		"rules": [
 			[ "\\s+", "" ],
 			[ "([0-9]*\\.[0-9]+|[0-9]+)", "return 'NUMBER';" ],
-			[ "=", "return 'EQUALS';" ],
+			[ "[a-zA-Z][a-zA-Z0-9]*'*", "return 'IDENTIFIER';" ],
+			[ "=", "return '=';" ],
+			[ "(\\^|\\*\\*)", "return '^';" ],
 			[ "\\*", "return '*';" ],
 			[ "\\/", "return '/';" ],
 			[ "\\-", "return '-';" ],
 			[ "\\+", "return '+';" ],
-			[ "\\^", "return '^';" ],
 			[ "\\(", "return '(';" ],
 			[ "\\)", "return ')';" ],
 			[ "\\[", "return '[';" ],
 			[ "\\]", "return ']';" ],
-			[ "(±|\\?)", "return 'PLUSMINUS';" ],
-			[ "~", "return 'INTEGRATE';" ],
-			[ "`", "return 'DIFFERENTIATE';" ],
-			[ "[_\\.]", "return 'SUB';" ],
-			[ "[a-zA-Z][a-zA-Z0-9]*'*", "return 'IDENTIFIER';" ],
+			[ "(±|\\?)", "return '±';" ],
+			[ "~", "return '~';" ],
+			[ "`", "return '`';" ],
+			[ "[_\\.]", "return '_';" ],
 			[ "$", "return 'EOF';" ],
 		]
 	},
 	
 	"operators": [
-		[ "left", "EQUALS" ],
+		[ "left", "=" ],
 		[ "left", "+", "-" ],
 		[ "left", "*", "/" ],
 		[ "right", "THEN" ],
 		[ "left", "^" ],
-		[ "left", "PLUSMINUS" ],
+		[ "left", "±" ],
 		[ "left", "UMINUS", "UPLUS" ],
-		[ "right", "SUB" ],
-		[ "left", "INTEGRATE", "DIFFERENTIATE" ],
+		[ "right", "_" ],
+		[ "left", "~", "`" ],
 	],
 	
 	"bnf": {
@@ -47,16 +47,16 @@ var parser = jison.Parser({
 		],
 		
 		"e": [
-			[ "e EQUALS e", "$$ = $1.equals($3);" ],
+			[ "e = e", "$$ = $1.equals($3);" ],
 			[ "e + e", "$$ = $1.plus($3);" ],
 			[ "e - e", "$$ = $1.minus($3);" ],
 			[ "e * e", "$$ = $1.times($3);" ],
 			[ "e / e", "$$ = $1.over($3);" ],
 			[ "e ^ e", "$$ = $1.to_the($3);" ],
-			[ "e INTEGRATE e", "$$ = $1.integrate($3);" ],
-			[ "e DIFFERENTIATE e", "$$ = $1.differentiate($3);" ],
-			[ "e PLUSMINUS e", "$$ = $1.plus_minus($3);" ],
-			[ "e SUB e", "$$ = $1.sub($3);" ],
+			[ "e ~ e", "$$ = $1.integrate($3);" ],
+			[ "e ` e", "$$ = $1.differentiate($3);" ],
+			[ "e ± e", "$$ = $1.plus_minus($3);" ],
+			[ "e _ e", "$$ = $1.sub($3);" ],
 			[ "- e", "$$ = $2.neg();", { "prec": "UMINUS" } ],
 			[ "+ e", "$$ = $2.pos();", { "prec": "UPLUS" } ],
 			
@@ -72,8 +72,8 @@ var parser = jison.Parser({
 		],
 		
 		"literal": [
-			[ "NUMBER", "$$ = shore.number(yytext);"],
-			[ "IDENTIFIER", "$$ = shore.identifier(yytext);"],
+			[ "NUMBER", "$$ = shore.number(Number(yytext));"],
+			[ "IDENTIFIER", "$$ = shore.identifier(String(yytext));"],
 		]
 	}
 })

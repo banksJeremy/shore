@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, _ref, canonization, console, getter_of_canonizers, name, shore, utility, value;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, _ref, canonization, getter_of_canonizers, log, logs, name, shore, utility, value;
   var __slice = Array.prototype.slice, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -8,11 +8,12 @@
     if (typeof parent.extended === "function") parent.extended(child);
     child.__super__ = parent.prototype;
   }, __hasProp = Object.prototype.hasOwnProperty;
-  if (!(typeof console !== "undefined" && console !== null)) {
-    console = {
-      log: function() {}
-    };
-  }
+  log = (typeof console !== "undefined" && console !== null) ? (function() {
+    return console.log.apply(console, arguments);
+  }) : function() {};
+  logs = function() {
+    return log(String.apply(this, arguments));
+  };
   shore = function() {
     var _i, _len, _ref, _result, arg, args;
     args = __slice.call(arguments, 0);
@@ -47,6 +48,7 @@
       "memoizes a nullary function on a prototype";
       return function() {
         var key, prototype;
+        return f;
         key = "proto-memory of nullary " + id;
         prototype = this.constructor.prototype;
         return !prototype.hasOwnProperty(key) ? (prototype[key] = f.apply(this)) : prototype[key];
@@ -56,6 +58,7 @@
       "memoizes a nullary function on an instance";
       return function() {
         var key;
+        return f;
         key = "memory of nullary " + id;
         return !(key in this) ? (this[key] = f.apply(this)) : this[key];
       };
@@ -120,7 +123,7 @@
       return f;
     },
     _canonization: function(significance, name, f) {
-      return shore._signified(significance, utility.nullary_memo("canonization (" + (name) + ")", f));
+      return shore._signified(significance, f);
     },
     _significations: {
       minor: 0,
@@ -135,8 +138,8 @@
       };
       Thing.prototype.canonize = function(enough, excess) {
         var _ref2, _ref3, next, result, significance;
-        enough = shore._significance(enough || 0);
-        excess = shore._significance(excess || 0);
+        enough = shore._significance(enough);
+        excess = shore._significance(excess);
         result = this;
         while (true) {
           next = result.next_canonization();
@@ -147,11 +150,11 @@
           _ref3 = _ref2[0];
           significance = _ref3.significance;
           value = _ref2[1];
-          if (significance >= excess) {
+          if ((typeof excess !== "undefined" && excess !== null) && (significance >= excess)) {
             break;
           }
           result = value;
-          if (significance >= enough) {
+          if ((typeof enough !== "undefined" && enough !== null) && (significance >= enough)) {
             break;
           }
         }
@@ -169,9 +172,9 @@
         }
         return _result;
       };
-      Thing.prototype.get_canonizers = (utility.nullary_proto_memo("get_canonizers", function() {
+      Thing.prototype.get_canonizers = function() {
         return this._get_canonizers();
-      }));
+      };
       Thing.prototype._get_canonizers = function() {
         return [];
       };
@@ -306,16 +309,18 @@
     CANOperation: (function() {
       CANOperation = function(_arg) {
         this.operands = _arg;
+        if (this.type === "Equality") {
+          log(this.operands);
+        }
         return this;
       };
       __extends(CANOperation, Value);
       CANOperation.prototype._eq = function(other) {
-        var _ref2, i;
+        var i;
         if (this.operands.length !== other.operands.length) {
           return false;
         }
-        _ref2 = this.operands.length;
-        for (i = 0; (0 <= _ref2 ? i <= _ref2 : i >= _ref2); (0 <= _ref2 ? i += 1 : i -= 1)) {
+        for (i = 0; (0 <= this.operands.length - 1 ? i <= this.operands.length - 1 : i >= this.operands.length - 1); (0 <= this.operands.length - 1 ? i += 1 : i -= 1)) {
           if (!(this.operands[i].eq(other.operands[i]))) {
             return false;
           }
@@ -474,7 +479,7 @@
       __extends(Derivative, Value);
       Derivative.prototype.precedence = 3;
       Derivative.prototype._eq = function(other) {
-        return this.expression.eq(other.expression) && this.exponent.eq(other.variable);
+        return this.expression.eq(other.expression) && this.variable.eq(other.variable);
       };
       Derivative.prototype.to_free_tex = function() {
         return "\\tfrac{d}{d" + (this.variable.to_tex()) + "}\\left[" + (this.expression.to_tex()) + "\\right]";
@@ -544,7 +549,7 @@
   }
   _ref = {
     CANOperation: function() {
-      return this.__super__._get_canonizers.apply(this).concat([
+      return CANOperation.__super__._get_canonizers.apply(this).concat([
         canonization("minor", "single argument", function() {
           if (this.operands.length === 1) {
             return this.operands[0];
@@ -557,8 +562,7 @@
       ]);
     },
     Sum: function() {
-      console.log("GETTING SUMS CANONIZERS");
-      return this.__super__._get_canonizers.apply(this).concat([
+      return Sum.__super__._get_canonizers.apply(this).concat([
         canonization("major", "numbers in sum", function() {
           var _i, _len, _ref2, not_numbers, numbers, operand, sum;
           numbers = [];
@@ -573,12 +577,47 @@
             }
           }
           if (numbers.length > 1) {
-            sum = this.nullary();
+            sum = this.get_nullary().value;
             while (numbers.length) {
-              sum = sum.plus(numbers.pop());
+              sum += numbers.pop().value;
             }
-            return shore.sum([sum].concat(not_numbers));
+            return shore.sum([shore.number(sum)].concat(not_numbers));
           }
+        })
+      ]);
+    },
+    Equality: function() {
+      return Equality.__super__._get_canonizers.apply(this).concat([
+        canonization("minor", "minors in equality", function() {
+          var _i, _len, _ref2, _result, o;
+          return shore.equality((function() {
+            _result = []; _ref2 = this.operands;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              o = _ref2[_i];
+              _result.push(o.canonize("minor", "minor"));
+            }
+            return _result;
+          }).call(this));
+        }), canonization("moderate", "moderates in equality", function() {
+          var _i, _len, _ref2, _result, o;
+          return shore.equality((function() {
+            _result = []; _ref2 = this.operands;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              o = _ref2[_i];
+              _result.push(o.canonize("moderate", "moderate"));
+            }
+            return _result;
+          }).call(this));
+        }), canonization("majors", "majors in equality", function() {
+          var _i, _len, _ref2, _result, o;
+          return shore.equality((function() {
+            _result = []; _ref2 = this.operands;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              o = _ref2[_i];
+              _result.push(o.canonize("majors", "majors"));
+            }
+            return _result;
+          }).call(this));
         })
       ]);
     }
@@ -586,7 +625,7 @@
   for (name in _ref) {
     if (!__hasProp.call(_ref, name)) continue;
     getter_of_canonizers = _ref[name];
-    shore[name]._get_canonizers = getter_of_canonizers;
+    shore[name].prototype._get_canonizers = getter_of_canonizers;
   }
   canonization = shore._canonization;
   shore._make_providers();

@@ -1,5 +1,6 @@
 #!/usr/bin/env coffee -c
-console = { log: -> } if not console? # so as to not except
+log = if console? then (-> console.log arguments...) else ->
+logs = -> log String arguments...
 
 shore = (args...) ->
 	if args.length is 1
@@ -25,6 +26,8 @@ shore.utility = utility =
 	nullary_proto_memo: (id, f) ->
 		"memoizes a nullary function on a prototype"
 		-> 
+			return f
+			
 			key = "proto-memory of nullary " + id
 			prototype = this.constructor.prototype
 			
@@ -36,6 +39,8 @@ shore.utility = utility =
 	nullary_memo: (id, f) ->
 		"memoizes a nullary function on an instance"
 		->
+			return f
+			
 			key = "memory of nullary " + id
 		
 			if key not of this
@@ -86,8 +91,8 @@ for name, value of { # contents of module
 		f
 	
 	_canonization: (significance, name, f) ->
-		(shore._signified significance,
-											(utility.nullary_memo "canonization (#{name})", f))
+		(shore._signified significance, f)
+#		                  (utility.nullary_memo "canonization (#{name})", f))
 	
 	_significations:
 		minor: 0
@@ -101,8 +106,8 @@ for name, value of { # contents of module
 			@type == other.type and @_eq other
 		
 		canonize: (enough, excess) ->
-			enough = shore._significance (enough || 0)
-			excess = shore._significance (excess || 0)
+			enough = shore._significance enough
+			excess = shore._significance excess
 			
 			result = this
 			
@@ -111,9 +116,9 @@ for name, value of { # contents of module
 				if not next.length then break
 				[{significance: significance}, value] = next
 				
-				if significance >= excess then break
+				if excess? and significance >= excess then break
 				result = value
-				if significance >= enough then break
+				if enough? and significance >= enough then break
 			
 			result
 		
@@ -124,8 +129,8 @@ for name, value of { # contents of module
 				if value and not @eq(value)
 					return [canonization, value]
 		
-		get_canonizers: (utility.nullary_proto_memo "get_canonizers", ->
-			@_get_canonizers())
+		get_canonizers: -> @_get_canonizers() #(utility.nullary_proto_memo "get_canonizers",
+			#-> @_get_canonizers())
 		
 		_get_canonizers: -> []
 		
@@ -211,17 +216,18 @@ for name, value of { # contents of module
 	CANOperation: class CANOperation extends Value
 		# Commutitive, Assocative N-ary Operation
 		
+		constructor: (@operands) ->
+			if @type is "Equality" then log @operands
+		
 		_eq: (other) ->
 			if @operands.length != other.operands.length
 				return false
 			
-			for i in [0..@operands.length]
+			for i in [0..@operands.length - 1]
 				if not (@operands[i].eq other.operands[i])
 					return false
 			
 			true
-		
-		constructor: (@operands) ->
 		
 		to_free_tex: ->
 			(((operand.to_tex @precedence) for operand in @operands)
@@ -281,7 +287,7 @@ for name, value of { # contents of module
 			
 			positive_exponents ||= [shore 1]
 			
-			# console.log (o.to_string() for o in @operands)
+			# log (o.to_string() for o in @operands)
 			
 			top = @_to_free_tex positive_exponents
 			
@@ -332,7 +338,7 @@ for name, value of { # contents of module
 		constructor: (@expression, @variable) ->
 		
 		_eq: (other) ->
-			@expression.eq(other.expression) and @exponent.eq(other.variable)
+			@expression.eq(other.expression) and @variable.eq(other.variable)
 		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
@@ -394,7 +400,7 @@ for name, value of { # contents of module
 
 for name, getter_of_canonizers of {
 	CANOperation: ->
-		@__super__._get_canonizers.apply(this).concat [
+		CANOperation.__super__._get_canonizers.apply(this).concat [
 			canonization "minor", "single argument", ->
 				@operands[0] if @operands.length == 1
 			canonization "minor", "no arguments", ->
@@ -402,8 +408,7 @@ for name, getter_of_canonizers of {
 		]
 	
 	Sum: ->
-		console.log "GETTING SUMS CANONIZERS"
-		@__super__._get_canonizers.apply(this).concat [
+		Sum.__super__._get_canonizers.apply(this).concat [
 			canonization "major", "numbers in sum", ->
 				numbers = []
 				not_numbers = []
@@ -415,14 +420,25 @@ for name, getter_of_canonizers of {
 						not_numbers.push operand
 				
 				if numbers.length > 1
-					sum = @nullary()
-					while numbers.length
-						sum = sum.plus numbers.pop()
+					sum = @get_nullary().value
 					
-					shore.sum [ sum ].concat not_numbers
+					while numbers.length
+						sum += numbers.pop().value
+					
+					shore.sum [ shore.number sum ].concat not_numbers
+		]
+	
+	Equality: ->
+		Equality.__super__._get_canonizers.apply(this).concat [
+			canonization "minor", "minors in equality", ->
+				shore.equality (o.canonize("minor", "minor") for o in @operands)
+			canonization "moderate", "moderates in equality", ->
+				shore.equality (o.canonize("moderate", "moderate") for o in @operands)
+			canonization "majors", "majors in equality", ->
+				shore.equality (o.canonize("majors", "majors") for o in @operands)
 		]
 }
-	shore[name]._get_canonizers = getter_of_canonizers
+	shore[name]::_get_canonizers = getter_of_canonizers
 
 canonization = shore._canonization
 shore._make_providers()

@@ -2,8 +2,8 @@
 shore.parser = (function(){
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"expressions":3,"e":4,"EOF":5,"EQUALS":6,"+":7,"-":8,"*":9,"/":10,"^":11,"INTEGRATE":12,"DIFFERENTIATE":13,"PLUSMINUS":14,"SUB":15,"literal":16,"parenthesized":17,"(":18,")":19,"[":20,"]":21,"NUMBER":22,"IDENTIFIER":23,"$accept":0,"$end":1},
-terminals_: {"2":"error","5":"EOF","6":"EQUALS","7":"+","8":"-","9":"*","10":"/","11":"^","12":"INTEGRATE","13":"DIFFERENTIATE","14":"PLUSMINUS","15":"SUB","18":"(","19":")","20":"[","21":"]","22":"NUMBER","23":"IDENTIFIER"},
+symbols_: {"error":2,"expressions":3,"e":4,"EOF":5,"=":6,"+":7,"-":8,"*":9,"/":10,"^":11,"~":12,"`":13,"\u00b1":14,"_":15,"literal":16,"parenthesized":17,"(":18,")":19,"[":20,"]":21,"NUMBER":22,"IDENTIFIER":23,"$accept":0,"$end":1},
+terminals_: {"2":"error","5":"EOF","6":"=","7":"+","8":"-","9":"*","10":"/","11":"^","12":"~","13":"`","14":"\u00b1","15":"_","18":"(","19":")","20":"[","21":"]","22":"NUMBER","23":"IDENTIFIER"},
 productions_: [0,[3,2],[3,1],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,2],[4,2],[4,2],[4,1],[4,1],[17,3],[17,3],[16,1],[16,1]],
 performAction: function anonymous(yytext,yyleng,yylineno,yy) {
 
@@ -47,9 +47,9 @@ case 18:this.$ = $$[$0-3+2-1];
 break;
 case 19:this.$ = $$[$0-3+2-1];
 break;
-case 20:this.$ = shore.number(yytext);
+case 20:this.$ = shore.number(Number(yytext));
 break;
-case 21:this.$ = shore.identifier(yytext);
+case 21:this.$ = shore.identifier(String(yytext));
 break;
 }
 },
@@ -333,41 +333,41 @@ case 0:
 break;
 case 1:return 22;
 break;
-case 2:return 6;
+case 2:return 23;
 break;
-case 3:return 9;
+case 3:return 6;
 break;
-case 4:return 10;
+case 4:return 11;
 break;
-case 5:return 8;
+case 5:return 9;
 break;
-case 6:return 7;
+case 6:return 10;
 break;
-case 7:return 11;
+case 7:return 8;
 break;
-case 8:return 18;
+case 8:return 7;
 break;
-case 9:return 19;
+case 9:return 18;
 break;
-case 10:return 20;
+case 10:return 19;
 break;
-case 11:return 21;
+case 11:return 20;
 break;
-case 12:return 14;
+case 12:return 21;
 break;
-case 13:return 12;
+case 13:return 14;
 break;
-case 14:return 13;
+case 14:return 12;
 break;
-case 15:return 15;
+case 15:return 13;
 break;
-case 16:return 23;
+case 16:return 15;
 break;
 case 17:return 5;
 break;
 }
 };
-lexer.rules = [/^\s+/,/^([0-9]*\.[0-9]+|[0-9]+)/,/^=/,/^\*/,/^\//,/^\-/,/^\+/,/^\^/,/^\(/,/^\)/,/^\[/,/^\]/,/^(±|\?)/,/^~/,/^`/,/^[_\.]/,/^[a-zA-Z][a-zA-Z0-9]*'*/,/^$/];return lexer;})()
+lexer.rules = [/^\s+/,/^([0-9]*\.[0-9]+|[0-9]+)/,/^[a-zA-Z][a-zA-Z0-9]*'*/,/^=/,/^(\^|\*\*)/,/^\*/,/^\//,/^\-/,/^\+/,/^\(/,/^\)/,/^\[/,/^\]/,/^(±|\?)/,/^~/,/^`/,/^[_\.]/,/^$/];return lexer;})()
 parser.lexer = lexer;
 return parser;
 })();
