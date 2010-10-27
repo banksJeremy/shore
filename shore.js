@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, _ref, canonization, getter_of_canonizers, name, shore, utility, value;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, _ref, canonization, console, getter_of_canonizers, name, shore, utility, value;
   var __slice = Array.prototype.slice, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -8,6 +8,11 @@
     if (typeof parent.extended === "function") parent.extended(child);
     child.__super__ = parent.prototype;
   }, __hasProp = Object.prototype.hasOwnProperty;
+  if (!(typeof console !== "undefined" && console !== null)) {
+    console = {
+      log: function() {}
+    };
+  }
   shore = function() {
     var _i, _len, _ref, _result, arg, args;
     args = __slice.call(arguments, 0);
@@ -179,7 +184,7 @@
         return this.precedence < context ? ("(" + (this.to_free_string()) + ")") : this.to_free_string();
       };
       Thing.prototype.toString = function() {
-        return this.to_js ? this.to_js() : ("#shore{" + (this.to_string()) + "}");
+        return this.to_js ? this.to_js() : ("S{" + (this.to_string()) + "}");
       };
       Thing.prototype.to_free_string = function() {
         return "SHORE PRIVATE TYPE";
@@ -288,11 +293,11 @@
         return this.string_value;
       };
       Identifier.prototype.to_js = function() {
-        return this.string_value !== this.tex_value ? ("S(\"" + (this.string_value) + "\", \"" + (this.tex_value) + "\")") : ("S(\"" + (this.string_value) + "\")");
+        return this.string_value !== this.tex_value ? ("S.identifier(\"" + (this.string_value) + "\", \"" + (this.tex_value) + "\")") : ("S(\"" + (this.string_value) + "\")");
       };
       Identifier.prototype.sub = function(other) {
         var string, tex;
-        string = ("{" + (this.string_value) + "}_" + (other.to_string()));
+        string = ("" + (this.string_value) + "_" + (other.to_string()));
         tex = ("{" + (this.tex_value) + "}_{" + (other.to_tex()) + "}");
         return shore.identifier(string, tex);
       };
@@ -428,6 +433,9 @@
       Exponent.prototype.to_free_string = function() {
         return this.exponent.type === "Number" && this.exponent.value === 1 ? this.base.to_tex(this.precedence) : ("" + (this.base.to_string(this.precedence)) + "^" + (this.exponent.to_string()));
       };
+      Exponent.prototype.to_js = function() {
+        return ("S(" + (this.base.to_js()) + ", " + (this.exponent.to_js()) + ")");
+      };
       return Exponent;
     })(),
     Integral: (function() {
@@ -520,7 +528,7 @@
     value = _ref[name];
     shore[name] = value;
     if (utility.uncamel(name)) {
-      shore[name].type = name;
+      shore[name].prototype.type = name;
     }
   }
   _ref = {

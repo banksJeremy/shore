@@ -9,38 +9,28 @@ Firefox and Opera, and remain functional in IE.
 
 I recommend you download MathJax and put it in ./dep/MathJax/ to use the
 interface but should can fall back to a plain text output without it. node.js
-and jison are required if you want to modify the parser used by the interface.
+and Jison are required if you want to modify the parser used by the interface.
 
 Credits
 -------
 
-Includes MathJax under Apache 2.0 Open Source License.
-Includes jQuery under the MIT license.
-Uses CoffeeScript.
-Uses Jison.
-Original code is by Jeremy Banks <jeremy@jeremybanks.com> and is released
-under the MIT license.
+Author: Jeremy Banks <jeremy@jeremybanks.com>
 
-Make this decent before showing off.
-Every time I try to get something done I fall victim to terrible feature
-creep, so I need to decide in advance what the scope of this should be.
+Shore makes use of:
+	- CoffeeScript
+	- jQuery
+	- Jison
+	- MathJax
+
+Full details including copyright and licensing info are in LICENSE.
 
 TODO
 ----
-Let's start with a relatively minimal set.
-- Arithmatic, exponents
-- Differentiation, possibly trivial integration
-- Margin of error
-- Equalities
-
-Scrawl:
-- Parse a(b) to a._then(b), for f(x = 1) or 2(b).
-- Load the parser after shore into shore.parser.
-- If parser is found then (P "a + b") should work, but short-circuit (S 1) 
-  and (S "x") the same with or without the parser.
-- Don't require whitespace termination unnecessarily, so that things like
-  (S "2b") are permitted. (Remember negative lookaheads!)
-- Put canonizers separate from other method definitions...
-  for class_name, canonizer_getter in {
-  	...
-  } shore[class_name]._get_canonizer = canonizer_getter
+- Make canonization work (critical)
+- Canonize sums, products
+- Pretty them up, too (-1 * a => -a; a + -b => a - b; 2 * b => 2b)
+- Unify products and exponents as originally?
+- Error calculations
+- Differentiation
+- Trivial integration
+- Support HTML5 offline cache
