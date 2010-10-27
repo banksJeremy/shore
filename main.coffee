@@ -73,16 +73,25 @@ $ -> # jQuery on DOM ready...
 	texscapeify = (value) ->
 		((escape_html value.to_tex()).replace /=/, "&=")
 	
-	process_math = (input, output) ->	
+	process_math = (input, output) ->
 		result_box.show 300
 		parsed = []
-		for line in input.split /\n/
-			if line.length
-				parsed_line = []
-				for expression in line.split /;/
-					if expression.length
-						parsed_line.push shore.parser.parse expression
-				parsed.push parsed_line
+		try
+			for line in input.split /\n/
+				if line.length
+					parsed_line = []
+					for expression in line.split /;/
+						if expression.length
+							parsed_line.push shore.parser.parse expression
+					parsed.push parsed_line
+		catch e
+			throw e if not /^Parse error/.test e.message # lack of exception type...
+			
+			output.empty
+			output.append (($ "<pre>").css whiteSpace: "pre-line").
+				text e.message.replace "on line 1", "in \"#{expression}\""
+			output.show()
+			return
 		
 		output_parts = []
 		
