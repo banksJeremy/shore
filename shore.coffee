@@ -239,6 +239,9 @@ for name, value of { # contents of module
 		
 		string_symbol: " + "
 		tex_symbol: " + "
+		
+		to_free_text: -> super().replace /\+ *\-/, "-" # HACK
+		to_free_tex: -> super().replace /\+ *\-/, "-" # HACK
 	
 	Product: class Product extends CANOperation
 		precedence: 4
@@ -246,6 +249,20 @@ for name, value of { # contents of module
 		
 		string_symbol: " f "
 		tex_symbol: " \\cdot "
+		
+		_to_free_tex: (operands) ->
+			"Without checking for negative powers."
+			
+			if operands.length > 1 and
+			   operands[0].type is "Number" and
+				 operands[1].type isnt "Number"
+				
+				(if operands[0].value != -1 then operands[0].to_tex @precedence else "-") +
+				(((operand.to_tex @precedence) for operand in operands.slice 1)
+				 .join @tex_symbol)
+			else
+				(((operand.to_tex @precedence) for operand in operands)
+				 .join @tex_symbol)
 		
 		to_free_tex: ->
 			positive_exponents = []
@@ -266,15 +283,15 @@ for name, value of { # contents of module
 			
 			# console.log (o.to_string() for o in @operands)
 			
-			top = (((operand.to_tex @precedence) for operand in positive_exponents)
-						 .join @tex_symbol)
+			top = @_to_free_tex positive_exponents
 			
 			if negative_exponents.length
-				bottom = (((operand.to_tex @precedence) for operand in negative_exponents)
-									.join @tex_symbol)
+				bottom = @_to_free_tex negative_exponents
 				"\\tfrac{#{top}}{#{bottom}}"
 			else
 				top
+		
+		# to_free_string?
 	
 	Exponent: class Exponent extends Value
 		precedence: 5
