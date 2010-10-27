@@ -360,6 +360,12 @@
       };
       Sum.prototype.string_symbol = " + ";
       Sum.prototype.tex_symbol = " + ";
+      Sum.prototype.to_free_text = function() {
+        return Sum.__super__.to_free_text.call(this).replace(/\+ *\-/, "-");
+      };
+      Sum.prototype.to_free_tex = function() {
+        return Sum.__super__.to_free_tex.call(this).replace(/\+ *\-/, "-");
+      };
       return Sum;
     })(),
     Product: (function() {
@@ -373,8 +379,27 @@
       };
       Product.prototype.string_symbol = " f ";
       Product.prototype.tex_symbol = " \\cdot ";
+      Product.prototype._to_free_tex = function(operands) {
+        var _i, _len, _ref2, _result, operand;
+        "Without checking for negative powers.";
+        return operands.length > 1 && operands[0].type === "Number" && operands[1].type !== "Number" ? (operands[0].value !== -1 ? operands[0].to_tex(this.precedence) : "-") + ((function() {
+          _result = []; _ref2 = operands.slice(1);
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            operand = _ref2[_i];
+            _result.push(operand.to_tex(this.precedence));
+          }
+          return _result;
+        }).call(this).join(this.tex_symbol)) : ((function() {
+          _result = []; _ref2 = operands;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            operand = _ref2[_i];
+            _result.push(operand.to_tex(this.precedence));
+          }
+          return _result;
+        }).call(this).join(this.tex_symbol));
+      };
       Product.prototype.to_free_tex = function() {
-        var _i, _len, _ref2, _result, bottom, exponent, negative_exponents, operand, positive_exponents, term, top;
+        var _i, _len, _ref2, bottom, exponent, negative_exponents, positive_exponents, term, top;
         positive_exponents = [];
         negative_exponents = [];
         _ref2 = this.operands;
@@ -392,23 +417,9 @@
           }
         }
         positive_exponents || (positive_exponents = [shore(1)]);
-        top = ((function() {
-          _result = []; _ref2 = positive_exponents;
-          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-            operand = _ref2[_i];
-            _result.push(operand.to_tex(this.precedence));
-          }
-          return _result;
-        }).call(this).join(this.tex_symbol));
+        top = this._to_free_tex(positive_exponents);
         if (negative_exponents.length) {
-          bottom = ((function() {
-            _result = []; _ref2 = negative_exponents;
-            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-              operand = _ref2[_i];
-              _result.push(operand.to_tex(this.precedence));
-            }
-            return _result;
-          }).call(this).join(this.tex_symbol));
+          bottom = this._to_free_tex(negative_exponents);
           return "\\tfrac{" + (top) + "}{" + (bottom) + "}";
         } else {
           return top;

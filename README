@@ -28,7 +28,6 @@ TODO
 ----
 - Make canonization work (critical)
 - Canonize sums, products
-- Pretty them up, too (-1 * a => -a; a + -b => a - b; 2 * b => 2b)
 - Unify products and exponents as originally?
 - Error calculations
 - Differentiation
