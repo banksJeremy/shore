@@ -29,6 +29,8 @@ TODO
 - Canonize sums, products
   - Commutativity! Do it!
 - Unify products and exponents as originally?
+- Generalize most attributes to .components, which Value can canonize for
+  recursive thingies, rather than having to manually write those out.
 - Error calculations
 - Differentiation
 - Trivial integration
