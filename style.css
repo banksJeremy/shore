@@ -49,9 +49,6 @@ h1, h2, h3, h4, h5, h6 {
 	-webkit-box-shadow: 0 0 4px rgb(255, 255, 240);
 	-moz-box-shadow: 0 0 4px rgb(255, 255, 240);
 	box-shadow: 0 0 4px rgb(255, 255, 240);
-}
-
-.result.box {
 	margin-top: .25em;
 }
 

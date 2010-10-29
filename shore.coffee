@@ -1,7 +1,4 @@
 #!/usr/bin/env coffee -c
-log = if console? then (-> console.log arguments...) else ->
-logs = -> log String arguments...
-
 shore = (args...) ->
 	if args.length is 1
 		arg = args[0]
@@ -285,8 +282,6 @@ for name, value of { # contents of module
 					positive_exponents.push term
 			
 			positive_exponents or= [shore 1]
-			
-			# log (o.to_string() for o in @operands)
 			
 			top = @_to_free_tex positive_exponents
 			

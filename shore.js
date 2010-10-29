@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, _ref, canonization, getter_of_canonizers, log, logs, name, shore, utility, value;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, _ref, canonization, getter_of_canonizers, name, shore, utility, value;
   var __slice = Array.prototype.slice, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -8,12 +8,6 @@
     if (typeof parent.extended === "function") parent.extended(child);
     child.__super__ = parent.prototype;
   }, __hasProp = Object.prototype.hasOwnProperty;
-  log = (typeof console !== "undefined" && console !== null) ? (function() {
-    return console.log.apply(console, arguments);
-  }) : function() {};
-  logs = function() {
-    return log(String.apply(this, arguments));
-  };
   shore = function() {
     var _i, _len, _ref, _result, arg, args;
     args = __slice.call(arguments, 0);
