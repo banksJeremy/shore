@@ -309,9 +309,6 @@
     CANOperation: (function() {
       CANOperation = function(_arg) {
         this.operands = _arg;
-        if (this.type === "Equality") {
-          log(this.operands);
-        }
         return this;
       };
       __extends(CANOperation, Value);

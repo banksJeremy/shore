@@ -36,7 +36,8 @@ Shore makes use of the following:
 
   - [CoffeeScript](http://jashkenas.github.com/coffee-script/)
   - [Jison](http://zaach.github.com/jison/)
-  - [jQuery](http://jquery.com/)
+  - [jQuery](http://jquery.com/) and the
+    [Address plugin](http://www.asual.com/jquery/address/)
   - [MathJax](http://www.mathjax.org/)
 
 See `LICENSE` file for copyright/license information.
@@ -70,6 +71,7 @@ TODO
   - Make the code decent
   - Write at least some basic documentation
   - Documentation!
+  - Organize code better, clearly distinguishing library from interface.
 
 ### `v1.1`
 
@@ -84,3 +86,4 @@ TODO
   - Memoization.
   - Abstract away identifier values.
   - Support HTML5 offline cache?
+  - Make nice on iPod touch/iPhone.
