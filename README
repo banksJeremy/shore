@@ -1,15 +1,24 @@
 Shore Math Engine
 =================
 
-Some math implemented in CoffeeScript, with a browser interface. The 
-compiled JavaScript version is included.
+Some math implemented in CoffeeScript, with a browser interface. The compiled
+JavaScript version is included, so it should work "out-of-the-box".
 
 Developed with Chrome, should work the same in Safari, a bit less polished in 
 Firefox and Opera, and remain functional in IE.
 
-I recommend you download MathJax and put it in ./dep/MathJax/ to use the
-interface but should can fall back to a plain text output without it. node.js
-and Jison are required if you want to modify the parser used by the interface.
+The interface has a LaTeX-style output format that requires you download
+MathJax to dep/MathJax. If you do not it will fall back to plain-text output,
+but at least for the moment this isn't given much attention.
+
+Using the library on its own requires only shore.coffee|js, but you'll
+probably also want to include shore.parser.coffee|js.
+
+It is intended that this will eventually be able to gracefully degrade in the
+absence of JavaScript and allow the calculations to be performed server-side,
+presumably using node.js. But not yet.
+
+Modifying the parser requires node.js and Jison.
 
 Credits
 -------
@@ -17,23 +26,50 @@ Credits
 Author: Jeremy Banks <jeremy@jeremybanks.com>
 
 Shore makes use of:
-	- CoffeeScript
-	- jQuery
-	- Jison
-	- MathJax
+  - CoffeeScript
+  - jQuery
+  - Jison
+  - MathJax
 
 See LICENSE file for copyright/license information.
 
+Documentation
+-------------
+
+There'll be some once version 1.0 is finished.
+
 TODO
 ----
-- Canonize sums, products
-  - Commutativity! Do it!
-- Unify products and exponents as originally?
-- Generalize most attributes to .components, which Value can canonize for
-  recursive thingies, rather than having to manually write those out.
-- Engineering notation
-- Error calculations
-- Differentiation
-- Trivial integration
-- Support HTML5 offline cache
-- Parse multilines to system
+
+Required for v0.1:
+  - Canonization of shore.Sum, shore.Product.
+  - Merge shore.Exponent into shore.Product.
+  - All defining attributes go onto shore.Value().components, which can
+    typically be canonized without requiring class-specific code.
+  - Generalize most attributes to .components, which Value can canonize for
+    recursive things, rather than having to manually write those out.
+  - Support engineering notation in parser.
+
+Required for v0.2:  
+  - Complete initial version of shore.WithMarginOfError.
+  - Complete initial version of shore.Derivative.
+  - Complete initial version of shore.Integral.
+    - No support for anything difficult.
+  - Pretty formatting for shore.Number?
+
+Required for v1.0:
+  - Make the code decent
+  - Write at least some basic documentation
+  - Documentation!
+
+Required for v1.1:
+  - shore.Restricted.
+  - shore.System
+    - Parsed from multiline input.
+    - Can substitute value to solve simple systems.
+    - Maybe add/remove restrictions where appropriate?
+
+Intended in the Future:
+  - Memoization.
+  - Abstract away identifier values.
+  - Support HTML5 offline cache?
