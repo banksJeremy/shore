@@ -6,10 +6,8 @@ default_input = """
 	t_fall = t(d=0)
 """
 
-shore.__main_mj_ready = ->
-
 mathjax_src = "https://jbmathjax.s3.amazonaws.com/mathjax-1.0.1/MathJax.js"
-
+shore.__main_on_mathjax_loaded = (->)
 mathjax_load = ->
 	# http://www.mathjax.org/docs/dynamic.html
 	# apparently creating script tags with jQuery had oddities...
@@ -22,15 +20,15 @@ mathjax_load = ->
 			jax: ["input/TeX", "output/HTML-CSS"],
 			extensions: ["tex2jax.js", "TeX/AMSmath.js", "TeX/AMSsymbols.js"],
 			tex2jax: {
-				inlineMath: [["\\(", "\\)"]],
-				displayMath: [["\\[", "\\]"]]
+				inlineMath: [["\\\\(", "\\\\)"]],
+				displayMath: [["\\\\[", "\\\\]"]]
 			},
 			messageStyle: "none"
 		});
 		
 		MathJax.Hub.Startup.onload();
 		MathJax.Hub.Register.StartupHook("End", function() {
-			shore.__main_mj_ready()
+			shore.__main_on_mathjax_loaded()
 		});
 	"""
 	
@@ -85,7 +83,7 @@ occurences = (string, target_character) ->
 	
 	result = 0
 	for character in string
-		if character == target_character
+		if character is target_character
 			result += 1
 	result
 
@@ -100,8 +98,10 @@ escape_html = (raw) ->
 texscapeify = (value) ->
 	((escape_html value.to_tex()).replace /=/, "&=")
 
-process_math = (input, output) ->
-	output.show 300
+process_math = (input, output_element) ->
+	"Parses an input string then display and format the input, steps and result
+	in a given element."
+	
 	parsed = []
 	try
 		for line in input.split /\n/
@@ -114,131 +114,145 @@ process_math = (input, output) ->
 	catch e
 		throw e if not /^(Parse|Lexical) error/.test e.message # lack of exception type...
 		
-		output.empty()
-		output.append (($ "<pre>").css whiteSpace: "pre-line").
-			text e.message.replace "on line 1", "in \"#{expression}\""
-		output.show()
+		output_element.empty()
+		output_element.append (($ "<pre>").css whiteSpace: "pre-line")
+			.text e.message.replace "on line 1", "in \"#{expression}\""
+		output_element.show()
 		return
 	
-	output_parts = []
+	output_parts = [];
+	out = (s) -> output_parts.push s
 	
 	if MathJax?.isReady
-		output_parts.push "<h3><span class=tex2jax_ignore>Input</span></h3>"
-		output_parts.push "<div>\\begin{align}"
+		out "<h3 id=output_input>Input</h3>"
+		out "<div>\\begin{align}"
 		
 		for line in parsed
 			for expression in line
-				output_parts.push texscapeify expression
-				output_parts.push " & "
-			output_parts.push " \\\\\n<br>"
+				out texscapeify expression
+				out " & "
+			out " \\\\\n<br>"
 		
-		output_parts.push "\\end{align}</div>"
+		out "\\end{align}</div>"
 		
-		output_parts.push "<h3><span class=tex2jax_ignore>Steps</span></h3>"
-		output_parts.push "<div>\\begin{align}"
-		output_parts.push "\\end{align}</div>"
+		out "<h3 id=output_steps>Steps</h3>"
+		out "<div>\\begin{align}"
+		out "\\end{align}</div>"
 		
-		output_parts.push "<h3><span class=tex2jax_ignore>Results</span></h3>"
-		output_parts.push "<div>\\begin{align}"
+		out "<h3 id=output_results>Results</h3>"
+		out "<div>\\begin{align}"
 		
 		for line in parsed
 			for expression in line
-				output_parts.push texscapeify expression.canonize()
-				output_parts.push " & "
-			output_parts.push " \\\\\n<br>"
+				out texscapeify expression.canonize()
+				out " & "
+			out " \\\\\n<br>"
 		
-		output_parts.push "\\end{align}</div>"
+		out "\\end{align}</div>"
 		output.html output_parts.join ""
 		
 		MathJax.Hub.Queue ["Typeset", MathJax.Hub, (output.get 0) ]
-	else
-		output_parts.push "<h3>Input</h3>"
-		output_parts.push "<pre>"
+	else # plain text output
+		out "<h3 id=output_input>Input</h3>"
+		out "<pre>"
 		
 		for line in parsed
 			for expression in line
-				output_parts.push escape_html expression.to_string()
-				output_parts.push "\t"
-			output_parts.push "\n"
+				out escape_html expression.to_string()
+				out "\t"
+			out "\n"
 		
-		output_parts.push "</pre>"
+		out "</pre>"
 		
-		output_parts.push "<h3>Steps</h3>"
-		output_parts.push "<pre>"
-		output_parts.push "</pre>"
+		out "<h3 id=output_steps>Steps</h3>"
+		out "<pre>"
+		out "</pre>"
 		
-		output_parts.push "<h3>Results</h3>"
-		output_parts.push "<pre>"
+		out "<h3 id=output_results>Results</h3>"
+		out "<pre>"
 		
 		for line in parsed
 			for expression in line
-				output_parts.push escape_html expression.canonize().to_string()
-				output_parts.push "\t"
-			output_parts.push "\n"
-	
-		output_parts.push "</pre>"
+				out escape_html expression.canonize().to_string()
+				out "\t"
+			out "\n"
 		
-		output.html output_parts.join ""
+		out "</pre>"
+		
+		output_element.html output_parts.join ""
 	
-	($ "h3").css cursor: "pointer"
-	($ "h3").hover (-> ($ this).css backgroundColor: "rgba(0,0,0,.1)"),
-	               (-> ($ this).css backgroundColor: "transparent")
-	($ "h3").toggle (-> ($ this).next().show 300), (-> ($ this).next().hide 300)
+	($ "h3")
+		.css(cursor: "pointer")
+		.hover (-> ($ this).css backgroundColor: "rgba(0,0,0,.1)"),
+		       (-> ($ this).css backgroundColor: "transparent")
+		.toggle (-> ($ this).next().show 300),
+		        (-> ($ this).next().hide 300)
 	($ "h3 + div").hide()
-	(($ "h3").eq 0).click()
-	(($ "h3").eq 2).click()
+	($ "h3#output_input").click()
+	($ "h3#output_results").click()
+	
+	output.show 300
 
+$.fn.select_all = ->
+	"Sets the user's selection in an input/textarea to the complete contents."
+	
+	for element in this
+		element.selectionStart = 0
+		element.selectionEnd = element.value.length
+	
+	this
 
 $ main = ->
 	"Make it all start working when the DOM's ready."
 	
 	"Since it's not strictly necessary we don't load MathJax until after all
 	of the required scripts."
-	mathjax_load()
 	
+	mathjax_load()
 	qs = get_qs()
 	
 	input_box = $ "#input"
 	result_box = $ "#results"
 	form = $ "form"
 	
-	input_box.focus()
-	
 	em_pixels = ems_per_pixel_in $ "body"
 	
 	input_box.keypress (event) ->
-		if event.which == 13 or event.which == 10
+		if event.which is 13 or event.which is 10
 			if event.shiftKey
 				($ "form").submit()
-				false
+				false # suppress newline
 			else
 				scale_textarea input_box, +1
-				# where it most needs to be snappy
 	
 	input_box.keyup (event) -> scale_textarea input_box, em_pixels
 	scale_textarea input_box, em_pixels
 	
-	form.submit window = ->
+	form.submit ->
 		input = ($ "#input").val()
 		process_math input, result_box
 		window.location.hash = "i=#{encode input}"
 		
-		false # prevent form from being submitted normally
+		false # suppress normal form submission
 	
-	provided_input = qs.i or if (location.hash.slice 0, 3) is "#i="
+	provided_input = if (location.hash.slice 0, 3) is "#i="
 		decode location.hash.slice 3
+	else
+		qs.i
 	
-	input = provided_input || default_input
+	input = provided_input or default_input
 	input_box.val input
 	scale_textarea input_box, em_pixels
 	
-	(input_box.get 0).selectionStart = 0
-	(input_box.get 0).selectionEnd = input_box.val().length
+	input_box
+		.select_all()
+		.focus()
 	
 	if provided_input
-		"We give MathJax two seconds to load, then fall back to plain text."
+		"We give MathJax two seconds to load, then process into plain text if
+		necessary."
 		
-		if mj_wait
+		if mj_wait and not MathJax?.isReady
 			processed = false
 			
 			process_once = ->
@@ -246,8 +260,7 @@ $ main = ->
 				processed = true
 				process_math input, result_box if provided_input
 			
-			shore.__main_mj_ready = ->
-				process_once()
+			shore.__main_on_mathjax_loaded = process_once
 			setTimeout process_once, mj_wait
 		else
 			process_math input, result_box if provided_input

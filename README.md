@@ -57,6 +57,7 @@ TODO
   - All defining attributes go onto `shore.Value().components`, which can
     typically be canonized without requiring class-specific code.
   - Support engineering notation in `shore.parser`.
+  - Maybe put interface in main.html and only have an index.html in gh-pages.
 
 ### `v0.2`
 
