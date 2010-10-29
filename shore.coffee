@@ -217,7 +217,6 @@ for name, value of { # contents of module
 		# Commutitive, Assocative N-ary Operation
 		
 		constructor: (@operands) ->
-			if @type is "Equality" then log @operands
 		
 		_eq: (other) ->
 			if @operands.length != other.operands.length

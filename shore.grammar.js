@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 var sys = require("sys")
-puts = sys.debug
+
+if (process.argv[2] != "-q") {
+	puts = sys.debug
+} else {
+	puts = function(){}
+}
 
 var jison  = new require("jison")
 

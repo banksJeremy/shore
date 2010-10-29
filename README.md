@@ -36,7 +36,8 @@ Shore makes use of the following:
 
   - [CoffeeScript](http://jashkenas.github.com/coffee-script/)
   - [Jison](http://zaach.github.com/jison/)
-  - [jQuery](http://jquery.com/)
+  - [jQuery](http://jquery.com/) and the
+    [Address plugin](http://www.asual.com/jquery/address/)
   - [MathJax](http://www.mathjax.org/)
 
 See `LICENSE` file for copyright/license information.
