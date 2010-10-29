@@ -2,7 +2,7 @@ Shore
 =====
 
 Source: [github.com/jeremybanks/shore](http://github.com/jeremybanks/shore)  
-Website/demo: [jeremybanks.github.com/shore](http://jeremybanks.github.com/)
+Demo: [jeremybanks.github.com/shore](http://jeremybanks.github.com/shore/)
 
 About
 -----
