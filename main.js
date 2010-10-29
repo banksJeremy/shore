@@ -1,12 +1,13 @@
 (function() {
-  var decode, default_input, ems_per_pixel_in, encode, escape_html, get_qs, load_mathjax, main, mj_wait, occurences, process_math, scale_textarea, texscapeify;
+  var decode, default_input, ems_per_pixel_in, encode, escape_html, get_qs, main, mathjax_load, mathjax_src, mj_wait, occurences, process_math, scale_textarea, texscapeify;
   default_input = "A = -g_gemini; g_gemini = 0.00015\nv = A ~ t + v_0; v_0 = 0\nd = v ~ t + d_0; d_0 = 1\nt_fall = t(d=0)";
   shore.__main_mj_ready = function() {};
-  load_mathjax = function() {
+  mathjax_src = "dep/mathjax-1.0.1/MathJax.js";
+  mathjax_load = function() {
     var _ref, config, script;
     script = document.createElement("script");
     script.type = "text/javascript";
-    script.src = "dep/mathjax-1.0.1/MathJax.js";
+    script.src = mathjax_src;
     config = "MathJax.Hub.Config({\n	jax: [\"input/TeX\", \"output/HTML-CSS\"],\n	extensions: [\"tex2jax.js\", \"TeX/AMSmath.js\", \"TeX/AMSsymbols.js\"],\n	tex2jax: {\n		inlineMath: [[\"\\(\", \"\\)\"]],\n		displayMath: [[\"\\[\", \"\\]\"]]\n	},\n	messageStyle: \"none\"\n});\n\nMathJax.Hub.Startup.onload();\nMathJax.Hub.Register.StartupHook(\"End\", function() {\n	shore.__main_mj_ready()\n});";
     if (typeof (_ref = window.opera) !== "undefined" && _ref !== null) {
       script.innerHTML = config;
@@ -198,7 +199,7 @@ processing it to plain-text output.";
     "Make it all start working when the DOM's ready.";
     "Since it's not strictly necessary we don't load MathJax until after all\
 	of the required scripts.";
-    load_mathjax();
+    mathjax_load();
     qs = get_qs();
     input_box = $("#input");
     result_box = $("#results");
@@ -240,7 +241,6 @@ processing it to plain-text output.";
           if (processed) {
             return null;
           }
-          console.log("processing");
           processed = true;
           if (provided_input) {
             return process_math(input, result_box);

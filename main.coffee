@@ -8,13 +8,15 @@ default_input = """
 
 shore.__main_mj_ready = ->
 
-load_mathjax = ->
+mathjax_src = "dep/mathjax-1.0.1/MathJax.js"
+
+mathjax_load = ->
 	# http://www.mathjax.org/docs/dynamic.html
 	# apparently creating script tags with jQuery had oddities...
 	
 	script = document.createElement "script"
 	script.type = "text/javascript"
-	script.src = "dep/mathjax-1.0.1/MathJax.js"
+	script.src = mathjax_src
 	config = """
 		MathJax.Hub.Config({
 			jax: ["input/TeX", "output/HTML-CSS"],
@@ -192,7 +194,7 @@ $ main = ->
 	
 	"Since it's not strictly necessary we don't load MathJax until after all
 	of the required scripts."
-	load_mathjax()
+	mathjax_load()
 	
 	qs = get_qs()
 	
