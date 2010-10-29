@@ -218,7 +218,7 @@ $ main = ->
 	input_box.keyup (event) -> scale_textarea input_box, em_pixels
 	scale_textarea input_box, em_pixels
 	
-	form.submit window = ->
+	form.submit ->
 		input = ($ "#input").val()
 		process_math input, result_box
 		window.location.hash = "i=#{encode input}"
