@@ -85,3 +85,4 @@ TODO
   - Memoization.
   - Abstract away identifier values.
   - Support HTML5 offline cache?
+  - Make nice on iPod touch/iPhone.
