@@ -103,7 +103,7 @@ for name, value of { # contents of module
 		precedence: 0
 		
 		eq: (other) ->
-			@type == other.type and @_eq other
+			@type is other.type and @_eq other
 		
 		canonize: (enough, excess) ->
 			enough = shore._significance enough
@@ -184,7 +184,7 @@ for name, value of { # contents of module
 		precedence: 10
 		constructor: (@value) ->
 		
-		_eq: (other) -> @value == other.value
+		_eq: (other) -> @value is other.value
 		neg: -> shore.number (- @value)
 		to_free_tex: -> String @value
 		to_free_string: -> String @value
@@ -199,11 +199,11 @@ for name, value of { # contents of module
 				else
 					@tex_value = @string_value
 		
-		_eq: (other) -> @value == other.value
+		_eq: (other) -> @value is other.value
 		to_free_tex: -> @tex_value
 		to_free_string: -> @string_value
 		to_js: ->
-			if @string_value != @tex_value
+			if @string_value isnt @tex_value
 				"S.identifier(\"#{@string_value}\", \"#{@tex_value}\")"
 			else
 				"S(\"#{@string_value}\")"
@@ -219,7 +219,7 @@ for name, value of { # contents of module
 		constructor: (@operands) ->
 		
 		_eq: (other) ->
-			if @operands.length != other.operands.length
+			if @operands.length is other.operands.length
 				return false
 			
 			for i in [0..@operands.length - 1]
@@ -262,7 +262,7 @@ for name, value of { # contents of module
 			   operands[0].type is "Number" and
 				 operands[1].type isnt "Number"
 				
-				(if operands[0].value != -1 then operands[0].to_tex @precedence else "-") +
+				(if operands[0].value is -1 then operands[0].to_tex @precedence else "-") +
 				(((operand.to_tex @precedence) for operand in operands.slice 1)
 				 .join @tex_symbol)
 			else
@@ -274,17 +274,17 @@ for name, value of { # contents of module
 			negative_exponents = []
 			
 			for term in @operands
-				if term.type == "Exponent"
+				if term.type is "Exponent"
 					exponent = term.exponent
 					
-					if exponent.type == "Number" and exponent.value < 0
+					if exponent.type is "Number" and exponent.value < 0
 						negative_exponents.push shore.exponent term.base, exponent.neg()
 					else
 						positive_exponents.push term
 				else
 					positive_exponents.push term
 			
-			positive_exponents ||= [shore 1]
+			positive_exponents or= [shore 1]
 			
 			# log (o.to_string() for o in @operands)
 			
@@ -306,13 +306,13 @@ for name, value of { # contents of module
 		_eq: (other) -> @base.eq(other.base) and @exponent.eq(other.exponent)
 		
 		to_free_tex: ->
-			if @exponent.type == "Number" and @exponent.value == 1
+			if @exponent.type is "Number" and @exponent.value is 1
 				@base.to_tex @precedence
 			else
 				"{#{@base.to_tex @precedence}}^{#{@exponent.to_tex()}}"
 		
 		to_free_string: ->
-			if @exponent.type == "Number" and @exponent.value == 1
+			if @exponent.type is "Number" and @exponent.value is 1
 				@base.to_tex @precedence
 			else
 				"#{@base.to_string @precedence}^#{@exponent.to_string()}"
@@ -401,9 +401,9 @@ for name, getter_of_canonizers of {
 	CANOperation: ->
 		CANOperation.__super__._get_canonizers.apply(this).concat [
 			canonization "minor", "single argument", ->
-				@operands[0] if @operands.length == 1
+				@operands[0] if @operands.length is 1
 			canonization "minor", "no arguments", ->
-				@get_nullary() if @operands.length == 0 and @get_nullary
+				@get_nullary() if @operands.length is 0 and @get_nullary
 		]
 	
 	Sum: ->

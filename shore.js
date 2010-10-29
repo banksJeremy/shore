@@ -314,7 +314,7 @@
       __extends(CANOperation, Value);
       CANOperation.prototype._eq = function(other) {
         var i;
-        if (this.operands.length !== other.operands.length) {
+        if (this.operands.length === other.operands.length) {
           return false;
         }
         for (i = 0; (0 <= this.operands.length - 1 ? i <= this.operands.length - 1 : i >= this.operands.length - 1); (0 <= this.operands.length - 1 ? i += 1 : i -= 1)) {
@@ -384,7 +384,7 @@
       Product.prototype._to_free_tex = function(operands) {
         var _i, _len, _ref2, _result, operand;
         "Without checking for negative powers.";
-        return operands.length > 1 && operands[0].type === "Number" && operands[1].type !== "Number" ? (operands[0].value !== -1 ? operands[0].to_tex(this.precedence) : "-") + ((function() {
+        return operands.length > 1 && operands[0].type === "Number" && operands[1].type !== "Number" ? (operands[0].value === -1 ? operands[0].to_tex(this.precedence) : "-") + ((function() {
           _result = []; _ref2 = operands.slice(1);
           for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
             operand = _ref2[_i];
