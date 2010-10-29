@@ -70,6 +70,7 @@ TODO
   - Make the code decent
   - Write at least some basic documentation
   - Documentation!
+  - Organize code better, clearly distinguishing library from interface.
 
 ### `v1.1`
 
