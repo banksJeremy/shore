@@ -2,7 +2,7 @@
   var decode, default_input, ems_per_pixel_in, encode, escape_html, get_qs, main, mathjax_load, mathjax_src, mj_wait, occurences, process_math, scale_textarea, texscapeify;
   default_input = "A = -g_gemini; g_gemini = 0.00015\nv = A ~ t + v_0; v_0 = 0\nd = v ~ t + d_0; d_0 = 1\nt_fall = t(d=0)";
   shore.__main_mj_ready = function() {};
-  mathjax_src = "dep/mathjax-1.0.1/MathJax.js";
+  mathjax_src = "https://jbmathjax.s3.amazonaws.com/mathjax-1.0.1/MathJax.js";
   mathjax_load = function() {
     var _ref, config, script;
     script = document.createElement("script");
