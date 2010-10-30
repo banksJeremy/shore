@@ -56,6 +56,7 @@ TODO
   - Merge `shore.Exponent` into `shore.Product`.
   - All defining attributes go onto `shore.Value().components`, which can
     typically be canonized without requiring class-specific code.
+    That'd manage _eq nicely as well.
   - Support engineering notation in `shore.parser`.
   - Maybe put interface in main.html and only have an index.html in gh-pages.
 
@@ -76,15 +77,23 @@ TODO
 
 ### `v1.1`
 
-  - `shore.Restricted`.
   - `shore.System`
     - Parsed from multiline input.
     - Can substitute value to solve simple systems.
     - Maybe add/remove restrictions where appropriate?
 
-### The Future
+### `v1.2`
+
+- `shore.Inequality`
+  - Just ≠ for now.
+- `shore.Restricted`
+  - Implications of potential division by zero, and such.
+
+### Non-concrete Future Thinkings
 
   - Memoization.
   - Abstract away identifier values.
   - Support HTML5 offline cache?
   - Make nice on iPod touch/iPhone.
+  - Maybe allow more classical functions via subscripts:
+    fib_n = fib_(n-1) + fib_(n-2); fib_0 = fib_1 = 1

@@ -325,6 +325,9 @@ for name, value of { # contents of module
 		
 		to_free_tex: ->
 			"\\int\\left[#{@expression.to_tex()}\\right]d#{@variable.to_tex()}"
+		
+		to_free_string: ->
+			"int{[#{@expression.to_tex()}]d#{@variable.to_tex()}}"
 	
 	Derivative: class Derivative extends Value
 		precedence: 3
@@ -336,6 +339,9 @@ for name, value of { # contents of module
 		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
+		
+		to_free_string: ->
+			"d/d#{@variable.to_tex()}[#{@expression.to_tex()}]"
 	
 	WithMarginOfError: class WithMarginOfError extends Value
 		precedence: 1.5

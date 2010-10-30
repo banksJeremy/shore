@@ -459,6 +459,9 @@
       Integral.prototype.to_free_tex = function() {
         return "\\int\\left[" + (this.expression.to_tex()) + "\\right]d" + (this.variable.to_tex());
       };
+      Integral.prototype.to_free_string = function() {
+        return "int{[" + (this.expression.to_tex()) + "]d" + (this.variable.to_tex()) + "}";
+      };
       return Integral;
     })(),
     Derivative: (function() {
@@ -474,6 +477,9 @@
       };
       Derivative.prototype.to_free_tex = function() {
         return "\\tfrac{d}{d" + (this.variable.to_tex()) + "}\\left[" + (this.expression.to_tex()) + "\\right]";
+      };
+      Derivative.prototype.to_free_string = function() {
+        return "d/d" + (this.variable.to_tex()) + "[" + (this.expression.to_tex()) + "]";
       };
       return Derivative;
     })(),
