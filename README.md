@@ -74,6 +74,7 @@ TODO
   - Write at least some basic documentation
   - Documentation!
   - Organize code better, clearly distinguishing library from interface.
+  - Make interface code better, so it can be dropped into something else.
 
 ### `v1.1`
 
