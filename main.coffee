@@ -1,4 +1,6 @@
 #!/usr/bin/env coffee -c
+root = this
+
 default_input = """
 	A = -g_gemini; g_gemini = 0.00015
 	v = A ~ t + v_0; v_0 = 0
@@ -32,7 +34,7 @@ mathjax_load = ->
 		});
 	"""
 	
-	if window.opera?
+	if opera?
 		script.innerHTML = config
 	else
 		script.text = config
@@ -50,7 +52,7 @@ get_qs = ->
 	"An object representing the contents of the query string."
 	
 	result = {}
-	query_string = window.location.search.substring 1
+	query_string = location.search.substring 1
 	re = /([^&=]+)=([^&]*)/g
 	
 	while match = re.exec query_string
@@ -232,7 +234,7 @@ $ main = ->
 	form.submit ->
 		input = ($ "#input").val()
 		process_math input, result_box
-		window.location.hash = "i=#{encode input}"
+		location.hash = "i=#{encode input}"
 		
 		false # suppress normal form submission
 	

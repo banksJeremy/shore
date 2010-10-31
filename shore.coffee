@@ -1,4 +1,13 @@
 #!/usr/bin/env coffee -c
+root = exports ? this
+S = root.S = root.shore ?=
+	_former_S: root.S
+	_former_shore: root.shore
+
+S.noConflict = (deep) ->
+	root.S = S._former_S
+	root.shore = S._former_shore
+
 shore = (args...) ->
 	if args.length is 1
 		arg = args[0]
@@ -52,6 +61,13 @@ shore.utility = utility =
 			parts = (for part in string.split /(?=[A-Z0-9])/
 				if part then part.toLowerCase())
 			return parts.join "_"
+	
+	sss: (s) ->
+		"Splits a String on Spaces"
+		
+		s.split " "
+
+sss = utility.sss
 
 for name, value of { # contents of module
 	_special_identifiers:
@@ -98,6 +114,13 @@ for name, value of { # contents of module
 	
 	Thing: class Thing
 		precedence: 0
+		
+		req_comps: []
+		
+		constructor: (@comps)
+			for name in @req_comps
+				if not @hasOwnProperty name
+					raise new Error "#{@type} object requires value for #{name}"
 		
 		eq: (other) ->
 			@type is other.type and @_eq other
@@ -179,7 +202,7 @@ for name, value of { # contents of module
 	
 	Number: class Number extends Value
 		precedence: 10
-		constructor: (@value) ->
+		req_components: sss "value"
 		
 		_eq: (other) -> @value is other.value
 		neg: -> shore.number (- @value)
@@ -189,6 +212,9 @@ for name, value of { # contents of module
 	
 	Identifier: class Identifier extends Value
 		precedence: 10
+		
+		req_components: sss "value"
+		
 		constructor: (@string_value, @tex_value) ->
 			if not @tex_value?
 				if @string_value of shore._special_identifiers
@@ -442,8 +468,3 @@ for name, getter_of_canonizers of {
 
 canonization = shore._canonization
 shore._make_providers()
-
-if window
-	window.shore = shore
-	window._S = window.S
-	window.S = shore
