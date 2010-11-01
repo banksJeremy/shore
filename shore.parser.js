@@ -47,9 +47,9 @@ case 18:this.$ = $$[$0-3+2-1];
 break;
 case 19:this.$ = $$[$0-3+2-1];
 break;
-case 20:this.$ = shore.number(Number(yytext));
+case 20:this.$ = shore(Number(yytext));
 break;
-case 21:this.$ = shore.identifier(String(yytext));
+case 21:this.$ = shore(String(yytext));
 break;
 }
 },

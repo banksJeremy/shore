@@ -1,7 +1,7 @@
 all: CLEAN parser.js shore.js main.js
 
 open: all
-	open index.html
+	open main.html
 
 CLEAN:
 	rm -f shore.js parser.js main.js

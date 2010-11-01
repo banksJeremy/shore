@@ -51,7 +51,8 @@ TODO
 ----
 
 ### `v0.1`
-
+  
+  - Canonical ordering of objects, even if unrelated to true value ordering.
   - Canonization of `shore.Sum`, `shore.Product`.
   - Merge `shore.Exponent` into `shore.Product`.
   - All defining attributes go onto `shore.Value().components`, which can

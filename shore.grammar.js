@@ -77,8 +77,8 @@ var parser = jison.Parser({
 		],
 		
 		"literal": [
-			[ "NUMBER", "$$ = shore.number(Number(yytext));"],
-			[ "IDENTIFIER", "$$ = shore.identifier(String(yytext));"],
+			[ "NUMBER", "$$ = shore(Number(yytext));"],
+			[ "IDENTIFIER", "$$ = shore(String(yytext));"],
 		]
 	}
 })

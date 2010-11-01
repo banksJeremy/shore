@@ -72,12 +72,23 @@ utility = shore.utility = shore.U =
 				if part then part.toLowerCase())
 			return parts.join "_"
 	
-	memoize: (f, hasher, memory) ->
-		# Memoizes a function using a specified hash function and memory object.
-		# 
-		# Hasher defaults to string conversion, memory to a new empty object.
+	hash: (object) ->
+		# Converts an object to a string or calls its __hash__ method recursively
+		# in Arrays and Object.
 		
-		hasher ?= String
+		String utility.call_in object, (object) ->
+			if object.__hash__?
+				object.__hash__()
+			else
+				String object
+	
+	memoize: (f, memory, hasher) ->
+		# Memoizes a function using a specified memory object and hash function.
+		# 
+		# Memory defaults to a new empty object.
+		# Hasher defaults to utility.hash.
+		
+		hasher ?= hash
 		memory ?= {}
 		
 		memoized = (arguments...) ->
@@ -102,9 +113,9 @@ utility = shore.utility = shore.U =
 		# For each CamelName on module defined module.uncameled_name to be
 		# module._make_provider module.CamelName.
 		
-		for old_name of module:
+		for old_name of module
 			if new_name = utility.uncamel old_name
-				this[new_name] = module._make_provider module[old_name]
+				module[new_name] = module._make_provider module[old_name]
 	
 	extend: (destination, sources...) ->
 		# Copies all properties from each source onto destination
@@ -122,6 +133,20 @@ utility = shore.utility = shore.U =
 		# Determines if an object is exactly of type Object
 		
 		typeof object is "object" and object.constructor is Object
+	
+	call_in: (object, f, extra_arguments...) ->
+		# Calls function on an object or recursively within Arrays and Objects.
+		
+		if utility.is_array object
+			for value in object
+				f value, extra_arguments...
+		else if utility.is_object object
+			result = {}
+			for key, value of object
+				result[key] = f value, extra_arguments...
+			result
+		else
+			f object, extra_arguments...
 
 __not_types =
 	# Merged onto shore first, as they may be required by the defenitions of
@@ -154,7 +179,10 @@ __not_types =
 		arctan: [ "arctan", "\\arctan" ]
 	
 	_make_provider: (cls) ->
-		"For now just like new, but later will memoize and such."
+		# Used to generate shore.foo_bar from shore.FooBar.
+		# 
+		# Just new for now, later we'll memoize.
+		
 		(args...) -> new cls args...
 	
 	_significance: (x) ->
@@ -167,7 +195,7 @@ __not_types =
 		f.significance = (shore._significance significance)
 		f
 	
-	_canonization: (significance, name, f) ->
+	canonization: (significance, name, f) ->
 		(shore._signified significance, f)
 	
 	_significances:
@@ -178,18 +206,12 @@ __not_types =
 	canonize: (object, arguments...) ->
 		# Canonizes an object or recrusively within Arrays and Objects.
 		
-		if utility.is_array object
-			for value in object
-				shore.canonize value, arguments...
-		else if utility.is_object object
-			new = {}
-			for key, value of object
-				new[key] = shore.canonize value, arguments...
-			new
-		else
-			object.canonize arguments...
+		utility.call_in ((o, args...) -> o.canonize args...), object, arguments
 
-utility.extend shore __not_types
+utility.extend shore, __not_types
+
+# used in defining types
+sss = utility.sss
 
 __types =
 	# The types of the shore module.
@@ -199,10 +221,10 @@ __types =
 		
 		req_comps: []
 		
-		constructor: (@comps)
+		constructor: (@comps) ->
 			for name in @req_comps
-				if not @hasOwnProperty name
-					raise new Error "#{@type} object requires value for #{name}"
+				if not @comps[name]?
+					throw new Error "#{@type ? @constructor} object requires value for #{name}"
 		
 		eq: (other) ->
 			@type is other.type and @_eq other
@@ -259,18 +281,18 @@ __types =
 	Value: class Value extends Thing
 		is_a_value: true
 		
-		plus: (other) -> shore.sum [this, other]
-		minus: (other) -> shore.sum [this, other.neg()]
-		times: (other) -> shore.product [this, other]
-		over: (other) -> shore.product [this, other.to_the shore (- 1)]
+		plus: (other) -> shore.sum operands: [this, other]
+		minus: (other) -> shore.sum operands: [this, other.neg()]
+		times: (other) -> shore.product operands: [this, other]
+		over: (other) -> shore.product operands: [this, other.to_the shore (- 1)]
 		pos: -> this
 		neg: -> (shore (-1)).times(this)
-		to_the: (other) -> shore.exponent this, other
-		equals: (other) -> shore.equality [this, other]
-		integrate: (variable) -> shore.integral this, variable
-		differentiate: (variable) -> shore.derivative this, variable
-		given: (substitution) -> shore.pending_substitution this, substitution
-		plus_minus: (other) -> shore.with_margin_of_error this, other
+		to_the: (other) -> shore.exponent base: this, exponent: other
+		equals: (other) -> shore.equality operands: [this, other]
+		integrate: (variable) -> shore.integral expression: this, variable: variable
+		differentiate: (variable) -> shore.derivative expression: this, variable: variable
+		given: (substitution) -> shore.pending_substitution expression: this, substitution: substitution
+		plus_minus: (other) -> shore.with_margin_of_error value: this, margin: other
 		
 		_then: (other) ->
 			if other.is_a_value
@@ -283,14 +305,14 @@ __types =
 		req_comps: sss "value"
 		
 		_eq: (other) -> @value is other.value
-		neg: -> shore.number (- @value)
+		neg: -> shore.number value: -@value
 		to_free_tex: -> String @value
 		to_free_string: -> String @value
 	
 	Identifier: class Identifier extends Value
 		precedence: 10
 		
-		req_comps: sss "string_value tex_value"
+		req_comps: sss "value tex_value"
 		
 		constructor: (comps) ->
 			{ tex_value: tex_value, value: value } = comps
@@ -301,7 +323,7 @@ __types =
 				else
 					tex_value = value
 			
-			super { tex_value: text_value, value: value }
+			super { tex_value: tex_value, value: value }
 		
 		_eq: (other) -> @value is other.value
 		to_free_tex: -> @tex_value
@@ -310,7 +332,7 @@ __types =
 		sub: (other) ->
 			string = "#{@string_value}_#{other.to_string()}"
 			tex = "{#{@tex_value}}_{#{other.to_tex()}}"
-			shore.identifier string, tex
+			shore.identifier value: string, tex_value: tex
 	
 	CANOperation: class CANOperation extends Value
 		# Commutitive, Assocative N-ary Operation
@@ -318,21 +340,21 @@ __types =
 		req_comps: sss "operands"
 		
 		_eq: (other) ->
-			if @operands.length isnt other.operands.length
+			if @comps.operands.length isnt other.operands.length
 				return false
 			
-			for i in [0..@operands.length - 1]
-				if not (@operands[i].eq other.operands[i])
+			for i in [0...@comps.operands.length]
+				if not (@comps.operands[i].eq other.operands[i])
 					return false
 			
 			true
 		
 		to_free_tex: ->
-			(((operand.to_tex @precedence) for operand in @operands)
+			(((operand.to_tex @precedence) for operand in @comps.operands)
 			 .join @tex_symbol)
 		
 		to_free_string: ->
-			(((operand.to_string @precedence) for operand in @operands)
+			(((operand.to_string @precedence) for operand in @comps.operands)
 			 .join @string_symbol)
 		
 	Sum: class Sum extends CANOperation
@@ -356,8 +378,8 @@ __types =
 			"Without checking for negative powers."
 			
 			if operands.length > 1 and
-			   operands[0].type is "Number" and
-				 operands[1].type isnt "Number"
+			   operands[0].type is shore.Number and
+				 operands[1].type isnt shore.Number
 				
 				(if operands[0].value isnt -1 then operands[0].to_tex @precedence else "-") +
 				(((operand.to_tex @precedence) for operand in operands.slice 1)
@@ -370,12 +392,12 @@ __types =
 			positive_exponents = []
 			negative_exponents = []
 			
-			for term in @operands
-				if term.type is "Exponent"
+			for term in @comps.operands
+				if term.type is shore.Exponent
 					exponent = term.exponent
 					
-					if exponent.type is "Number" and exponent.value < 0
-						negative_exponents.push shore.exponent term.base, exponent.neg()
+					if exponent.type is shore.Number and exponent.value < 0
+						negative_exponents.push shore.exponent base: term.base, exponent: exponent.neg()
 					else
 						positive_exponents.push term
 				else
@@ -391,79 +413,78 @@ __types =
 			else
 				top
 		
-		# to_free_string?
+		to_free_string: ->
+			(operand.to_string() for operand in @comps.operands).join ""
 	
 	Exponent: class Exponent extends Value
 		precedence: 5
 		
-		constructor: (@base, @exponent) ->
-		
-		_eq: (other) -> @base.eq(other.base) and @exponent.eq(other.exponent)
+		_eq: (other) ->
+			@comps.base.eq(other.base) and @comps.exponent.eq(other.exponent)
 		
 		to_free_tex: ->
-			if @exponent.type is "Number" and @exponent.value is 1
-				@base.to_tex @precedence
+			if @comps.exponent.type is shore.Number and @comps.exponent.value is 1
+				@comps.base.to_tex @precedence
 			else
-				"{#{@base.to_tex @precedence}}^{#{@exponent.to_tex()}}"
+				"{#{@comps.base.to_tex @precedence}}^{#{@comps.exponent.to_tex()}}"
 		
 		to_free_string: ->
-			if @exponent.type is "Number" and @exponent.value is 1
-				@base.to_tex @precedence
+			if @comps.exponent.type is shore.Number and @comps.exponent.value is 1
+				@comps.base.to_tex @precedence
 			else
-				"#{@base.to_string @precedence}^#{@exponent.to_string()}"
+				"#{@comps.base.to_string @precedence}^#{@comps.exponent.to_string()}"
 		
 	Integral: class Integral extends Value
 		precedence: 3
 		
-		constructor: (@expression, @variable) ->
-		
 		_eq: (other) ->
-			@expression.eq(other.expression) and @variable.eq(other.variable)
+			@comps.expression.eq(other.expression) and
+			@comps.variable.eq(other.variable)
 		
 		to_free_tex: ->
-			"\\int\\left[#{@expression.to_tex()}\\right]d#{@variable.to_tex()}"
+			"\\int\\left[#{@comps.expression.to_tex()}\\right]d#{@comps.variable.to_tex()}"
 		
 		to_free_string: ->
-			"int{[#{@expression.to_tex()}]d#{@variable.to_tex()}}"
+			"int{[#{@comps.expression.to_tex()}]d#{@comps.variable.to_tex()}}"
 	
 	Derivative: class Derivative extends Value
 		precedence: 3
 		
-		constructor: (@expression, @variable) ->
-		
 		_eq: (other) ->
-			@expression.eq(other.expression) and @variable.eq(other.variable)
+			@expression.eq(other.expression) and @comps.variable.eq(other.variable)
 		
 		to_free_tex: ->
-			"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
+			"\\tfrac{d}{d#{@comps.variable.to_tex()}}\\left[#{@comps.expression.to_tex()}\\right]"
 		
 		to_free_string: ->
-			"d/d#{@variable.to_tex()}[#{@expression.to_tex()}]"
+			"d/d#{@comps.variable.to_tex()}[#{@comps.expression.to_tex()}]"
 	
 	WithMarginOfError: class WithMarginOfError extends Value
 		precedence: 1.5
-		
-		constructor: (@value, @margin) ->
 		
 		tex_symbol: " \\pm "
 		string_symbol: " ± "
 		
 		to_free_string: ->
 			if not @margin.eq (shore 0)
-				"#{@value.to_string @precedence} #{@string_symbol} #{@margin.to_string @precedence}"
+				"#{@comps.value.to_string @precedence}
+				 #{@string_symbol}
+				 #{@comps.margin.to_string @precedence}"
 			else
-				@value.to_string @precedence
+				@comps.value.to_string @precedence
 		
 		to_free_tex: ->
 			if not @margin.eq (shore 0)
-				"#{@value.to_tex @precedence} #{@tex_symbol} #{@margin.to_tex @precedence}"
+				"#{@comps.value.to_tex @precedence}
+				 #{@tex_symbol}
+				 #{@comps.margin.to_tex @precedence}"
 			else
-				@value.to_tex @precedence
+				@comps.value.to_tex @precedence
 	
 	Equality: class Equality extends CANOperation
 		precedence: 1
 		
-		is_a_value: false # ><
+		is_a_value: false # >_< HACK
 		
 		string_symbol: " = "
 		tex_symbol: " = "
@@ -471,10 +492,9 @@ __types =
 	PendingSubstitution: class PendingSubstitution extends Value
 		precedence: 2.5
 		
-		thing: "PendingSubstitution"
-		
-		constructor: (@expression, @substitution) ->
-			@is_a_value = @expression.is_a_value
+		constructor: (comps) ->
+			comps.is_a_value = comps.expression.is_a_value
+			super comps
 		
 		_eq: (other) ->
 			@expression.eq(other.expression) and @substitution.eq(other.substitution)
@@ -483,18 +503,23 @@ __types =
 		tex_symbol: ""
 		
 		to_free_string: ->
-			(@expression.to_string @precedence) + @string_symbol + (@substitution.to_string @precedence)
+			(@comps.expression.to_string @precedence) +
+			@string_symbol +
+			(@comps.substitution.to_string @precedence)
+		
 		to_free_tex: ->
-			(@expression.to_tex @precedence) + @tex_symbol + (@substitution.to_tex @precedence)
+			(@comps.expression.to_tex @precedence) +
+			@tex_symbol +
+			(@comps.substitution.to_tex @precedence)
 
 # Set the .type property of each type to itself
-for type of __types
+for name, type of __types
 	type.type = type
 
-utility.make_providers __types
-utility.extend shore __types
+utility.extend shore, __types
+utility.make_providers shore
 
-__definers_of_canonizers =
+__definers_of_canonizers = [
 	"Thing", -> 
 		for significance of shore.significances
 			canonization significance, "components #{significance}", ->
@@ -514,7 +539,7 @@ __definers_of_canonizers =
 			not_numbers = []
 			
 			for operand in @operands
-				if operand.type is "Number"
+				if operand.type is shore.Number
 					numbers.push operand
 				else
 					not_numbers.push operand
@@ -525,9 +550,12 @@ __definers_of_canonizers =
 				while numbers.length
 					sum += numbers.pop().value
 				
-				shore.sum [ shore.number sum ].concat not_numbers
+				shore.sum operands: [ shore.number sum ].concat not_numbers
 	]
+]
 
-for [name, definer] in __definers_of_canonizers
-	shore[name].canonizers = definer.apply shore[name]
+for index of __definers_of_canonizers
+	if not index % 2
+		[name, definer] = [__definers_of_canonizers[index], __definers_of_canonizers[index + 1]]
+		shore[name].canonizers = definer.apply shore[name]
 
