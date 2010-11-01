@@ -1,15 +1,16 @@
 (function() {
-  var decode, default_input, ems_per_pixel_in, encode, escape_html, get_qs, main, mathjax_load, mathjax_src, mj_wait, occurences, process_math, scale_textarea, texscapeify;
+  var decode, default_input, ems_per_pixel_in, encode, escape_html, get_qs, main, mathjax_load, mathjax_src, mj_wait, occurences, process_math, root, scale_textarea, texscapeify;
+  root = this;
   default_input = "A = -g_gemini; g_gemini = 0.00015\nv = A ~ t + v_0; v_0 = 0\nd = v ~ t + d_0; d_0 = 1\nt_fall = t(d=0)";
   mathjax_src = "https://jbmathjax.s3.amazonaws.com/mathjax-1.0.1/MathJax.js";
   shore.__main_on_mathjax_loaded = (function() {});
   mathjax_load = function() {
-    var _ref, config, script;
+    var config, script;
     script = document.createElement("script");
     script.type = "text/javascript";
     script.src = mathjax_src;
     config = "MathJax.Hub.Config({\n	jax: [\"input/TeX\", \"output/HTML-CSS\"],\n	extensions: [\"tex2jax.js\", \"TeX/AMSmath.js\", \"TeX/AMSsymbols.js\"],\n	tex2jax: {\n		inlineMath: [[\"\\\\(\", \"\\\\)\"]],\n		displayMath: [[\"\\\\[\", \"\\\\]\"]]\n	},\n	messageStyle: \"none\"\n});\n\nMathJax.Hub.Startup.onload();\nMathJax.Hub.Register.StartupHook(\"End\", function() {\n	shore.__main_on_mathjax_loaded()\n});";
-    if (typeof (_ref = window.opera) !== "undefined" && _ref !== null) {
+    if (typeof opera !== "undefined" && opera !== null) {
       script.innerHTML = config;
     } else {
       script.text = config;
@@ -27,7 +28,7 @@ processing it to plain-text output.";
     var match, query_string, re, result;
     "An object representing the contents of the query string.";
     result = {};
-    query_string = window.location.search.substring(1);
+    query_string = location.search.substring(1);
     re = /([^&=]+)=([^&]*)/g;
     while (match = re.exec(query_string)) {
       result[decode(match[1])] = decode(match[2]);
@@ -237,7 +238,7 @@ processing it to plain-text output.";
       var input;
       input = ($("#input")).val();
       process_math(input, result_box);
-      window.location.hash = ("i=" + (encode(input)));
+      location.hash = ("i=" + (encode(input)));
       return false;
     });
     provided_input = (location.hash.slice(0, 3)) === "#i=" ? decode(location.hash.slice(3)) : qs.i;

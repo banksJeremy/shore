@@ -1,13 +1,53 @@
 #!/usr/bin/env coffee -c
-shore = (args...) ->
+###
+Shore Math Module
+http://jeremybanks.github.com/shore/
+
+Copyright Jeremy Banks <jeremy@jeremybanks.com>
+Released under the MIT License
+### 
+
+# This module exports a single function under the names S and shore, with a
+# single submodule defined as .utility and .U. In most cases you will only
+# need to call the module function and not use any of the functions it
+# contains directly, provided that you also include shore.parser.
+# 
+# The module is defined piecemeal:
+# 
+#   1. the object is created as a function that may be used to create shore
+#      objects, using shore.parser if available.
+#   
+#   2. the shore.utility submodule is defined.
+#   
+#   3. components of the shore module which are not its types are defined
+#      as __not_types and then added to the shore object.
+#   
+#   4. the shore types are defined initially as __types, provider functions
+#      are generated and then it's all added to the shore object.
+#   
+#   5. the canonizations for the types are defined initially by functions
+#      in __definers_of_canonizers, which are evaluated and added added to
+#      their respective types.
+
+root = this
+
+former_S = root.S
+former_shore = root.shore
+
+shore = root.S = root.shore = (args...) ->
+	# The shore object is a function which can be called to create shore values.
+	# Without shore.parser it will only be able to create numbers and
+	# identifiers. If multiple arguments are provided it will return an array
+	# of values, so you can do things like [x, y, z] = shore "x", "y", "z".
+	
 	if args.length is 1
 		arg = args[0]
 		
 		if typeof arg is "number"
-			shore.number arg
+			S.number value: arg
 		else if typeof arg is "string"
 			if /^[a-zA-Z][a-zA-Z0-9]*'*$/.test arg
-				shore.identifier arg
+				S.identifier value: arg
 			else
 				if shore.parser?
 					shore.parser.parse arg
@@ -19,42 +59,114 @@ shore = (args...) ->
 		for arg in args
 			shore arg
 
-shore.utility = utility = 
-	nullary_proto_memo: (id, f) ->
-		"memoizes a nullary function on a prototype"
-		-> 
-			return f
-			
-			key = "proto-memory of nullary " + id
-			prototype = this.constructor.prototype
-			
-			if not prototype.hasOwnProperty key
-				prototype[key] = f.apply this
-			else
-				prototype[key]
-	
-	nullary_memo: (id, f) ->
-		"memoizes a nullary function on an instance"
-		->
-			return f
-			
-			key = "memory of nullary " + id
-		
-			if key not of this
-				this[key] = f.apply this
-			else
-				this[key]
+utility = shore.utility = shore.U =
+	# The shore.utility module contains functions that are not shore-specific.
 	
 	uncamel: (string) ->
-		"Converts CamelBack (not ALLCAPS) string to this_thing."
+		# Converts CamelBack string (not just UPPERCASE) to lowercased_underscore.
+		# 
+		# Returns undefined if string's not in CamelBack.
 		
 		if (/^[A-Z]/.test string) and (/[a-z]/.test string)
-			parts = (for part in string.split /(?=[A-Z0-9])/
+			parts = (for part in string.split /(?=[A-Z0-9]+)/
 				if part then part.toLowerCase())
 			return parts.join "_"
+	
+	hash: (object) ->
+		# Converts an object to a string or calls its __hash__ method recursively
+		# in Arrays and Object.
+		
+		String utility.call_in object, (object) ->
+			if object.__hash__?
+				object.__hash__()
+			else
+				String object
+	
+	memoize: (f, memory, hasher) ->
+		# Memoizes a function using a specified memory object and hash function.
+		# 
+		# Memory defaults to a new empty object.
+		# Hasher defaults to utility.hash.
+		
+		hasher ?= hash
+		memory ?= {}
+		
+		memoized = (arguments...) ->
+			"The memoized copy of a function."
+			
+			key = memoized.hasher [this].concat arguments
+			
+			if key of memory
+				memoized.memory[key]
+			else
+				memoized.memory[key] = f.apply this, arguments...
+		
+		memoized.memory = memory
+		memoized
+	
+	sss: (s) ->
+		# Splits a String on Spaces
+		
+		s.split " "
+	
+	make_providers: (module) ->
+		# For each CamelName on module defined module.uncameled_name to be
+		# module._make_provider module.CamelName.
+		
+		for old_name of module
+			if new_name = utility.uncamel old_name
+				module[new_name] = module._make_provider module[old_name]
+	
+	extend: (destination, sources...) ->
+		# Copies all properties from each source onto destination
+		
+		for source in sources
+			for property of source
+				destination[property] = source[property]
+	
+	is_array: (object) ->
+		# Determines if an object is exactly of type Array
+		
+		typeof object is "object" and object.constructor is Array
+	
+	is_object: (object) ->
+		# Determines if an object is exactly of type Object
+		
+		typeof object is "object" and object.constructor is Object
+	
+	call_in: (object, f, extra_arguments...) ->
+		# Calls function on an object or recursively within Arrays and Objects.
+		
+		if utility.is_array object
+			for value in object
+				f value, extra_arguments...
+		else if utility.is_object object
+			result = {}
+			for key, value of object
+				result[key] = f value, extra_arguments...
+			result
+		else
+			f object, extra_arguments...
 
-for name, value of { # contents of module
+__not_types =
+	# Merged onto shore first, as they may be required by the defenitions of
+	# shore types.
+	
+	former_S: former_S,
+	former_shore: former_shore,
+	
+	no_conflict: (deep) ->
+		# Resets the value of root.S that what it was before shore was imported.
+		# If deep is a true value than root.shore is also reset. Returns shore.
+		
+		root.S = @former_S
+		root.shore = @former_shore if deep
+		this
+	
 	_special_identifiers:
+		# If an identifier is created with one of these values it is converted
+		# into the corresponding string/tex values.
+		
 		theta: [ "θ", "\\theta" ]
 		pi: [ "π", "\\pi" ]
 		tau: [ "τ" , "\\tau" ]
@@ -67,19 +179,15 @@ for name, value of { # contents of module
 		arctan: [ "arctan", "\\arctan" ]
 	
 	_make_provider: (cls) ->
-		"For now just like new, but later will memoize and such."
+		# Used to generate shore.foo_bar from shore.FooBar.
+		# 
+		# Just new for now, later we'll memoize.
+		
 		(args...) -> new cls args...
 	
-	_make_providers: ->
-		"For each FooBar in this define foo_bar = this._provider FooBar."
-		
-		for old_name of this
-			if new_name = utility.uncamel old_name
-				this[new_name] = @_make_provider this[old_name]
-	
 	_significance: (x) ->
-		if x of shore._significations
-			@_significations[x]
+		if x of shore._significances
+			@_significances[x]
 		else
 			x
 	
@@ -87,20 +195,42 @@ for name, value of { # contents of module
 		f.significance = (shore._significance significance)
 		f
 	
-	_canonization: (significance, name, f) ->
+	canonization: (significance, name, f) ->
 		(shore._signified significance, f)
-#		                  (utility.nullary_memo "canonization (#{name})", f))
 	
-	_significations:
+	_significances:
 		minor: 0
 		moderate: 1
 		major: 2
 	
+	canonize: (object, arguments...) ->
+		# Canonizes an object or recrusively within Arrays and Objects.
+		
+		utility.call_in ((o, args...) -> o.canonize args...), object, arguments
+
+utility.extend shore, __not_types
+
+# used in defining types
+sss = utility.sss
+
+__types =
+	# The types of the shore module.
+	
 	Thing: class Thing
+		# The underlying mechanisms of all of our types, without anything of
+		# actual math.
+		
 		precedence: 0
 		
+		req_comps: []
+		
+		constructor: (@comps) ->
+			for name in @req_comps
+				if not @comps[name]?
+					throw new Error "#{@type ? @constructor} object requires value for #{name}"
+		
 		eq: (other) ->
-			@type is other.type and @_eq other
+			@type is other.type and @components is other.components
 		
 		canonize: (enough, excess) ->
 			enough = shore._significance enough
@@ -146,30 +276,26 @@ for name, value of { # contents of module
 			else
 				@to_free_string()
 		
-		toString: ->
-			if @to_js
-				@to_js()
-			else
-				"S{#{@to_string()}}"
-		
-		to_free_string: -> "SHORE PRIVATE TYPE"
-		to_free_tex: -> "\\text{SHORE PRIVATE TYPE}"
+		to_free_string: -> "(shore.#{@type} value)"
+		to_free_tex: -> "\\text{(shore.#{@type} value)}"
+		to_cs: -> "(shore.#{@type.toLowerCase()} #{@comps})"
+		toString: -> @to_cs()
 		
 	Value: class Value extends Thing
 		is_a_value: true
 		
-		plus: (other) -> shore.sum [this, other]
-		minus: (other) -> shore.sum [this, other.neg()]
-		times: (other) -> shore.product [this, other]
-		over: (other) -> shore.product [this, other.to_the shore (- 1)]
+		plus: (other) -> shore.sum operands: [this, other]
+		minus: (other) -> shore.sum operands: [this, other.neg()]
+		times: (other) -> shore.product operands: [this, other]
+		over: (other) -> shore.product operands: [this, other.to_the shore (- 1)]
 		pos: -> this
 		neg: -> (shore (-1)).times(this)
-		to_the: (other) -> shore.exponent this, other
-		equals: (other) -> shore.equality [this, other]
-		integrate: (variable) -> shore.integral this, variable
-		differentiate: (variable) -> shore.derivative this, variable
-		given: (substitution) -> shore.pending_substitution this, substitution
-		plus_minus: (other) -> shore.with_margin_of_error this, other
+		to_the: (other) -> shore.exponent base: this, exponent: other
+		equals: (other) -> shore.equality operands: [this, other]
+		integrate: (variable) -> shore.integral expression: this, variable: variable
+		differentiate: (variable) -> shore.derivative expression: this, variable: variable
+		given: (substitution) -> shore.pending_substitution expression: this, substitution: substitution
+		plus_minus: (other) -> shore.with_margin_of_error value: this, margin: other
 		
 		_then: (other) ->
 			if other.is_a_value
@@ -179,62 +305,50 @@ for name, value of { # contents of module
 	
 	Number: class Number extends Value
 		precedence: 10
-		constructor: (@value) ->
+		req_comps: sss "value"
 		
-		_eq: (other) -> @value is other.value
-		neg: -> shore.number (- @value)
-		to_free_tex: -> String @value
-		to_free_string: -> String @value
-		to_js: -> "S(#{@value})"
+		neg: -> shore.number value: -@comps.value
+		to_free_tex: -> String @comps.value
+		to_free_string: -> String @comps.value
 	
 	Identifier: class Identifier extends Value
 		precedence: 10
-		constructor: (@string_value, @tex_value) ->
-			if not @tex_value?
-				if @string_value of shore._special_identifiers
-					[@string_value, @tex_value] = shore._special_identifiers[@string_value]
-				else
-					@tex_value = @string_value
 		
-		_eq: (other) -> @value is other.value
-		to_free_tex: -> @tex_value
-		to_free_string: -> @string_value
-		to_js: ->
-			if @string_value isnt @tex_value
-				"S.identifier(\"#{@string_value}\", \"#{@tex_value}\")"
-			else
-				"S(\"#{@string_value}\")"
+		req_comps: sss "value tex_value"
+		
+		constructor: (comps) ->
+			{ tex_value: tex_value, value: value } = comps
+			
+			if not tex_value?
+				if value of shore._special_identifiers
+					[value, tex_value] = shore._special_identifiers[value]
+				else
+					tex_value = value
+			
+			super { tex_value: tex_value, value: value }
+		
+		to_free_tex: -> @comps.tex_value
+		to_free_string: -> @comps.value
 		
 		sub: (other) ->
-			string = "#{@string_value}_#{other.to_string()}"
-			tex = "{#{@tex_value}}_{#{other.to_tex()}}"
-			shore.identifier string, tex
+			string = "#{@comps.value}_#{other.to_string()}"
+			tex = "{#{@comps.tex_value}}_{#{other.to_tex()}}"
+			
+			shore.identifier value: string, tex_value: tex
 	
 	CANOperation: class CANOperation extends Value
 		# Commutitive, Assocative N-ary Operation
 		
-		constructor: (@operands) ->
-		
-		_eq: (other) ->
-			if @operands.length isnt other.operands.length
-				return false
-			
-			for i in [0..@operands.length - 1]
-				if not (@operands[i].eq other.operands[i])
-					return false
-			
-			true
+		req_comps: sss "operands"
 		
 		to_free_tex: ->
-			(((operand.to_tex @precedence) for operand in @operands)
+			(((operand.to_tex @precedence) for operand in @comps.operands)
 			 .join @tex_symbol)
 		
 		to_free_string: ->
-			(((operand.to_string @precedence) for operand in @operands)
+			(((operand.to_string @precedence) for operand in @comps.operands)
 			 .join @string_symbol)
 		
-		to_js: -> "S.#{@type.toLowerCase()}([#{@operands.join ", "}])"
-	
 	Sum: class Sum extends CANOperation
 		precedence: 2
 		get_nullary: -> shore 0
@@ -256,10 +370,10 @@ for name, value of { # contents of module
 			"Without checking for negative powers."
 			
 			if operands.length > 1 and
-			   operands[0].type is "Number" and
-				 operands[1].type isnt "Number"
+			   operands[0].type is shore.Number and
+				 operands[1].type isnt shore.Number
 				
-				(if operands[0].value isnt -1 then operands[0].to_tex @precedence else "-") +
+				(if operands[0].comps.value isnt -1 then operands[0].to_tex @precedence else "-") +
 				(((operand.to_tex @precedence) for operand in operands.slice 1)
 				 .join @tex_symbol)
 			else
@@ -270,12 +384,12 @@ for name, value of { # contents of module
 			positive_exponents = []
 			negative_exponents = []
 			
-			for term in @operands
-				if term.type is "Exponent"
+			for term in @comps.operands
+				if term.type is shore.Exponent
 					exponent = term.exponent
 					
-					if exponent.type is "Number" and exponent.value < 0
-						negative_exponents.push shore.exponent term.base, exponent.neg()
+					if exponent.type is shore.Number and exponent.comps.value < 0
+						negative_exponents.push shore.exponent base: term.comps.base, exponent: exponent.neg()
 					else
 						positive_exponents.push term
 				else
@@ -291,82 +405,68 @@ for name, value of { # contents of module
 			else
 				top
 		
-		# to_free_string?
+		to_free_string: ->
+			(operand.to_string() for operand in @comps.operands).join ""
 	
 	Exponent: class Exponent extends Value
 		precedence: 5
 		
-		constructor: (@base, @exponent) ->
-		
-		_eq: (other) -> @base.eq(other.base) and @exponent.eq(other.exponent)
-		
 		to_free_tex: ->
-			if @exponent.type is "Number" and @exponent.value is 1
-				@base.to_tex @precedence
+			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
+				@comps.base.to_tex @precedence
 			else
-				"{#{@base.to_tex @precedence}}^{#{@exponent.to_tex()}}"
+				"{#{@comps.base.to_tex @precedence}}^{#{@comps.exponent.to_tex()}}"
 		
 		to_free_string: ->
-			if @exponent.type is "Number" and @exponent.value is 1
-				@base.to_tex @precedence
+			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
+				@comps.base.to_tex @precedence
 			else
-				"#{@base.to_string @precedence}^#{@exponent.to_string()}"
+				"#{@comps.base.to_string @precedence}^#{@comps.exponent.to_string()}"
 		
-		to_js: ->
-			return "S(#{@base.to_js()}, #{@exponent.to_js()})"
-	
 	Integral: class Integral extends Value
 		precedence: 3
 		
-		constructor: (@expression, @variable) ->
-		
-		_eq: (other) ->
-			@expression.eq(other.expression) and @variable.eq(other.variable)
-		
 		to_free_tex: ->
-			"\\int\\left[#{@expression.to_tex()}\\right]d#{@variable.to_tex()}"
+			"\\int\\left[#{@comps.expression.to_tex()}\\right]d#{@comps.variable.to_tex()}"
 		
 		to_free_string: ->
-			"int{[#{@expression.to_tex()}]d#{@variable.to_tex()}}"
+			"int{[#{@comps.expression.to_tex()}]d#{@comps.variable.to_tex()}}"
 	
 	Derivative: class Derivative extends Value
 		precedence: 3
 		
-		constructor: (@expression, @variable) ->
-		
-		_eq: (other) ->
-			@expression.eq(other.expression) and @variable.eq(other.variable)
-		
 		to_free_tex: ->
-			"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
+			"\\tfrac{d}{d#{@comps.variable.to_tex()}}\\left[#{@comps.expression.to_tex()}\\right]"
 		
 		to_free_string: ->
-			"d/d#{@variable.to_tex()}[#{@expression.to_tex()}]"
+			"d/d#{@comps.variable.to_tex()}[#{@comps.expression.to_tex()}]"
 	
 	WithMarginOfError: class WithMarginOfError extends Value
 		precedence: 1.5
-		
-		constructor: (@value, @margin) ->
 		
 		tex_symbol: " \\pm "
 		string_symbol: " ± "
 		
 		to_free_string: ->
 			if not @margin.eq (shore 0)
-				"#{@value.to_string @precedence} #{@string_symbol} #{@margin.to_string @precedence}"
+				"#{@comps.value.to_string @precedence}
+				 #{@string_symbol}
+				 #{@comps.margin.to_string @precedence}"
 			else
-				@value.to_string @precedence
+				@comps.value.to_string @precedence
 		
 		to_free_tex: ->
 			if not @margin.eq (shore 0)
-				"#{@value.to_tex @precedence} #{@tex_symbol} #{@margin.to_tex @precedence}"
+				"#{@comps.value.to_tex @precedence}
+				 #{@tex_symbol}
+				 #{@comps.margin.to_tex @precedence}"
 			else
-				@value.to_tex @precedence
+				@comps.value.to_tex @precedence
 	
 	Equality: class Equality extends CANOperation
 		precedence: 1
 		
-		is_a_value: false # ><
+		is_a_value: false # >_< HACK
 		
 		string_symbol: " = "
 		tex_symbol: " = "
@@ -374,76 +474,67 @@ for name, value of { # contents of module
 	PendingSubstitution: class PendingSubstitution extends Value
 		precedence: 2.5
 		
-		thing: "PendingSubstitution"
-		
-		constructor: (@expression, @substitution) ->
-			@is_a_value = @expression.is_a_value
-		
-		_eq: (other) ->
-			@expression.eq(other.expression) and @substitution.eq(other.substitution)
+		constructor: (comps) ->
+			comps.is_a_value = comps.expression.is_a_value
+			super comps
 		
 		string_symbol: ""
 		tex_symbol: ""
 		
 		to_free_string: ->
-			(@expression.to_string @precedence) + @string_symbol + (@substitution.to_string @precedence)
+			(@comps.expression.to_string @precedence) +
+			@string_symbol +
+			(@comps.substitution.to_string @precedence)
+		
 		to_free_tex: ->
-			(@expression.to_tex @precedence) + @tex_symbol + (@substitution.to_tex @precedence)
-}
-	shore[name] = value
-	
-	if utility.uncamel name # if it's CamelCase to begin with
-		shore[name]::type = name
+			(@comps.expression.to_tex @precedence) +
+			@tex_symbol +
+			(@comps.substitution.to_tex @precedence)
 
-# Canonizers follow here, to keep the logic of math as seperate
-# from the logic of programming as I can.
+# Set the .type property of each type to itself
+for name, type of __types
+	type::type = type
 
-for name, getter_of_canonizers of {
-	CANOperation: ->
-		CANOperation.__super__._get_canonizers.apply(this).concat [
-			canonization "minor", "single argument", ->
-				@operands[0] if @operands.length is 1
-			canonization "minor", "no arguments", ->
-				@get_nullary() if @operands.length is 0 and @get_nullary
-		]
+utility.extend shore, __types
+utility.make_providers shore
+
+__definers_of_canonizers = [
+	"Thing", -> 
+		for significance of shore.significances
+			canonization significance, "components #{significance}", ->
+				@provider shore.canonize @comps, significance, significance
 	
-	Sum: ->
-		Sum.__super__._get_canonizers.apply(this).concat [
-			canonization "major", "numbers in sum", ->
-				numbers = []
-				not_numbers = []
+	"CANOperation", -> @__super__.canonizers.concat [
+		canonization "minor", "single argument", ->
+			@operands[0] if @operands.length is 1
+		
+		canonization "minor", "no arguments", ->
+			@get_nullary() if @operands.length is 0 and @get_nullary
+	]
+	
+	"Sum", -> @__super__.canonizers.concat [
+		canonization "major", "numbers in sum", ->
+			numbers = []
+			not_numbers = []
+			
+			for operand in @operands
+				if operand.type is shore.Number
+					numbers.push operand
+				else
+					not_numbers.push operand
+			
+			if numbers.length > 1
+				sum = @get_nullary().value
 				
-				for operand in @operands
-					if operand.type is "Number"
-						numbers.push operand
-					else
-						not_numbers.push operand
+				while numbers.length
+					sum += numbers.pop().value
 				
-				if numbers.length > 1
-					sum = @get_nullary().value
-					
-					while numbers.length
-						sum += numbers.pop().value
-					
-					shore.sum [ shore.number sum ].concat not_numbers
-		]
-	
-	Equality: ->
-		Equality.__super__._get_canonizers.apply(this).concat [
-			canonization "minor", "minors in equality", ->
-				shore.equality (o.canonize("minor", "minor") for o in @operands)
-			canonization "moderate", "moderates in equality", ->
-				shore.equality (o.canonize("moderate", "moderate") for o in @operands)
-			canonization "majors", "majors in equality", ->
-				shore.equality (o.canonize("majors", "majors") for o in @operands)
-		]
-}
-	shore[name]::_get_canonizers = getter_of_canonizers
+				shore.sum operands: [ shore.number sum ].concat not_numbers
+	]
+]
 
-canonization = shore._canonization
-shore._make_providers()
+for index of __definers_of_canonizers
+	if not index % 2
+		[name, definer] = [__definers_of_canonizers[index], __definers_of_canonizers[index + 1]]
+		shore[name].canonizers = definer.apply shore[name]
 
-if window
-	window.shore = shore
-	window._S = window.S
-	window.S = shore

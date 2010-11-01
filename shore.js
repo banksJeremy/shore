@@ -1,23 +1,37 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, _ref, canonization, getter_of_canonizers, name, shore, utility, value;
-  var __slice = Array.prototype.slice, __extends = function(child, parent) {
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _ref, _ref2, definer, former_S, former_shore, index, name, root, shore, sss, type, utility;
+  var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
     child.prototype = new ctor();
     child.prototype.constructor = child;
     if (typeof parent.extended === "function") parent.extended(child);
     child.__super__ = parent.prototype;
-  }, __hasProp = Object.prototype.hasOwnProperty;
-  shore = function() {
+  };
+  /*
+  Shore Math Module
+  http://jeremybanks.github.com/shore/
+
+  Copyright Jeremy Banks <jeremy@jeremybanks.com>
+  Released under the MIT License
+  */
+  root = this;
+  former_S = root.S;
+  former_shore = root.shore;
+  shore = (root.S = (root.shore = function() {
     var _i, _len, _ref, _result, arg, args;
     args = __slice.call(arguments, 0);
     if (args.length === 1) {
       arg = args[0];
       if (typeof arg === "number") {
-        return shore.number(arg);
+        return S.number({
+          value: arg
+        });
       } else if (typeof arg === "string") {
         if (/^[a-zA-Z][a-zA-Z0-9]*'*$/.test(arg)) {
-          return shore.identifier(arg);
+          return S.identifier({
+            value: arg
+          });
         } else {
           if (typeof (_ref = shore.parser) !== "undefined" && _ref !== null) {
             return shore.parser.parse(arg);
@@ -36,33 +50,13 @@
       }
       return _result;
     }
-  };
-  shore.utility = (utility = {
-    nullary_proto_memo: function(id, f) {
-      "memoizes a nullary function on a prototype";
-      return function() {
-        var key, prototype;
-        return f;
-        key = "proto-memory of nullary " + id;
-        prototype = this.constructor.prototype;
-        return !prototype.hasOwnProperty(key) ? (prototype[key] = f.apply(this)) : prototype[key];
-      };
-    },
-    nullary_memo: function(id, f) {
-      "memoizes a nullary function on an instance";
-      return function() {
-        var key;
-        return f;
-        key = "memory of nullary " + id;
-        return !(key in this) ? (this[key] = f.apply(this)) : this[key];
-      };
-    },
+  }));
+  utility = (shore.utility = (shore.U = {
     uncamel: function(string) {
       var _i, _len, _ref, _result, part, parts;
-      "Converts CamelBack (not ALLCAPS) string to this_thing.";
       if ((/^[A-Z]/.test(string)) && (/[a-z]/.test(string))) {
         parts = (function() {
-          _result = []; _ref = string.split(/(?=[A-Z0-9])/);
+          _result = []; _ref = string.split(/(?=[A-Z0-9]+)/);
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             part = _ref[_i];
             _result.push(part ? part.toLowerCase() : null);
@@ -71,9 +65,98 @@
         })();
         return parts.join("_");
       }
+    },
+    hash: function(object) {
+      return String(utility.call_in(object, function(object) {
+        var _ref;
+        return (typeof (_ref = object.__hash__) !== "undefined" && _ref !== null) ? object.__hash__() : String(object);
+      }));
+    },
+    memoize: function(f, memory, hasher) {
+      var memoized;
+      hasher = (typeof hasher !== "undefined" && hasher !== null) ? hasher : hash;
+      memory = (typeof memory !== "undefined" && memory !== null) ? memory : {};
+      memoized = function() {
+        var arguments, key;
+        arguments = __slice.call(arguments, 0);
+        "The memoized copy of a function.";
+        key = memoized.hasher([this].concat(arguments));
+        return key in memory ? memoized.memory[key] : (memoized.memory[key] = f.apply.apply(f, [this].concat(arguments)));
+      };
+      memoized.memory = memory;
+      return memoized;
+    },
+    sss: function(s) {
+      return s.split(" ");
+    },
+    make_providers: function(module) {
+      var _i, _ref, _result, new_name, old_name;
+      _result = []; _ref = module;
+      for (old_name in _ref) {
+        if (!__hasProp.call(_ref, old_name)) continue;
+        _i = _ref[old_name];
+        _result.push((new_name = utility.uncamel(old_name)) ? (module[new_name] = module._make_provider(module[old_name])) : null);
+      }
+      return _result;
+    },
+    extend: function(destination) {
+      var _i, _j, _len, _ref, _ref2, _result, _result2, property, source, sources;
+      sources = __slice.call(arguments, 1);
+      _result = []; _ref = sources;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        source = _ref[_i];
+        _result.push((function() {
+          _result2 = []; _ref2 = source;
+          for (property in _ref2) {
+            if (!__hasProp.call(_ref2, property)) continue;
+            _j = _ref2[property];
+            _result2.push(destination[property] = source[property]);
+          }
+          return _result2;
+        })());
+      }
+      return _result;
+    },
+    is_array: function(object) {
+      return typeof object === "object" && object.constructor === Array;
+    },
+    is_object: function(object) {
+      return typeof object === "object" && object.constructor === Object;
+    },
+    call_in: function(object, f) {
+      var _i, _len, _ref, _result, extra_arguments, key, result, value;
+      extra_arguments = __slice.call(arguments, 2);
+      if (utility.is_array(object)) {
+        _result = []; _ref = object;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          value = _ref[_i];
+          _result.push(f.apply(this, [value].concat(extra_arguments)));
+        }
+        return _result;
+      } else if (utility.is_object(object)) {
+        result = {};
+        _ref = object;
+        for (key in _ref) {
+          if (!__hasProp.call(_ref, key)) continue;
+          value = _ref[key];
+          result[key] = f.apply(this, [value].concat(extra_arguments));
+        }
+        return result;
+      } else {
+        return f.apply(this, [object].concat(extra_arguments));
+      }
     }
-  });
-  _ref = {
+  }));
+  __not_types = {
+    former_S: former_S,
+    former_shore: former_shore,
+    no_conflict: function(deep) {
+      root.S = this.former_S;
+      if (deep) {
+        root.shore = this.former_shore;
+      }
+      return this;
+    },
     _special_identifiers: {
       theta: ["θ", "\\theta"],
       pi: ["π", "\\pi"],
@@ -87,51 +170,64 @@
       arctan: ["arctan", "\\arctan"]
     },
     _make_provider: function(cls) {
-      "For now just like new, but later will memoize and such.";
       return function() {
-        var _ctor, _ref2, _result, args;
+        var _ctor, _ref, _result, args;
         args = __slice.call(arguments, 0);
         return (function() {
           var ctor = function(){};
           __extends(ctor, _ctor = cls);
-          return typeof (_result = _ctor.apply(_ref2 = new ctor, args)) === "object" ? _result : _ref2;
+          return typeof (_result = _ctor.apply(_ref = new ctor, args)) === "object" ? _result : _ref;
         }).call(this);
       };
     },
-    _make_providers: function() {
-      var _i, _ref2, _result, new_name, old_name;
-      "For each FooBar in this define foo_bar = this._provider FooBar.";
-      _result = []; _ref2 = this;
-      for (old_name in _ref2) {
-        if (!__hasProp.call(_ref2, old_name)) continue;
-        _i = _ref2[old_name];
-        _result.push((new_name = utility.uncamel(old_name)) ? (this[new_name] = this._make_provider(this[old_name])) : null);
-      }
-      return _result;
-    },
     _significance: function(x) {
-      return x in shore._significations ? this._significations[x] : x;
+      return x in shore._significances ? this._significances[x] : x;
     },
     _signified: function(significance, f) {
       f.significance = (shore._significance(significance));
       return f;
     },
-    _canonization: function(significance, name, f) {
+    canonization: function(significance, name, f) {
       return shore._signified(significance, f);
     },
-    _significations: {
+    _significances: {
       minor: 0,
       moderate: 1,
       major: 2
     },
+    canonize: function(object) {
+      var arguments;
+      arguments = __slice.call(arguments, 1);
+      return utility.call_in(function(o) {
+        var args;
+        args = __slice.call(arguments, 1);
+        return o.canonize.apply(o, args);
+      }, object, arguments);
+    }
+  };
+  utility.extend(shore, __not_types);
+  sss = utility.sss;
+  __types = {
     Thing: (function() {
-      Thing = function() {};
+      Thing = function(_arg) {
+        var _i, _len, _ref, _ref2, name;
+        this.comps = _arg;
+        _ref = this.req_comps;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          name = _ref[_i];
+          if (!(typeof (_ref2 = this.comps[name]) !== "undefined" && _ref2 !== null)) {
+            throw new Error("" + ((typeof (_ref2 = this.type) !== "undefined" && _ref2 !== null) ? _ref2 : this.constructor) + " object requires value for " + (name));
+          }
+        }
+        return this;
+      };
       Thing.prototype.precedence = 0;
+      Thing.prototype.req_comps = [];
       Thing.prototype.eq = function(other) {
-        return this.type === other.type && this._eq(other);
+        return this.type === other.type && this.components === other.components;
       };
       Thing.prototype.canonize = function(enough, excess) {
-        var _ref2, _ref3, next, result, significance;
+        var _ref, _ref2, next, result, significance, value;
         enough = shore._significance(enough);
         excess = shore._significance(excess);
         result = this;
@@ -140,10 +236,10 @@
           if (!next.length) {
             break;
           }
-          _ref2 = next;
-          _ref3 = _ref2[0];
-          significance = _ref3.significance;
-          value = _ref2[1];
+          _ref = next;
+          _ref2 = _ref[0];
+          significance = _ref2.significance;
+          value = _ref[1];
           if ((typeof excess !== "undefined" && excess !== null) && (significance >= excess)) {
             break;
           }
@@ -155,10 +251,10 @@
         return result;
       };
       Thing.prototype.next_canonization = function() {
-        var _i, _len, _ref2, _result, canonization;
-        _result = []; _ref2 = this.get_canonizers();
-        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-          canonization = _ref2[_i];
+        var _i, _len, _ref, _result, canonization, value;
+        _result = []; _ref = this.get_canonizers();
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          canonization = _ref[_i];
           value = canonization.apply(this);
           if (value && !this.eq(value)) {
             return [canonization, value];
@@ -180,14 +276,17 @@
         context = (typeof context !== "undefined" && context !== null) ? context : 0;
         return this.precedence < context ? ("(" + (this.to_free_string()) + ")") : this.to_free_string();
       };
-      Thing.prototype.toString = function() {
-        return this.to_js ? this.to_js() : ("S{" + (this.to_string()) + "}");
-      };
       Thing.prototype.to_free_string = function() {
-        return "SHORE PRIVATE TYPE";
+        return "(shore." + (this.type) + " value)";
       };
       Thing.prototype.to_free_tex = function() {
-        return "\\text{SHORE PRIVATE TYPE}";
+        return "\\text{(shore." + (this.type) + " value)}";
+      };
+      Thing.prototype.to_cs = function() {
+        return "(shore." + (this.type.toLowerCase()) + " " + (this.comps) + ")";
+      };
+      Thing.prototype.toString = function() {
+        return this.to_cs();
       };
       return Thing;
     })(),
@@ -198,16 +297,24 @@
       __extends(Value, Thing);
       Value.prototype.is_a_value = true;
       Value.prototype.plus = function(other) {
-        return shore.sum([this, other]);
+        return shore.sum({
+          operands: [this, other]
+        });
       };
       Value.prototype.minus = function(other) {
-        return shore.sum([this, other.neg()]);
+        return shore.sum({
+          operands: [this, other.neg()]
+        });
       };
       Value.prototype.times = function(other) {
-        return shore.product([this, other]);
+        return shore.product({
+          operands: [this, other]
+        });
       };
       Value.prototype.over = function(other) {
-        return shore.product([this, other.to_the(shore(-1))]);
+        return shore.product({
+          operands: [this, other.to_the(shore(-1))]
+        });
       };
       Value.prototype.pos = function() {
         return this;
@@ -216,22 +323,39 @@
         return (shore(-1)).times(this);
       };
       Value.prototype.to_the = function(other) {
-        return shore.exponent(this, other);
+        return shore.exponent({
+          base: this,
+          exponent: other
+        });
       };
       Value.prototype.equals = function(other) {
-        return shore.equality([this, other]);
+        return shore.equality({
+          operands: [this, other]
+        });
       };
       Value.prototype.integrate = function(variable) {
-        return shore.integral(this, variable);
+        return shore.integral({
+          expression: this,
+          variable: variable
+        });
       };
       Value.prototype.differentiate = function(variable) {
-        return shore.derivative(this, variable);
+        return shore.derivative({
+          expression: this,
+          variable: variable
+        });
       };
       Value.prototype.given = function(substitution) {
-        return shore.pending_substitution(this, substitution);
+        return shore.pending_substitution({
+          expression: this,
+          substitution: substitution
+        });
       };
       Value.prototype.plus_minus = function(other) {
-        return shore.with_margin_of_error(this, other);
+        return shore.with_margin_of_error({
+          value: this,
+          margin: other
+        });
       };
       Value.prototype._then = function(other) {
         return other.is_a_value ? this.times(other) : this.given(other);
@@ -239,109 +363,93 @@
       return Value;
     })(),
     Number: (function() {
-      Number = function(_arg) {
-        this.value = _arg;
-        return this;
+      Number = function() {
+        return Value.apply(this, arguments);
       };
       __extends(Number, Value);
       Number.prototype.precedence = 10;
-      Number.prototype._eq = function(other) {
-        return this.value === other.value;
-      };
+      Number.prototype.req_comps = sss("value");
       Number.prototype.neg = function() {
-        return shore.number(-this.value);
+        return shore.number({
+          value: -this.comps.value
+        });
       };
       Number.prototype.to_free_tex = function() {
-        return String(this.value);
+        return String(this.comps.value);
       };
       Number.prototype.to_free_string = function() {
-        return String(this.value);
-      };
-      Number.prototype.to_js = function() {
-        return "S(" + (this.value) + ")";
+        return String(this.comps.value);
       };
       return Number;
     })(),
     Identifier: (function() {
-      Identifier = function(_arg, _arg2) {
-        var _ref2;
-        this.tex_value = _arg2;
-        this.string_value = _arg;
-        if (!(typeof (_ref2 = this.tex_value) !== "undefined" && _ref2 !== null)) {
-          if (this.string_value in shore._special_identifiers) {
-            _ref2 = shore._special_identifiers[this.string_value];
-            this.string_value = _ref2[0];
-            this.tex_value = _ref2[1];
+      Identifier = function(comps) {
+        var _ref, tex_value, value;
+        _ref = comps;
+        tex_value = _ref.tex_value;
+        value = _ref.value;
+        if (!(typeof tex_value !== "undefined" && tex_value !== null)) {
+          if (value in shore._special_identifiers) {
+            _ref = shore._special_identifiers[value];
+            value = _ref[0];
+            tex_value = _ref[1];
           } else {
-            this.tex_value = this.string_value;
+            tex_value = value;
           }
         }
+        Identifier.__super__.constructor.call(this, {
+          tex_value: tex_value,
+          value: value
+        });
         return this;
       };
       __extends(Identifier, Value);
       Identifier.prototype.precedence = 10;
-      Identifier.prototype._eq = function(other) {
-        return this.value === other.value;
-      };
+      Identifier.prototype.req_comps = sss("value tex_value");
       Identifier.prototype.to_free_tex = function() {
-        return this.tex_value;
+        return this.comps.tex_value;
       };
       Identifier.prototype.to_free_string = function() {
-        return this.string_value;
-      };
-      Identifier.prototype.to_js = function() {
-        return this.string_value !== this.tex_value ? ("S.identifier(\"" + (this.string_value) + "\", \"" + (this.tex_value) + "\")") : ("S(\"" + (this.string_value) + "\")");
+        return this.comps.value;
       };
       Identifier.prototype.sub = function(other) {
         var string, tex;
-        string = ("" + (this.string_value) + "_" + (other.to_string()));
-        tex = ("{" + (this.tex_value) + "}_{" + (other.to_tex()) + "}");
-        return shore.identifier(string, tex);
+        string = ("" + (this.comps.value) + "_" + (other.to_string()));
+        tex = ("{" + (this.comps.tex_value) + "}_{" + (other.to_tex()) + "}");
+        return shore.identifier({
+          value: string,
+          tex_value: tex
+        });
       };
       return Identifier;
     })(),
     CANOperation: (function() {
-      CANOperation = function(_arg) {
-        this.operands = _arg;
-        return this;
+      CANOperation = function() {
+        return Value.apply(this, arguments);
       };
       __extends(CANOperation, Value);
-      CANOperation.prototype._eq = function(other) {
-        var i;
-        if (this.operands.length !== other.operands.length) {
-          return false;
-        }
-        for (i = 0; (0 <= this.operands.length - 1 ? i <= this.operands.length - 1 : i >= this.operands.length - 1); (0 <= this.operands.length - 1 ? i += 1 : i -= 1)) {
-          if (!(this.operands[i].eq(other.operands[i]))) {
-            return false;
-          }
-        }
-        return true;
-      };
+      CANOperation.prototype.req_comps = sss("operands");
       CANOperation.prototype.to_free_tex = function() {
-        var _i, _len, _ref2, _result, operand;
+        var _i, _len, _ref, _result, operand;
         return (function() {
-          _result = []; _ref2 = this.operands;
-          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-            operand = _ref2[_i];
+          _result = []; _ref = this.comps.operands;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            operand = _ref[_i];
             _result.push(operand.to_tex(this.precedence));
           }
           return _result;
         }).call(this).join(this.tex_symbol);
       };
       CANOperation.prototype.to_free_string = function() {
-        var _i, _len, _ref2, _result, operand;
+        var _i, _len, _ref, _result, operand;
         return (function() {
-          _result = []; _ref2 = this.operands;
-          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-            operand = _ref2[_i];
+          _result = []; _ref = this.comps.operands;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            operand = _ref[_i];
             _result.push(operand.to_string(this.precedence));
           }
           return _result;
         }).call(this).join(this.string_symbol);
-      };
-      CANOperation.prototype.to_js = function() {
-        return "S." + (this.type.toLowerCase()) + "([" + (this.operands.join(", ")) + "])";
       };
       return CANOperation;
     })(),
@@ -376,35 +484,38 @@
       Product.prototype.string_symbol = " * ";
       Product.prototype.tex_symbol = " \\cdot ";
       Product.prototype._to_free_tex = function(operands) {
-        var _i, _len, _ref2, _result, operand;
+        var _i, _len, _ref, _result, operand;
         "Without checking for negative powers.";
-        return operands.length > 1 && operands[0].type === "Number" && operands[1].type !== "Number" ? (operands[0].value !== -1 ? operands[0].to_tex(this.precedence) : "-") + ((function() {
-          _result = []; _ref2 = operands.slice(1);
-          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-            operand = _ref2[_i];
+        return operands.length > 1 && operands[0].type === shore.Number && operands[1].type !== shore.Number ? (operands[0].comps.value !== -1 ? operands[0].to_tex(this.precedence) : "-") + ((function() {
+          _result = []; _ref = operands.slice(1);
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            operand = _ref[_i];
             _result.push(operand.to_tex(this.precedence));
           }
           return _result;
         }).call(this).join(this.tex_symbol)) : ((function() {
-          _result = []; _ref2 = operands;
-          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-            operand = _ref2[_i];
+          _result = []; _ref = operands;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            operand = _ref[_i];
             _result.push(operand.to_tex(this.precedence));
           }
           return _result;
         }).call(this).join(this.tex_symbol));
       };
       Product.prototype.to_free_tex = function() {
-        var _i, _len, _ref2, bottom, exponent, negative_exponents, positive_exponents, term, top;
+        var _i, _len, _ref, bottom, exponent, negative_exponents, positive_exponents, term, top;
         positive_exponents = [];
         negative_exponents = [];
-        _ref2 = this.operands;
-        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-          term = _ref2[_i];
-          if (term.type === "Exponent") {
+        _ref = this.comps.operands;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          term = _ref[_i];
+          if (term.type === shore.Exponent) {
             exponent = term.exponent;
-            if (exponent.type === "Number" && exponent.value < 0) {
-              negative_exponents.push(shore.exponent(term.base, exponent.neg()));
+            if (exponent.type === shore.Number && exponent.comps.value < 0) {
+              negative_exponents.push(shore.exponent({
+                base: term.comps.base,
+                exponent: exponent.neg()
+              }));
             } else {
               positive_exponents.push(term);
             }
@@ -421,83 +532,78 @@
           return top;
         }
       };
+      Product.prototype.to_free_string = function() {
+        var _i, _len, _ref, _result, operand;
+        return (function() {
+          _result = []; _ref = this.comps.operands;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            operand = _ref[_i];
+            _result.push(operand.to_string());
+          }
+          return _result;
+        }).call(this).join("");
+      };
       return Product;
     })(),
     Exponent: (function() {
-      Exponent = function(_arg, _arg2) {
-        this.exponent = _arg2;
-        this.base = _arg;
-        return this;
+      Exponent = function() {
+        return Value.apply(this, arguments);
       };
       __extends(Exponent, Value);
       Exponent.prototype.precedence = 5;
-      Exponent.prototype._eq = function(other) {
-        return this.base.eq(other.base) && this.exponent.eq(other.exponent);
-      };
       Exponent.prototype.to_free_tex = function() {
-        return this.exponent.type === "Number" && this.exponent.value === 1 ? this.base.to_tex(this.precedence) : ("{" + (this.base.to_tex(this.precedence)) + "}^{" + (this.exponent.to_tex()) + "}");
+        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_tex(this.precedence) : ("{" + (this.comps.base.to_tex(this.precedence)) + "}^{" + (this.comps.exponent.to_tex()) + "}");
       };
       Exponent.prototype.to_free_string = function() {
-        return this.exponent.type === "Number" && this.exponent.value === 1 ? this.base.to_tex(this.precedence) : ("" + (this.base.to_string(this.precedence)) + "^" + (this.exponent.to_string()));
-      };
-      Exponent.prototype.to_js = function() {
-        return ("S(" + (this.base.to_js()) + ", " + (this.exponent.to_js()) + ")");
+        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_tex(this.precedence) : ("" + (this.comps.base.to_string(this.precedence)) + "^" + (this.comps.exponent.to_string()));
       };
       return Exponent;
     })(),
     Integral: (function() {
-      Integral = function(_arg, _arg2) {
-        this.variable = _arg2;
-        this.expression = _arg;
-        return this;
+      Integral = function() {
+        return Value.apply(this, arguments);
       };
       __extends(Integral, Value);
       Integral.prototype.precedence = 3;
-      Integral.prototype._eq = function(other) {
-        return this.expression.eq(other.expression) && this.variable.eq(other.variable);
-      };
       Integral.prototype.to_free_tex = function() {
-        return "\\int\\left[" + (this.expression.to_tex()) + "\\right]d" + (this.variable.to_tex());
+        return "\\int\\left[" + (this.comps.expression.to_tex()) + "\\right]d" + (this.comps.variable.to_tex());
       };
       Integral.prototype.to_free_string = function() {
-        return "int{[" + (this.expression.to_tex()) + "]d" + (this.variable.to_tex()) + "}";
+        return "int{[" + (this.comps.expression.to_tex()) + "]d" + (this.comps.variable.to_tex()) + "}";
       };
       return Integral;
     })(),
     Derivative: (function() {
-      Derivative = function(_arg, _arg2) {
-        this.variable = _arg2;
-        this.expression = _arg;
-        return this;
+      Derivative = function() {
+        return Value.apply(this, arguments);
       };
       __extends(Derivative, Value);
       Derivative.prototype.precedence = 3;
-      Derivative.prototype._eq = function(other) {
-        return this.expression.eq(other.expression) && this.variable.eq(other.variable);
-      };
       Derivative.prototype.to_free_tex = function() {
-        return "\\tfrac{d}{d" + (this.variable.to_tex()) + "}\\left[" + (this.expression.to_tex()) + "\\right]";
+        return "\\tfrac{d}{d" + (this.comps.variable.to_tex()) + "}\\left[" + (this.comps.expression.to_tex()) + "\\right]";
       };
       Derivative.prototype.to_free_string = function() {
-        return "d/d" + (this.variable.to_tex()) + "[" + (this.expression.to_tex()) + "]";
+        return "d/d" + (this.comps.variable.to_tex()) + "[" + (this.comps.expression.to_tex()) + "]";
       };
       return Derivative;
     })(),
     WithMarginOfError: (function() {
-      WithMarginOfError = function(_arg, _arg2) {
-        this.margin = _arg2;
-        this.value = _arg;
-        return this;
+      WithMarginOfError = function() {
+        return Value.apply(this, arguments);
       };
       __extends(WithMarginOfError, Value);
       WithMarginOfError.prototype.precedence = 1.5;
       WithMarginOfError.prototype.tex_symbol = " \\pm ";
       WithMarginOfError.prototype.string_symbol = " ± ";
       WithMarginOfError.prototype.to_free_string = function() {
-        return !this.margin.eq(shore(0)) ? ("" + (this.value.to_string(this.precedence)) + " " + (this.string_symbol) + " " + (this.margin.to_string(this.precedence))) : this.value.to_string(this.precedence);
+        return !this.margin.eq(shore(0)) ? ("" + (this.comps.value.to_string(this.precedence)) + "\
+				 " + (this.string_symbol) + "\
+				 " + (this.comps.margin.to_string(this.precedence))) : this.comps.value.to_string(this.precedence);
       };
       WithMarginOfError.prototype.to_free_tex = function() {
-        return !this.margin.eq(shore(0)) ? ("" + (this.value.to_tex(this.precedence)) + " " + (this.tex_symbol) + " " + (this.margin.to_tex(this.precedence))) : this.value.to_tex(this.precedence);
+        return !this.margin.eq(shore(0)) ? ("" + (this.comps.value.to_tex(this.precedence)) + "\
+				 " + (this.tex_symbol) + "\
+				 " + (this.comps.margin.to_tex(this.precedence))) : this.comps.value.to_tex(this.precedence);
       };
       return WithMarginOfError;
     })(),
@@ -513,40 +619,49 @@
       return Equality;
     })(),
     PendingSubstitution: (function() {
-      PendingSubstitution = function(_arg, _arg2) {
-        this.substitution = _arg2;
-        this.expression = _arg;
-        this.is_a_value = this.expression.is_a_value;
+      PendingSubstitution = function(comps) {
+        comps.is_a_value = comps.expression.is_a_value;
+        PendingSubstitution.__super__.constructor.call(this, comps);
         return this;
       };
       __extends(PendingSubstitution, Value);
       PendingSubstitution.prototype.precedence = 2.5;
-      PendingSubstitution.prototype.thing = "PendingSubstitution";
-      PendingSubstitution.prototype._eq = function(other) {
-        return this.expression.eq(other.expression) && this.substitution.eq(other.substitution);
-      };
       PendingSubstitution.prototype.string_symbol = "";
       PendingSubstitution.prototype.tex_symbol = "";
       PendingSubstitution.prototype.to_free_string = function() {
-        return (this.expression.to_string(this.precedence)) + this.string_symbol + (this.substitution.to_string(this.precedence));
+        return (this.comps.expression.to_string(this.precedence)) + this.string_symbol + (this.comps.substitution.to_string(this.precedence));
       };
       PendingSubstitution.prototype.to_free_tex = function() {
-        return (this.expression.to_tex(this.precedence)) + this.tex_symbol + (this.substitution.to_tex(this.precedence));
+        return (this.comps.expression.to_tex(this.precedence)) + this.tex_symbol + (this.comps.substitution.to_tex(this.precedence));
       };
       return PendingSubstitution;
     })()
   };
+  _ref = __types;
   for (name in _ref) {
     if (!__hasProp.call(_ref, name)) continue;
-    value = _ref[name];
-    shore[name] = value;
-    if (utility.uncamel(name)) {
-      shore[name].prototype.type = name;
-    }
+    type = _ref[name];
+    type.prototype.type = type;
   }
-  _ref = {
-    CANOperation: function() {
-      return CANOperation.__super__._get_canonizers.apply(this).concat([
+  utility.extend(shore, __types);
+  utility.make_providers(shore);
+  __definers_of_canonizers = [
+    "Thing", function() {
+      var _i, _j, _ref2, _result, significance;
+      _result = []; _ref2 = shore.significances;
+      for (_j in _ref2) {
+        if (!__hasProp.call(_ref2, _j)) continue;
+        (function() {
+          var significance = _j;
+          var _i = _ref2[_j];
+          return _result.push(canonization(significance, "components " + (significance), function() {
+            return this.provider(shore.canonize(this.comps, significance, significance));
+          }));
+        })();
+      }
+      return _result;
+    }, "CANOperation", function() {
+      return this.__super__.canonizers.concat([
         canonization("minor", "single argument", function() {
           if (this.operands.length === 1) {
             return this.operands[0];
@@ -557,9 +672,8 @@
           }
         })
       ]);
-    },
-    Sum: function() {
-      return Sum.__super__._get_canonizers.apply(this).concat([
+    }, "Sum", function() {
+      return this.__super__.canonizers.concat([
         canonization("major", "numbers in sum", function() {
           var _i, _len, _ref2, not_numbers, numbers, operand, sum;
           numbers = [];
@@ -567,7 +681,7 @@
           _ref2 = this.operands;
           for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
             operand = _ref2[_i];
-            if (operand.type === "Number") {
+            if (operand.type === shore.Number) {
               numbers.push(operand);
             } else {
               not_numbers.push(operand);
@@ -578,57 +692,23 @@
             while (numbers.length) {
               sum += numbers.pop().value;
             }
-            return shore.sum([shore.number(sum)].concat(not_numbers));
+            return shore.sum({
+              operands: [shore.number(sum)].concat(not_numbers)
+            });
           }
         })
       ]);
-    },
-    Equality: function() {
-      return Equality.__super__._get_canonizers.apply(this).concat([
-        canonization("minor", "minors in equality", function() {
-          var _i, _len, _ref2, _result, o;
-          return shore.equality((function() {
-            _result = []; _ref2 = this.operands;
-            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-              o = _ref2[_i];
-              _result.push(o.canonize("minor", "minor"));
-            }
-            return _result;
-          }).call(this));
-        }), canonization("moderate", "moderates in equality", function() {
-          var _i, _len, _ref2, _result, o;
-          return shore.equality((function() {
-            _result = []; _ref2 = this.operands;
-            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-              o = _ref2[_i];
-              _result.push(o.canonize("moderate", "moderate"));
-            }
-            return _result;
-          }).call(this));
-        }), canonization("majors", "majors in equality", function() {
-          var _i, _len, _ref2, _result, o;
-          return shore.equality((function() {
-            _result = []; _ref2 = this.operands;
-            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-              o = _ref2[_i];
-              _result.push(o.canonize("majors", "majors"));
-            }
-            return _result;
-          }).call(this));
-        })
-      ]);
     }
-  };
-  for (name in _ref) {
-    if (!__hasProp.call(_ref, name)) continue;
-    getter_of_canonizers = _ref[name];
-    shore[name].prototype._get_canonizers = getter_of_canonizers;
-  }
-  canonization = shore._canonization;
-  shore._make_providers();
-  if (window) {
-    window.shore = shore;
-    window._S = window.S;
-    window.S = shore;
+  ];
+  _ref = __definers_of_canonizers;
+  for (index in _ref) {
+    if (!__hasProp.call(_ref, index)) continue;
+    _i = _ref[index];
+    if (!index % 2) {
+      _ref2 = [__definers_of_canonizers[index], __definers_of_canonizers[index + 1]];
+      name = _ref2[0];
+      definer = _ref2[1];
+      shore[name].canonizers = definer.apply(shore[name]);
+    }
   }
 }).call(this);
