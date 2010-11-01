@@ -207,6 +207,36 @@ __not_types =
 		# Canonizes an object or recrusively within Arrays and Objects.
 		
 		utility.call_in ((o, args...) -> o.canonize args...), object, arguments
+	
+	eq: (a, b) ->
+		# Determines equality of two objects or recursively within arrays and
+		# objects.
+		
+		if utility.is_object a
+			return false if not utility.is_object b
+			
+			for key of a
+				return false if key not of b
+			for key of b
+				return false if key not of a
+			for key of a
+				return false if not shore.eq a[key], b[key]
+			true
+		else if utility.is_array a
+			return false if not utility.is_array b
+			return false if a.length isnt b.length
+			
+			for index of a
+				return false if not shore.eq a[index], b[index]
+			
+			true
+		else
+			return false if a?.type isnt b?.type
+			
+			if a.eq?
+				a.eq(b)
+			else
+				a is b # if it doesn't have .eq and isn't an Array or Object, just ==
 
 utility.extend shore, __not_types
 
@@ -230,7 +260,7 @@ __types =
 					throw new Error "#{@type ? @constructor} object requires value for #{name}"
 		
 		eq: (other) ->
-			@type is other.type and @components is other.components
+			@type is other?.type and shore.eq @comps, other.comps
 		
 		canonize: (enough, excess) ->
 			enough = shore._significance enough
@@ -241,6 +271,7 @@ __types =
 			loop
 				next = result.next_canonization()
 				if not next.length then break
+				
 				[{significance: significance}, value] = next
 				
 				if excess? and significance >= excess then break
@@ -506,7 +537,7 @@ __definers_of_canonizers = [
 	
 	def "CANOperation", -> @__super__.canonizers.concat [
 		canonization "minor", "single argument", ->
-			@operands[0] if @comps.operands.length is 1
+			@comps.operands[0] if @comps.operands.length is 1
 		
 		canonization "minor", "no arguments", ->
 			@get_nullary() if @comps.operands.length is 0 and @get_nullary
@@ -524,10 +555,10 @@ __definers_of_canonizers = [
 					not_numbers.push operand
 			
 			if numbers.length > 1
-				sum = @get_nullary().value
+				sum = @get_nullary().comps.value
 				
 				while numbers.length
-					sum += numbers.pop().value
+					sum += numbers.pop().comps.value
 				
 				shore.sum operands: [ shore.number value: sum ].concat not_numbers
 	]
@@ -536,4 +567,3 @@ __definers_of_canonizers = [
 for definition in __definers_of_canonizers
 	[name, definer] = definition
 	shore[name]::canonizers = definer.apply shore[name]
-

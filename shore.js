@@ -203,6 +203,60 @@
         args = __slice.call(arguments, 1);
         return o.canonize.apply(o, args);
       }, object, arguments);
+    },
+    eq: function(a, b) {
+      var _i, _ref, index, key;
+      if (utility.is_object(a)) {
+        if (!utility.is_object(b)) {
+          return false;
+        }
+        _ref = a;
+        for (key in _ref) {
+          if (!__hasProp.call(_ref, key)) continue;
+          _i = _ref[key];
+          if (!(key in b)) {
+            return false;
+          }
+        }
+        _ref = b;
+        for (key in _ref) {
+          if (!__hasProp.call(_ref, key)) continue;
+          _i = _ref[key];
+          if (!(key in a)) {
+            return false;
+          }
+        }
+        _ref = a;
+        for (key in _ref) {
+          if (!__hasProp.call(_ref, key)) continue;
+          _i = _ref[key];
+          if (!shore.eq(a[key], b[key])) {
+            return false;
+          }
+        }
+        return true;
+      } else if (utility.is_array(a)) {
+        if (!utility.is_array(b)) {
+          return false;
+        }
+        if (a.length !== b.length) {
+          return false;
+        }
+        _ref = a;
+        for (index in _ref) {
+          if (!__hasProp.call(_ref, index)) continue;
+          _i = _ref[index];
+          if (!shore.eq(a[index], b[index])) {
+            return false;
+          }
+        }
+        return true;
+      } else {
+        if (((typeof a === "undefined" || a === null) ? undefined : a.type) !== ((typeof b === "undefined" || b === null) ? undefined : b.type)) {
+          return false;
+        }
+        return (typeof (_ref = a.eq) !== "undefined" && _ref !== null) ? a.eq(b) : a === b;
+      }
     }
   };
   utility.extend(shore, __not_types);
@@ -224,7 +278,7 @@
       Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
       Thing.prototype.eq = function(other) {
-        return this.type === other.type && this.components === other.components;
+        return this.type === other.type && shore.eq(this.comps, other.comps);
       };
       Thing.prototype.canonize = function(enough, excess) {
         var _ref, _ref2, next, result, significance, value;
@@ -665,7 +719,7 @@
       return this.__super__.canonizers.concat([
         canonization("minor", "single argument", function() {
           if (this.comps.operands.length === 1) {
-            return this.operands[0];
+            return this.comps.operands[0];
           }
         }), canonization("minor", "no arguments", function() {
           if (this.comps.operands.length === 0 && this.get_nullary) {
@@ -689,9 +743,9 @@
             }
           }
           if (numbers.length > 1) {
-            sum = this.get_nullary().value;
+            sum = this.get_nullary().comps.value;
             while (numbers.length) {
-              sum += numbers.pop().value;
+              sum += numbers.pop().comps.value;
             }
             return shore.sum({
               operands: [
