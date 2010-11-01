@@ -206,7 +206,7 @@ __not_types =
 	canonize: (object, arguments...) ->
 		# Canonizes an object or recrusively within Arrays and Objects.
 		
-		utility.call_in ((o, args...) -> o.canonize args...), object, arguments
+		utility.call_in object, ((o, args...) -> o.canonize args...), arguments...
 	
 	eq: (a, b) ->
 		# Determines equality of two objects or recursively within arrays and
@@ -308,6 +308,7 @@ __types =
 		toString: -> @to_cs()
 		
 	Value: class Value extends Thing
+		known_constant: false
 		is_a_value: true
 		
 		plus: (other) -> shore.sum operands: [this, other]
@@ -330,6 +331,7 @@ __types =
 				this.given other
 	
 	Number: class Number extends Value
+		known_constant: true
 		precedence: 10
 		req_comps: sss "value"
 		
@@ -561,6 +563,9 @@ __definers_of_canonizers = [
 						new_operands.push operand
 				
 				@provider operands: new_operands
+		
+		canonization "major", "remove redundant nullaries", ->
+			null # TODO
 	]
 	
 	def "Sum", -> @__super__.canonizers.concat [
@@ -604,16 +609,12 @@ __definers_of_canonizers = [
 	]
 	
 	def "Integral", -> @__super__.canonizers.concat [
-		canonization "major", "integration over self", ->
-			if @comps.variable.eq @comps.expression
-				shore 1
-		
-		canonization "major", "integration over number", ->
-			if @comps.variable.type is shore.Number
+		canonization "major", "integration over constant", ->
+			if @comps.variable.known_constant
 				shore 0
 		
-		canonization "major", "integration of number", ->
-			if @comps.expression.type is shore.Number
+		canonization "major", "integration of constant", ->
+			if @comps.expression.known_constant
 				@comps.expression.times @comps.variable
 	]
 	
@@ -622,12 +623,12 @@ __definers_of_canonizers = [
 			if @comps.variable.eq @comps.expression
 				shore 1
 		
-		canonization "major", "differentiation over number", ->
-			if @comps.variable.type is shore.Number
+		canonization "major", "differentiation over constant", ->
+			if @comps.variable.known_constant
 				shore 0
 		
-		canonization "major", "differentiation of number", ->
-			if @comps.expression.type is shore.Number
+		canonization "major", "differentiation of constant", ->
+			if @comps.expression.known_constant
 				shore 0
 	]
 ]

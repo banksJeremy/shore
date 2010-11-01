@@ -198,11 +198,11 @@
     canonize: function(object) {
       var arguments;
       arguments = __slice.call(arguments, 1);
-      return utility.call_in(function(o) {
+      return utility.call_in.apply(utility, [object, (function(o) {
         var args;
         args = __slice.call(arguments, 1);
         return o.canonize.apply(o, args);
-      }, object, arguments);
+      })].concat(arguments));
     },
     eq: function(a, b) {
       var _i, _ref, index, key;
@@ -343,6 +343,7 @@
         return Thing.apply(this, arguments);
       };
       __extends(Value, Thing);
+      Value.prototype.known_constant = false;
       Value.prototype.is_a_value = true;
       Value.prototype.plus = function(other) {
         return shore.sum({
@@ -415,6 +416,7 @@
         return Value.apply(this, arguments);
       };
       __extends(Number, Value);
+      Number.prototype.known_constant = true;
       Number.prototype.precedence = 10;
       Number.prototype.req_comps = sss("value");
       Number.prototype.neg = function() {
@@ -755,6 +757,8 @@
               operands: new_operands
             });
           }
+        }), canonization("major", "remove redundant nullaries", function() {
+          return null;
         })
       ]);
     }), def("Sum", function() {
@@ -819,22 +823,20 @@
       ]);
     }), def("Integral", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "integration over self", function() {
-          return this.comps.variable.eq(this.comps.expression) ? shore(1) : null;
-        }), canonization("major", "integration over number", function() {
-          return this.comps.variable.type === shore.Number ? shore(0) : null;
-        }), canonization("major", "integration of number", function() {
-          return this.comps.expression.type === shore.Number ? this.comps.expression.times(this.comps.variable) : null;
+        canonization("major", "integration over constant", function() {
+          return this.comps.variable.known_constant ? shore(0) : null;
+        }), canonization("major", "integration of constant", function() {
+          return this.comps.expression.known_constant ? this.comps.expression.times(this.comps.variable) : null;
         })
       ]);
     }), def("Derivative", function() {
       return this.__super__.canonizers.concat([
         canonization("major", "differentiation over self", function() {
           return this.comps.variable.eq(this.comps.expression) ? shore(1) : null;
-        }), canonization("major", "differentiation over number", function() {
-          return this.comps.variable.type === shore.Number ? shore(0) : null;
-        }), canonization("major", "differentiation of number", function() {
-          return this.comps.expression.type === shore.Number ? shore(0) : null;
+        }), canonization("major", "differentiation over constant", function() {
+          return this.comps.variable.known_constant ? shore(0) : null;
+        }), canonization("major", "differentiation of constant", function() {
+          return this.comps.expression.known_constant ? shore(0) : null;
         })
       ]);
     })
