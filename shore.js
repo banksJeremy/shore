@@ -777,10 +777,40 @@
             while (numbers.length) {
               sum += numbers.pop().comps.value;
             }
-            return shore.sum({
+            return this.provider({
               operands: [
                 shore.number({
                   value: sum
+                })
+              ].concat(not_numbers)
+            });
+          }
+        })
+      ]);
+    }), def("Product", function() {
+      return this.__super__.canonizers.concat([
+        canonization("major", "numbers in product", function() {
+          var _i, _len, _ref2, not_numbers, numbers, operand, product;
+          numbers = [];
+          not_numbers = [];
+          _ref2 = this.comps.operands;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            operand = _ref2[_i];
+            if (operand.type === shore.Number) {
+              numbers.push(operand);
+            } else {
+              not_numbers.push(operand);
+            }
+          }
+          if (numbers.length > 1) {
+            product = this.get_nullary().comps.value;
+            while (numbers.length) {
+              product *= numbers.pop().comps.value;
+            }
+            return this.provider({
+              operands: [
+                shore.number({
+                  value: product
                 })
               ].concat(not_numbers)
             });

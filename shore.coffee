@@ -580,7 +580,27 @@ __definers_of_canonizers = [
 				while numbers.length
 					sum += numbers.pop().comps.value
 				
-				shore.sum operands: [ shore.number value: sum ].concat not_numbers
+				@provider operands: [ shore.number value: sum ].concat not_numbers
+	]
+	
+	def "Product", -> @__super__.canonizers.concat [
+		canonization "major", "numbers in product", ->
+			numbers = []
+			not_numbers = []
+			
+			for operand in @comps.operands
+				if operand.type is shore.Number
+					numbers.push operand
+				else
+					not_numbers.push operand
+			
+			if numbers.length > 1
+				product = @get_nullary().comps.value
+				
+				while numbers.length
+					product *= numbers.pop().comps.value
+				
+				@provider operands: [ shore.number value: product ].concat not_numbers
 	]
 ]
 
