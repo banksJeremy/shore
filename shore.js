@@ -817,6 +817,26 @@
           }
         })
       ]);
+    }), def("Integral", function() {
+      return this.__super__.canonizers.concat([
+        canonization("major", "integration over self", function() {
+          return this.comps.variable.eq(this.comps.expression) ? shore(1) : null;
+        }), canonization("major", "integration over number", function() {
+          return this.comps.variable.type === shore.Number ? shore(0) : null;
+        }), canonization("major", "integration of number", function() {
+          return this.comps.expression.type === shore.Number ? this.comps.expression.times(this.comps.variable) : null;
+        })
+      ]);
+    }), def("Derivative", function() {
+      return this.__super__.canonizers.concat([
+        canonization("major", "differentiation over self", function() {
+          return this.comps.variable.eq(this.comps.expression) ? shore(1) : null;
+        }), canonization("major", "differentiation over number", function() {
+          return this.comps.variable.type === shore.Number ? shore(0) : null;
+        }), canonization("major", "differentiation of number", function() {
+          return this.comps.expression.type === shore.Number ? shore(0) : null;
+        })
+      ]);
     })
   ];
   _ref = __definers_of_canonizers;

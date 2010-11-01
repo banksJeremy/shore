@@ -602,6 +602,34 @@ __definers_of_canonizers = [
 				
 				@provider operands: [ shore.number value: product ].concat not_numbers
 	]
+	
+	def "Integral", -> @__super__.canonizers.concat [
+		canonization "major", "integration over self", ->
+			if @comps.variable.eq @comps.expression
+				shore 1
+		
+		canonization "major", "integration over number", ->
+			if @comps.variable.type is shore.Number
+				shore 0
+		
+		canonization "major", "integration of number", ->
+			if @comps.expression.type is shore.Number
+				@comps.expression.times @comps.variable
+	]
+	
+	def "Derivative", -> @__super__.canonizers.concat [
+		canonization "major", "differentiation over self", ->
+			if @comps.variable.eq @comps.expression
+				shore 1
+		
+		canonization "major", "differentiation over number", ->
+			if @comps.variable.type is shore.Number
+				shore 0
+		
+		canonization "major", "differentiation of number", ->
+			if @comps.expression.type is shore.Number
+				shore 0
+	]
 ]
 
 for definition in __definers_of_canonizers
