@@ -217,6 +217,9 @@ __types =
 	# The types of the shore module.
 	
 	Thing: class Thing
+		# The underlying mechanisms of all of our types, without anything of
+		# actual math.
+		
 		precedence: 0
 		
 		req_comps: []
@@ -227,7 +230,7 @@ __types =
 					throw new Error "#{@type ? @constructor} object requires value for #{name}"
 		
 		eq: (other) ->
-			@type is other.type and @_eq other
+			@type is other.type and @components is other.components
 		
 		canonize: (enough, excess) ->
 			enough = shore._significance enough
@@ -304,10 +307,9 @@ __types =
 		precedence: 10
 		req_comps: sss "value"
 		
-		_eq: (other) -> @value is other.value
-		neg: -> shore.number value: -@value
-		to_free_tex: -> String @value
-		to_free_string: -> String @value
+		neg: -> shore.number value: -@comps.value
+		to_free_tex: -> String @comps.value
+		to_free_string: -> String @comps.value
 	
 	Identifier: class Identifier extends Value
 		precedence: 10
@@ -325,29 +327,19 @@ __types =
 			
 			super { tex_value: tex_value, value: value }
 		
-		_eq: (other) -> @value is other.value
-		to_free_tex: -> @tex_value
-		to_free_string: -> @string_value
+		to_free_tex: -> @comps.tex_value
+		to_free_string: -> @comps.value
 		
 		sub: (other) ->
-			string = "#{@string_value}_#{other.to_string()}"
-			tex = "{#{@tex_value}}_{#{other.to_tex()}}"
+			string = "#{@comps.value}_#{other.to_string()}"
+			tex = "{#{@comps.tex_value}}_{#{other.to_tex()}}"
+			
 			shore.identifier value: string, tex_value: tex
 	
 	CANOperation: class CANOperation extends Value
 		# Commutitive, Assocative N-ary Operation
 		
 		req_comps: sss "operands"
-		
-		_eq: (other) ->
-			if @comps.operands.length isnt other.operands.length
-				return false
-			
-			for i in [0...@comps.operands.length]
-				if not (@comps.operands[i].eq other.operands[i])
-					return false
-			
-			true
 		
 		to_free_tex: ->
 			(((operand.to_tex @precedence) for operand in @comps.operands)
@@ -381,7 +373,7 @@ __types =
 			   operands[0].type is shore.Number and
 				 operands[1].type isnt shore.Number
 				
-				(if operands[0].value isnt -1 then operands[0].to_tex @precedence else "-") +
+				(if operands[0].comps.value isnt -1 then operands[0].to_tex @precedence else "-") +
 				(((operand.to_tex @precedence) for operand in operands.slice 1)
 				 .join @tex_symbol)
 			else
@@ -396,8 +388,8 @@ __types =
 				if term.type is shore.Exponent
 					exponent = term.exponent
 					
-					if exponent.type is shore.Number and exponent.value < 0
-						negative_exponents.push shore.exponent base: term.base, exponent: exponent.neg()
+					if exponent.type is shore.Number and exponent.comps.value < 0
+						negative_exponents.push shore.exponent base: term.comps.base, exponent: exponent.neg()
 					else
 						positive_exponents.push term
 				else
@@ -419,27 +411,20 @@ __types =
 	Exponent: class Exponent extends Value
 		precedence: 5
 		
-		_eq: (other) ->
-			@comps.base.eq(other.base) and @comps.exponent.eq(other.exponent)
-		
 		to_free_tex: ->
-			if @comps.exponent.type is shore.Number and @comps.exponent.value is 1
+			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
 				@comps.base.to_tex @precedence
 			else
 				"{#{@comps.base.to_tex @precedence}}^{#{@comps.exponent.to_tex()}}"
 		
 		to_free_string: ->
-			if @comps.exponent.type is shore.Number and @comps.exponent.value is 1
+			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
 				@comps.base.to_tex @precedence
 			else
 				"#{@comps.base.to_string @precedence}^#{@comps.exponent.to_string()}"
 		
 	Integral: class Integral extends Value
 		precedence: 3
-		
-		_eq: (other) ->
-			@comps.expression.eq(other.expression) and
-			@comps.variable.eq(other.variable)
 		
 		to_free_tex: ->
 			"\\int\\left[#{@comps.expression.to_tex()}\\right]d#{@comps.variable.to_tex()}"
@@ -449,9 +434,6 @@ __types =
 	
 	Derivative: class Derivative extends Value
 		precedence: 3
-		
-		_eq: (other) ->
-			@expression.eq(other.expression) and @comps.variable.eq(other.variable)
 		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@comps.variable.to_tex()}}\\left[#{@comps.expression.to_tex()}\\right]"
@@ -496,9 +478,6 @@ __types =
 			comps.is_a_value = comps.expression.is_a_value
 			super comps
 		
-		_eq: (other) ->
-			@expression.eq(other.expression) and @substitution.eq(other.substitution)
-		
 		string_symbol: ""
 		tex_symbol: ""
 		
@@ -514,7 +493,7 @@ __types =
 
 # Set the .type property of each type to itself
 for name, type of __types
-	type.type = type
+	type::type = type
 
 utility.extend shore, __types
 utility.make_providers shore

@@ -224,7 +224,7 @@
       Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
       Thing.prototype.eq = function(other) {
-        return this.type === other.type && this._eq(other);
+        return this.type === other.type && this.components === other.components;
       };
       Thing.prototype.canonize = function(enough, excess) {
         var _ref, _ref2, next, result, significance, value;
@@ -369,19 +369,16 @@
       __extends(Number, Value);
       Number.prototype.precedence = 10;
       Number.prototype.req_comps = sss("value");
-      Number.prototype._eq = function(other) {
-        return this.value === other.value;
-      };
       Number.prototype.neg = function() {
         return shore.number({
-          value: -this.value
+          value: -this.comps.value
         });
       };
       Number.prototype.to_free_tex = function() {
-        return String(this.value);
+        return String(this.comps.value);
       };
       Number.prototype.to_free_string = function() {
-        return String(this.value);
+        return String(this.comps.value);
       };
       return Number;
     })(),
@@ -409,19 +406,16 @@
       __extends(Identifier, Value);
       Identifier.prototype.precedence = 10;
       Identifier.prototype.req_comps = sss("value tex_value");
-      Identifier.prototype._eq = function(other) {
-        return this.value === other.value;
-      };
       Identifier.prototype.to_free_tex = function() {
-        return this.tex_value;
+        return this.comps.tex_value;
       };
       Identifier.prototype.to_free_string = function() {
-        return this.string_value;
+        return this.comps.value;
       };
       Identifier.prototype.sub = function(other) {
         var string, tex;
-        string = ("" + (this.string_value) + "_" + (other.to_string()));
-        tex = ("{" + (this.tex_value) + "}_{" + (other.to_tex()) + "}");
+        string = ("" + (this.comps.value) + "_" + (other.to_string()));
+        tex = ("{" + (this.comps.tex_value) + "}_{" + (other.to_tex()) + "}");
         return shore.identifier({
           value: string,
           tex_value: tex
@@ -435,19 +429,6 @@
       };
       __extends(CANOperation, Value);
       CANOperation.prototype.req_comps = sss("operands");
-      CANOperation.prototype._eq = function(other) {
-        var _ref, i;
-        if (this.comps.operands.length !== other.operands.length) {
-          return false;
-        }
-        _ref = this.comps.operands.length;
-        for (i = 0; (0 <= _ref ? i < _ref : i > _ref); (0 <= _ref ? i += 1 : i -= 1)) {
-          if (!(this.comps.operands[i].eq(other.operands[i]))) {
-            return false;
-          }
-        }
-        return true;
-      };
       CANOperation.prototype.to_free_tex = function() {
         var _i, _len, _ref, _result, operand;
         return (function() {
@@ -505,7 +486,7 @@
       Product.prototype._to_free_tex = function(operands) {
         var _i, _len, _ref, _result, operand;
         "Without checking for negative powers.";
-        return operands.length > 1 && operands[0].type === shore.Number && operands[1].type !== shore.Number ? (operands[0].value !== -1 ? operands[0].to_tex(this.precedence) : "-") + ((function() {
+        return operands.length > 1 && operands[0].type === shore.Number && operands[1].type !== shore.Number ? (operands[0].comps.value !== -1 ? operands[0].to_tex(this.precedence) : "-") + ((function() {
           _result = []; _ref = operands.slice(1);
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             operand = _ref[_i];
@@ -530,9 +511,9 @@
           term = _ref[_i];
           if (term.type === shore.Exponent) {
             exponent = term.exponent;
-            if (exponent.type === shore.Number && exponent.value < 0) {
+            if (exponent.type === shore.Number && exponent.comps.value < 0) {
               negative_exponents.push(shore.exponent({
-                base: term.base,
+                base: term.comps.base,
                 exponent: exponent.neg()
               }));
             } else {
@@ -570,14 +551,11 @@
       };
       __extends(Exponent, Value);
       Exponent.prototype.precedence = 5;
-      Exponent.prototype._eq = function(other) {
-        return this.comps.base.eq(other.base) && this.comps.exponent.eq(other.exponent);
-      };
       Exponent.prototype.to_free_tex = function() {
-        return this.comps.exponent.type === shore.Number && this.comps.exponent.value === 1 ? this.comps.base.to_tex(this.precedence) : ("{" + (this.comps.base.to_tex(this.precedence)) + "}^{" + (this.comps.exponent.to_tex()) + "}");
+        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_tex(this.precedence) : ("{" + (this.comps.base.to_tex(this.precedence)) + "}^{" + (this.comps.exponent.to_tex()) + "}");
       };
       Exponent.prototype.to_free_string = function() {
-        return this.comps.exponent.type === shore.Number && this.comps.exponent.value === 1 ? this.comps.base.to_tex(this.precedence) : ("" + (this.comps.base.to_string(this.precedence)) + "^" + (this.comps.exponent.to_string()));
+        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_tex(this.precedence) : ("" + (this.comps.base.to_string(this.precedence)) + "^" + (this.comps.exponent.to_string()));
       };
       return Exponent;
     })(),
@@ -587,9 +565,6 @@
       };
       __extends(Integral, Value);
       Integral.prototype.precedence = 3;
-      Integral.prototype._eq = function(other) {
-        return this.comps.expression.eq(other.expression) && this.comps.variable.eq(other.variable);
-      };
       Integral.prototype.to_free_tex = function() {
         return "\\int\\left[" + (this.comps.expression.to_tex()) + "\\right]d" + (this.comps.variable.to_tex());
       };
@@ -604,9 +579,6 @@
       };
       __extends(Derivative, Value);
       Derivative.prototype.precedence = 3;
-      Derivative.prototype._eq = function(other) {
-        return this.expression.eq(other.expression) && this.comps.variable.eq(other.variable);
-      };
       Derivative.prototype.to_free_tex = function() {
         return "\\tfrac{d}{d" + (this.comps.variable.to_tex()) + "}\\left[" + (this.comps.expression.to_tex()) + "\\right]";
       };
@@ -654,9 +626,6 @@
       };
       __extends(PendingSubstitution, Value);
       PendingSubstitution.prototype.precedence = 2.5;
-      PendingSubstitution.prototype._eq = function(other) {
-        return this.expression.eq(other.expression) && this.substitution.eq(other.substitution);
-      };
       PendingSubstitution.prototype.string_symbol = "";
       PendingSubstitution.prototype.tex_symbol = "";
       PendingSubstitution.prototype.to_free_string = function() {
@@ -672,7 +641,7 @@
   for (name in _ref) {
     if (!__hasProp.call(_ref, name)) continue;
     type = _ref[name];
-    type.type = type;
+    type.prototype.type = type;
   }
   utility.extend(shore, __types);
   utility.make_providers(shore);
