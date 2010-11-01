@@ -414,7 +414,7 @@ __types =
 			
 			for term in @comps.operands
 				if term.type is shore.Exponent
-					exponent = term.exponent
+					exponent = term.comps.exponent
 					
 					if exponent.type is shore.Number and exponent.comps.value < 0
 						negative_exponents.push shore.exponent base: term.comps.base, exponent: exponent.neg()

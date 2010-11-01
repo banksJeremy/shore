@@ -560,7 +560,7 @@
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           term = _ref[_i];
           if (term.type === shore.Exponent) {
-            exponent = term.exponent;
+            exponent = term.comps.exponent;
             if (exponent.type === shore.Number && exponent.comps.value < 0) {
               negative_exponents.push(shore.exponent({
                 base: term.comps.base,
