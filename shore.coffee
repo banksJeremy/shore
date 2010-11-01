@@ -44,10 +44,10 @@ shore = root.S = root.shore = (args...) ->
 		arg = args[0]
 		
 		if typeof arg is "number"
-			S.number value: arg
+			shore.number value: arg
 		else if typeof arg is "string"
 			if /^[a-zA-Z][a-zA-Z0-9]*'*$/.test arg
-				S.identifier value: arg
+				shore.identifier value: arg
 			else
 				if shore.parser?
 					shore.parser.parse arg
@@ -250,16 +250,11 @@ __types =
 			result
 		
 		next_canonization: ->
-			for canonization in @get_canonizers()
+			for canonization in @canonizers
 				value = canonization.apply this
 				
 				if value and not @eq(value)
 					return [canonization, value]
-		
-		get_canonizers: -> @_get_canonizers() #(utility.nullary_proto_memo "get_canonizers",
-			#-> @_get_canonizers())
-		
-		_get_canonizers: -> []
 		
 		to_tex: (context) ->
 			context ?= 1
@@ -278,7 +273,7 @@ __types =
 		
 		to_free_string: -> "(shore.#{@type} value)"
 		to_free_tex: -> "\\text{(shore.#{@type} value)}"
-		to_cs: -> "(shore.#{@type.toLowerCase()} #{@comps})"
+		to_cs: -> "(shore.#{@name.toLowerCase()} #{@comps})"
 		toString: -> @to_cs()
 		
 	Value: class Value extends Thing
@@ -406,7 +401,7 @@ __types =
 				top
 		
 		to_free_string: ->
-			(operand.to_string() for operand in @comps.operands).join ""
+			(operand.to_string(20) for operand in @comps.operands).join ""
 	
 	Exponent: class Exponent extends Value
 		precedence: 5
@@ -494,30 +489,35 @@ __types =
 # Set the .type property of each type to itself
 for name, type of __types
 	type::type = type
+	type::name = name
 
 utility.extend shore, __types
 utility.make_providers shore
 
+# in defining canonizations
+def = (args...) -> args
+canonization = shore.canonization
+
 __definers_of_canonizers = [
-	"Thing", -> 
+	def "Thing", -> 
 		for significance of shore.significances
 			canonization significance, "components #{significance}", ->
 				@provider shore.canonize @comps, significance, significance
 	
-	"CANOperation", -> @__super__.canonizers.concat [
+	def "CANOperation", -> @__super__.canonizers.concat [
 		canonization "minor", "single argument", ->
-			@operands[0] if @operands.length is 1
+			@operands[0] if @comps.operands.length is 1
 		
 		canonization "minor", "no arguments", ->
-			@get_nullary() if @operands.length is 0 and @get_nullary
+			@get_nullary() if @comps.operands.length is 0 and @get_nullary
 	]
 	
-	"Sum", -> @__super__.canonizers.concat [
+	def "Sum", -> @__super__.canonizers.concat [
 		canonization "major", "numbers in sum", ->
 			numbers = []
 			not_numbers = []
 			
-			for operand in @operands
+			for operand in @comps.operands
 				if operand.type is shore.Number
 					numbers.push operand
 				else
@@ -529,12 +529,11 @@ __definers_of_canonizers = [
 				while numbers.length
 					sum += numbers.pop().value
 				
-				shore.sum operands: [ shore.number sum ].concat not_numbers
+				shore.sum operands: [ shore.number value: sum ].concat not_numbers
 	]
 ]
 
-for index of __definers_of_canonizers
-	if not index % 2
-		[name, definer] = [__definers_of_canonizers[index], __definers_of_canonizers[index + 1]]
-		shore[name].canonizers = definer.apply shore[name]
+for definition in __definers_of_canonizers
+	[name, definer] = definition
+	shore[name]::canonizers = definer.apply shore[name]
 

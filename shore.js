@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _ref, _ref2, definer, former_S, former_shore, index, name, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -24,12 +24,12 @@
     if (args.length === 1) {
       arg = args[0];
       if (typeof arg === "number") {
-        return S.number({
+        return shore.number({
           value: arg
         });
       } else if (typeof arg === "string") {
         if (/^[a-zA-Z][a-zA-Z0-9]*'*$/.test(arg)) {
-          return S.identifier({
+          return shore.identifier({
             value: arg
           });
         } else {
@@ -252,7 +252,7 @@
       };
       Thing.prototype.next_canonization = function() {
         var _i, _len, _ref, _result, canonization, value;
-        _result = []; _ref = this.get_canonizers();
+        _result = []; _ref = this.canonizers;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           canonization = _ref[_i];
           value = canonization.apply(this);
@@ -261,12 +261,6 @@
           }
         }
         return _result;
-      };
-      Thing.prototype.get_canonizers = function() {
-        return this._get_canonizers();
-      };
-      Thing.prototype._get_canonizers = function() {
-        return [];
       };
       Thing.prototype.to_tex = function(context) {
         context = (typeof context !== "undefined" && context !== null) ? context : 1;
@@ -283,7 +277,7 @@
         return "\\text{(shore." + (this.type) + " value)}";
       };
       Thing.prototype.to_cs = function() {
-        return "(shore." + (this.type.toLowerCase()) + " " + (this.comps) + ")";
+        return "(shore." + (this.name.toLowerCase()) + " " + (this.comps) + ")";
       };
       Thing.prototype.toString = function() {
         return this.to_cs();
@@ -538,7 +532,7 @@
           _result = []; _ref = this.comps.operands;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             operand = _ref[_i];
-            _result.push(operand.to_string());
+            _result.push(operand.to_string(20));
           }
           return _result;
         }).call(this).join("");
@@ -642,11 +636,18 @@
     if (!__hasProp.call(_ref, name)) continue;
     type = _ref[name];
     type.prototype.type = type;
+    type.prototype.name = name;
   }
   utility.extend(shore, __types);
   utility.make_providers(shore);
+  def = function() {
+    var args;
+    args = __slice.call(arguments, 0);
+    return args;
+  };
+  canonization = shore.canonization;
   __definers_of_canonizers = [
-    "Thing", function() {
+    def("Thing", function() {
       var _i, _j, _ref2, _result, significance;
       _result = []; _ref2 = shore.significances;
       for (_j in _ref2) {
@@ -660,25 +661,25 @@
         })();
       }
       return _result;
-    }, "CANOperation", function() {
+    }), def("CANOperation", function() {
       return this.__super__.canonizers.concat([
         canonization("minor", "single argument", function() {
-          if (this.operands.length === 1) {
+          if (this.comps.operands.length === 1) {
             return this.operands[0];
           }
         }), canonization("minor", "no arguments", function() {
-          if (this.operands.length === 0 && this.get_nullary) {
+          if (this.comps.operands.length === 0 && this.get_nullary) {
             return this.get_nullary();
           }
         })
       ]);
-    }, "Sum", function() {
+    }), def("Sum", function() {
       return this.__super__.canonizers.concat([
         canonization("major", "numbers in sum", function() {
           var _i, _len, _ref2, not_numbers, numbers, operand, sum;
           numbers = [];
           not_numbers = [];
-          _ref2 = this.operands;
+          _ref2 = this.comps.operands;
           for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
             operand = _ref2[_i];
             if (operand.type === shore.Number) {
@@ -693,22 +694,23 @@
               sum += numbers.pop().value;
             }
             return shore.sum({
-              operands: [shore.number(sum)].concat(not_numbers)
+              operands: [
+                shore.number({
+                  value: sum
+                })
+              ].concat(not_numbers)
             });
           }
         })
       ]);
-    }
+    })
   ];
   _ref = __definers_of_canonizers;
-  for (index in _ref) {
-    if (!__hasProp.call(_ref, index)) continue;
-    _i = _ref[index];
-    if (!index % 2) {
-      _ref2 = [__definers_of_canonizers[index], __definers_of_canonizers[index + 1]];
-      name = _ref2[0];
-      definer = _ref2[1];
-      shore[name].canonizers = definer.apply(shore[name]);
-    }
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    definition = _ref[_i];
+    _ref2 = definition;
+    name = _ref2[0];
+    definer = _ref2[1];
+    shore[name].prototype.canonizers = definer.apply(shore[name]);
   }
 }).call(this);

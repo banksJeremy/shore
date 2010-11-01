@@ -85,4 +85,6 @@ var parser = jison.Parser({
 
 var source = parser.generate({moduleName: "shore.parser"})
 
+sys.print("if (shore === undefined) { var shore = require ? require('./shore').shore : {} }")
+sys.print("if (this.exports) { exports.shore = shore }")
 sys.print(source)

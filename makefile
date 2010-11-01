@@ -1,10 +1,14 @@
-all: CLEAN parser.js shore.js main.js
+all: clean parser.js shore.js main.js
 
 open: all
 	open main.html
 
-CLEAN:
-	rm -f shore.js parser.js main.js
+test: all
+	./shore.tests.coffee
+	node shore.tests.js
+
+clean:
+	rm -f shore.js shore.parser.js main.js
 
 main.js:
 	./main.coffee # main.js - requires coffeescript
