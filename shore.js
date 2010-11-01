@@ -95,7 +95,7 @@
       for (old_name in _ref) {
         if (!__hasProp.call(_ref, old_name)) continue;
         _i = _ref[old_name];
-        _result.push((new_name = utility.uncamel(old_name)) ? (module[new_name] = module._make_provider(module[old_name])) : null);
+        _result.push((new_name = utility.uncamel(old_name)) ? (module[new_name] = (module[old_name].prototype.provider = module._make_provider(module[old_name]))) : null);
       }
       return _result;
     },
@@ -278,7 +278,7 @@
       Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
       Thing.prototype.eq = function(other) {
-        return this.type === other.type && shore.eq(this.comps, other.comps);
+        return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.eq(this.comps, other.comps);
       };
       Thing.prototype.canonize = function(enough, excess) {
         var _ref, _ref2, next, result, significance, value;
@@ -724,6 +724,36 @@
         }), canonization("minor", "no arguments", function() {
           if (this.comps.operands.length === 0 && this.get_nullary) {
             return this.get_nullary();
+          }
+        }), canonization("minor", "commutativity", function() {
+          var _i, _j, _len, _len2, _ref2, _ref3, can_expand, new_operands, operand, suboperand;
+          can_expand = false;
+          _ref2 = this.comps.operands;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            operand = _ref2[_i];
+            if (this.type === operand.type) {
+              can_expand = true;
+              break;
+            }
+          }
+          if (can_expand) {
+            new_operands = [];
+            _ref2 = this.comps.operands;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              operand = _ref2[_i];
+              if (this.type === operand.type) {
+                _ref3 = operand.comps.operands;
+                for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
+                  suboperand = _ref3[_j];
+                  new_operands.push(suboperand);
+                }
+              } else {
+                new_operands.push(operand);
+              }
+            }
+            return this.provider({
+              operands: new_operands
+            });
           }
         })
       ]);

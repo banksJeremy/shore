@@ -115,7 +115,7 @@ utility = shore.utility = shore.U =
 		
 		for old_name of module
 			if new_name = utility.uncamel old_name
-				module[new_name] = module._make_provider module[old_name]
+				module[new_name] = module[old_name]::provider = module._make_provider module[old_name]
 	
 	extend: (destination, sources...) ->
 		# Copies all properties from each source onto destination
@@ -541,6 +541,26 @@ __definers_of_canonizers = [
 		
 		canonization "minor", "no arguments", ->
 			@get_nullary() if @comps.operands.length is 0 and @get_nullary
+		
+		canonization "minor", "commutativity", ->
+			# expands out instances of the same thing in itself
+			can_expand = false
+			for operand in @comps.operands
+				if @type is operand.type
+					can_expand = true
+					break
+			
+			if can_expand
+				new_operands = []
+				
+				for operand in @comps.operands
+					if @type is operand.type
+						for suboperand in operand.comps.operands
+							new_operands.push suboperand
+					else
+						new_operands.push operand
+				
+				@provider operands: new_operands
 	]
 	
 	def "Sum", -> @__super__.canonizers.concat [
