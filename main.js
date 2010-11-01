@@ -141,8 +141,8 @@ processing it to plain-text output.";
         out(" \\\\\n<br>");
       }
       out("\\end{align}</div>");
-      output.html(output_parts.join(""));
-      MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output.get(0))]);
+      output_element.html(output_parts.join(""));
+      MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output_element.get(0))]);
     } else {
       out("<h3 id=output_input>Input</h3>");
       out("<pre>");
@@ -195,7 +195,7 @@ processing it to plain-text output.";
     ($("h3 + div")).hide();
     ($("h3#output_input")).click();
     ($("h3#output_results")).click();
-    return output.show(300);
+    return output_element.show(300);
   };
   $.fn.select_all = function() {
     var _i, _len, _ref, element;

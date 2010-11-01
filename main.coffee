@@ -112,7 +112,8 @@ process_math = (input, output_element) ->
 						parsed_line.push shore.parser.parse expression
 				parsed.push parsed_line
 	catch e
-		throw e if not /^(Parse|Lexical) error/.test e.message # lack of exception type...
+		throw e if not /^(Parse|Lexical) error/.test e.message
+		# lack of exception types is bah...
 		
 		output_element.empty()
 		output_element.append (($ "<pre>").css whiteSpace: "pre-line")
@@ -149,9 +150,9 @@ process_math = (input, output_element) ->
 			out " \\\\\n<br>"
 		
 		out "\\end{align}</div>"
-		output.html output_parts.join ""
+		output_element.html output_parts.join ""
 		
-		MathJax.Hub.Queue ["Typeset", MathJax.Hub, (output.get 0) ]
+		MathJax.Hub.Queue ["Typeset", MathJax.Hub, (output_element.get 0) ]
 	else # plain text output
 		out "<h3 id=output_input>Input</h3>"
 		out "<pre>"
@@ -191,7 +192,7 @@ process_math = (input, output_element) ->
 	($ "h3#output_input").click()
 	($ "h3#output_results").click()
 	
-	output.show 300
+	output_element.show 300
 
 $.fn.select_all = ->
 	"Sets the user's selection in an input/textarea to the complete contents."

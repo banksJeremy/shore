@@ -216,7 +216,7 @@ for name, value of { # contents of module
 		constructor: (@operands) ->
 		
 		_eq: (other) ->
-			if @operands.length is other.operands.length
+			if @operands.length isnt other.operands.length
 				return false
 			
 			for i in [0..@operands.length - 1]
@@ -259,7 +259,7 @@ for name, value of { # contents of module
 			   operands[0].type is "Number" and
 				 operands[1].type isnt "Number"
 				
-				(if operands[0].value is -1 then operands[0].to_tex @precedence else "-") +
+				(if operands[0].value isnt -1 then operands[0].to_tex @precedence else "-") +
 				(((operand.to_tex @precedence) for operand in operands.slice 1)
 				 .join @tex_symbol)
 			else
@@ -325,6 +325,9 @@ for name, value of { # contents of module
 		
 		to_free_tex: ->
 			"\\int\\left[#{@expression.to_tex()}\\right]d#{@variable.to_tex()}"
+		
+		to_free_string: ->
+			"int{[#{@expression.to_tex()}]d#{@variable.to_tex()}}"
 	
 	Derivative: class Derivative extends Value
 		precedence: 3
@@ -336,6 +339,9 @@ for name, value of { # contents of module
 		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@variable.to_tex()}}\\left[#{@expression.to_tex()}\\right]"
+		
+		to_free_string: ->
+			"d/d#{@variable.to_tex()}[#{@expression.to_tex()}]"
 	
 	WithMarginOfError: class WithMarginOfError extends Value
 		precedence: 1.5
