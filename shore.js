@@ -212,11 +212,11 @@
     substitute: function(within, original, replacement) {
       var f;
       f = function(object, original, replacement) {
-        return object.eq(original) ? replacement : object;
+        return object.is(original) ? replacement : object;
       };
       return utility.call_in(within, f, original, replacement);
     },
-    eq: function(a, b) {
+    is: function(a, b) {
       var _i, _ref, index, key;
       if (utility.is_object(a)) {
         if (!utility.is_object(b)) {
@@ -242,7 +242,7 @@
         for (key in _ref) {
           if (!__hasProp.call(_ref, key)) continue;
           _i = _ref[key];
-          if (!shore.eq(a[key], b[key])) {
+          if (!shore.is(a[key], b[key])) {
             return false;
           }
         }
@@ -258,7 +258,7 @@
         for (index in _ref) {
           if (!__hasProp.call(_ref, index)) continue;
           _i = _ref[index];
-          if (!shore.eq(a[index], b[index])) {
+          if (!shore.is(a[index], b[index])) {
             return false;
           }
         }
@@ -267,7 +267,7 @@
         if (((typeof a === "undefined" || a === null) ? undefined : a.type) !== ((typeof b === "undefined" || b === null) ? undefined : b.type)) {
           return false;
         }
-        return (typeof (_ref = a.eq) !== "undefined" && _ref !== null) ? a.eq(b) : a === b;
+        return (typeof (_ref = a.is) !== "undefined" && _ref !== null) ? a.is(b) : a === b;
       }
     }
   };
@@ -289,8 +289,8 @@
       };
       Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
-      Thing.prototype.eq = function(other) {
-        return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.eq(this.comps, other.comps);
+      Thing.prototype.is = function(other) {
+        return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.is(this.comps, other.comps);
       };
       Thing.prototype.canonize = function(limit, enough) {
         var _ref, _ref2, next, result, significance, value;
@@ -322,7 +322,7 @@
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           canonization = _ref[_i];
           value = canonization.apply(this);
-          if (value && !this.eq(value)) {
+          if (value && !this.is(value)) {
             return [canonization, value];
           }
         }
@@ -658,12 +658,12 @@
       WithMarginOfError.prototype.tex_symbol = " \\pm ";
       WithMarginOfError.prototype.string_symbol = " ± ";
       WithMarginOfError.prototype.to_free_string = function() {
-        return !this.margin.eq(shore(0)) ? ("" + (this.comps.value.to_string(this.precedence)) + "\
+        return !this.margin.is(shore(0)) ? ("" + (this.comps.value.to_string(this.precedence)) + "\
 				 " + (this.string_symbol) + "\
 				 " + (this.comps.margin.to_string(this.precedence))) : this.comps.value.to_string(this.precedence);
       };
       WithMarginOfError.prototype.to_free_tex = function() {
-        return !this.margin.eq(shore(0)) ? ("" + (this.comps.value.to_tex(this.precedence)) + "\
+        return !this.margin.is(shore(0)) ? ("" + (this.comps.value.to_tex(this.precedence)) + "\
 				 " + (this.tex_symbol) + "\
 				 " + (this.comps.margin.to_tex(this.precedence))) : this.comps.value.to_tex(this.precedence);
       };
@@ -844,7 +844,7 @@
     }), def("Derivative", function() {
       return this.__super__.canonizers.concat([
         canonization("major", "differentiation over self", function() {
-          return this.comps.variable.eq(this.comps.expression) ? shore(1) : null;
+          return this.comps.variable.is(this.comps.expression) ? shore(1) : null;
         }), canonization("major", "differentiation over constant", function() {
           return this.comps.variable.known_constant ? shore(0) : null;
         }), canonization("major", "differentiation of constant", function() {

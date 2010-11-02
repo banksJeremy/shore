@@ -10,7 +10,7 @@ class Test
 			input = (S @input).canonize "major"
 			output = (S @output).canonize "minor"
 			
-			if input .eq output
+			if input.is output
 				new TestResult this, true, "#{input.to_string()} == #{output.to_string()}"
 			else
 				new TestResult this, false, "#{input.to_string()} != #{output.to_string()}"
@@ -38,8 +38,8 @@ tests = [
 passes = 0
 
 for test in tests
-	console.log String(result = test.run())
+	console.error String(result = test.run())
 	passes += 1 if result.passed
 
-console.log()
-console.log "#{passes} of #{tests.length} tests passed."
+console.error()
+console.log "[#{passes}/#{tests.length} Tests Pass]"

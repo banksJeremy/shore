@@ -11,10 +11,10 @@ clean:
 	rm -f shore.js shore.parser.js main.js
 
 main.js:
-	./main.coffee # main.js - requires coffeescript
+	./main.coffee
 
 shore.js:
-	./shore.coffee # shore.js - requires coffeescript
+	./shore.coffee
 
 parser.js:
-	./shore.grammar.js -q > shore.parser.js # - requires node.js, jison
+	./shore.grammar.js -q > shore.parser.js

@@ -15,7 +15,7 @@
     try {
       input = (S(this.input)).canonize("major");
       output = (S(this.output)).canonize("minor");
-      return input.eq(output) ? new TestResult(this, true, "" + (input.to_string()) + " == " + (output.to_string())) : new TestResult(this, false, "" + (input.to_string()) + " != " + (output.to_string()));
+      return input.is(output) ? new TestResult(this, true, "" + (input.to_string()) + " == " + (output.to_string())) : new TestResult(this, false, "" + (input.to_string()) + " != " + (output.to_string()));
     } catch (error) {
       return new TestResult(this, false, "Exception: " + (error));
     }
@@ -40,11 +40,11 @@
   _ref = tests;
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     test = _ref[_i];
-    console.log(String(result = test.run()));
+    console.error(String(result = test.run()));
     if (result.passed) {
       passes += 1;
     }
   }
-  console.log();
-  console.log("" + (passes) + " of " + (tests.length) + " tests passed.");
+  console.error();
+  console.log("[" + (passes) + "/" + (tests.length) + " Tests Pass]");
 }).call(this);

@@ -218,14 +218,14 @@ __not_types =
 	
 	substitute: (within, original, replacement) ->
 		f = (object, original, replacement) ->
-			if object.eq original
+			if object.is original
 				replacement
 			else
 				object
 		
 		utility.call_in within, f, original, replacement
 	
-	eq: (a, b) ->
+	is: (a, b) ->
 		# Determines equality of two objects or recursively within arrays and
 		# objects.
 		
@@ -237,23 +237,23 @@ __not_types =
 			for key of b
 				return false if key not of a
 			for key of a
-				return false if not shore.eq a[key], b[key]
+				return false if not shore.is a[key], b[key]
 			true
 		else if utility.is_array a
 			return false if not utility.is_array b
 			return false if a.length isnt b.length
 			
 			for index of a
-				return false if not shore.eq a[index], b[index]
+				return false if not shore.is a[index], b[index]
 			
 			true
 		else
 			return false if a?.type isnt b?.type
 			
-			if a.eq?
-				a.eq(b)
+			if a.is?
+				a.is(b)
 			else
-				a is b # if it doesn't have .eq and isn't an Array or Object, just ==
+				a is b
 
 utility.extend shore, __not_types
 
@@ -276,8 +276,8 @@ __types =
 				if not @comps[name]?
 					throw new Error "#{@type ? @constructor} object requires value for #{name}"
 		
-		eq: (other) ->
-			@type is other?.type and shore.eq @comps, other.comps
+		is: (other) ->
+			@type is other?.type and shore.is @comps, other.comps
 		
 		canonize: (limit, enough) ->
 			limit = shore._significance limit
@@ -301,7 +301,7 @@ __types =
 			for canonization in @canonizers
 				value = canonization.apply this
 				
-				if value and not @eq(value)
+				if value and not @is(value)
 					return [canonization, value]
 		
 		to_tex: (context) ->
@@ -493,7 +493,7 @@ __types =
 		string_symbol: " ± "
 		
 		to_free_string: ->
-			if not @margin.eq (shore 0)
+			if not @margin.is (shore 0)
 				"#{@comps.value.to_string @precedence}
 				 #{@string_symbol}
 				 #{@comps.margin.to_string @precedence}"
@@ -501,7 +501,7 @@ __types =
 				@comps.value.to_string @precedence
 		
 		to_free_tex: ->
-			if not @margin.eq (shore 0)
+			if not @margin.is (shore 0)
 				"#{@comps.value.to_tex @precedence}
 				 #{@tex_symbol}
 				 #{@comps.margin.to_tex @precedence}"
@@ -637,7 +637,7 @@ __definers_of_canonizers = [
 	
 	def "Derivative", -> @__super__.canonizers.concat [
 		canonization "major", "differentiation over self", ->
-			if @comps.variable.eq @comps.expression
+			if @comps.variable.is @comps.expression
 				shore 1
 		
 		canonization "major", "differentiation over constant", ->
