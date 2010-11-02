@@ -214,7 +214,7 @@
     substitute: function(within, original, replacement) {
       var f;
       f = function(object, original, replacement) {
-        return object.is_shore_thing && object.is(original) ? replacement : object;
+        return object.is_shore_thing ? (object.is(original) ? replacement : object.provider(shore.substitute(object.comps, original, replacement))) : object;
       };
       return utility.call_in(within, f, original, replacement);
     },

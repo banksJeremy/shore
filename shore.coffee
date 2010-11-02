@@ -223,8 +223,11 @@ __not_types =
 	
 	substitute: (within, original, replacement) ->
 		f = (object, original, replacement) ->
-			if object.is_shore_thing and object.is original
-				replacement
+			if object.is_shore_thing
+				if object.is original
+					replacement
+				else
+					object.provider shore.substitute object.comps, original, replacement
 			else
 				object
 		

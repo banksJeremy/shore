@@ -1,7 +1,7 @@
 (function() {
   var decode, default_input, ems_per_pixel_in, encode, escape_html, get_qs, main, mathjax_load, mathjax_src, mj_wait, occurences, process_math, root, scale_textarea, texscapeify;
   root = this;
-  default_input = "d = (((-9.8) ~ t + 5) ~ t) + 30\nA = (-4.9t^2 + 5t + 30) ` t ` t";
+  default_input = "d = (((g ~ t + 5) ~ t) + 30)(g = -9.8)\nA = (-4.9t^2 + 5t + 30) ` t ` t";
   mathjax_src = "dep/mathjax-1.0.1/MathJax.js";
   shore.__main_on_mathjax_loaded = (function() {});
   mathjax_load = function() {
