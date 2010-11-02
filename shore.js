@@ -284,7 +284,7 @@
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           name = _ref[_i];
           if (!(typeof (_ref2 = this.comps[name]) !== "undefined" && _ref2 !== null)) {
-            throw new Error("" + ((typeof (_ref2 = this.type) !== "undefined" && _ref2 !== null) ? _ref2 : this.constructor) + " object requires value for " + (name));
+            throw new Error("" + ((typeof (_ref2 = this.name) !== "undefined" && _ref2 !== null) ? _ref2 : this.constructor) + " object requires value for " + (name));
           }
         }
         return this;
@@ -621,7 +621,7 @@
         return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_tex(this.precedence) : ("{" + (this.comps.base.to_tex(this.precedence)) + "}^{" + (this.comps.exponent.to_tex()) + "}");
       };
       Exponent.prototype.to_free_string = function() {
-        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_tex(this.precedence) : ("" + (this.comps.base.to_string(this.precedence)) + "^" + (this.comps.exponent.to_string()));
+        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_string(this.precedence) : ("" + (this.comps.base.to_string(this.precedence)) + "^" + (this.comps.exponent.to_string()));
       };
       return Exponent;
     })(),
@@ -631,11 +631,12 @@
       };
       __extends(Integral, Value);
       Integral.prototype.precedence = 3;
+      Integral.prototype.req_comps = sss("variable expression");
       Integral.prototype.to_free_tex = function() {
         return "\\int\\left[" + (this.comps.expression.to_tex()) + "\\right]d" + (this.comps.variable.to_tex());
       };
       Integral.prototype.to_free_string = function() {
-        return "int{[" + (this.comps.expression.to_tex()) + "]d" + (this.comps.variable.to_tex()) + "}";
+        return "int{[" + (this.comps.expression.to_string()) + "]d" + (this.comps.variable.to_string()) + "}";
       };
       return Integral;
     })(),
@@ -645,11 +646,12 @@
       };
       __extends(Derivative, Value);
       Derivative.prototype.precedence = 3;
+      Derivative.prototype.req_comps = sss("variable expression");
       Derivative.prototype.to_free_tex = function() {
         return "\\tfrac{d}{d" + (this.comps.variable.to_tex()) + "}\\left[" + (this.comps.expression.to_tex()) + "\\right]";
       };
       Derivative.prototype.to_free_string = function() {
-        return "d/d" + (this.comps.variable.to_tex()) + "[" + (this.comps.expression.to_tex()) + "]";
+        return "d/d" + (this.comps.variable.to_string()) + "[" + (this.comps.expression.to_string()) + "]";
       };
       return Derivative;
     })(),
@@ -839,7 +841,9 @@
       ]);
     }), def("Exponent", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "exponent of numbers", function() {
+        canonization("minor", "eliminate power of one", function() {
+          return this.comps.exponent.is(shore(1)) ? this.comps.base : null;
+        }), canonization("major", "exponent of numbers", function() {
           var x;
           if ((this.comps.base.type === this.comps.exponent.type) && (this.comps.exponent.type === shore.Number)) {
             x = Math.pow(this.comps.base.comps.value, this.comps.exponent.comps.value);
@@ -855,16 +859,89 @@
           return this.comps.variable.known_constant ? shore(0) : null;
         }), canonization("major", "integration of constant", function() {
           return this.comps.expression.known_constant ? this.comps.expression.times(this.comps.variable) : null;
+        }), canonization("moderate", "rule of sums", function() {
+          var _i, _len, _ref2, _result, term;
+          return this.comps.expression.type === shore.Sum ? shore.sum({
+            operands: (function() {
+              _result = []; _ref2 = this.comps.expression.comps.operands;
+              for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+                term = _ref2[_i];
+                _result.push(shore.integral({
+                  variable: this.comps.variable,
+                  expression: term
+                }));
+              }
+              return _result;
+            }).call(this)
+          }) : null;
+        }), canonization("moderate", "constant coefficient", function() {
+          var coefficient, terms;
+          if (this.comps.expression.type === shore.Product) {
+            terms = this.comps.expression.comps.operands;
+            coefficient = terms[0];
+            return coefficient.known_constant ? coefficient.times(shore.integral({
+              variable: this.comps.variable,
+              expression: shore.product({
+                operands: terms.slice(1, terms.length)
+              })
+            })) : null;
+          }
+        }), canonization("major", "integration over self", function() {
+          return this.comps.expression.is(this.comps.variable) ? this.comps.expression.to_the(shore(2)).over(shore(2)) : null;
+        }), canonization("major", "power rule", function() {
+          var _ref2, base, exponent, new_exponent;
+          if (this.comps.expression.type === shore.Exponent) {
+            _ref2 = this.comps.expression.comps;
+            base = _ref2.base;
+            exponent = _ref2.exponent;
+            new_exponent = exponent.plus(shore(1));
+            return base.is(this.comps.variable) ? base.to_the(exponent.minus(new_exponent)).over(new_exponent) : null;
+          }
         })
       ]);
     }), def("Derivative", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "differentiation over self", function() {
+        canonization("moderate", "differentiation over self", function() {
           return this.comps.variable.is(this.comps.expression) ? shore(1) : null;
-        }), canonization("major", "differentiation over constant", function() {
+        }), canonization("moderate", "differentiation over constant", function() {
           return this.comps.variable.known_constant ? shore(0) : null;
-        }), canonization("major", "differentiation of constant", function() {
+        }), canonization("moderate", "differentiation of constant", function() {
           return this.comps.expression.known_constant ? shore(0) : null;
+        }), canonization("moderate", "rule of sums", function() {
+          var _i, _len, _ref2, _result, term;
+          return this.comps.expression.type === shore.Sum ? shore.sum({
+            operands: (function() {
+              _result = []; _ref2 = this.comps.expression.comps.operands;
+              for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+                term = _ref2[_i];
+                _result.push(shore.derivative({
+                  variable: this.comps.variable,
+                  expression: term
+                }));
+              }
+              return _result;
+            }).call(this)
+          }) : null;
+        }), canonization("major", "constant coefficient", function() {
+          var coefficient, terms;
+          if (this.comps.expression.type === shore.Product) {
+            terms = this.comps.expression.comps.operands;
+            coefficient = terms[0];
+            return coefficient.known_constant ? coefficient.times(shore.derivative({
+              variable: this.comps.variable,
+              expression: shore.product({
+                operands: terms.slice(1, terms.length)
+              })
+            })) : null;
+          }
+        }), canonization("major", "power rule", function() {
+          var _ref2, base, exponent;
+          if (this.comps.expression.type === shore.Exponent) {
+            _ref2 = this.comps.expression.comps;
+            base = _ref2.base;
+            exponent = _ref2.exponent;
+            return base.is(this.comps.variable) ? exponent.times(base).to_the(exponent.minus(shore(1))) : null;
+          }
         })
       ]);
     }), def("PendingSubstitution", function() {

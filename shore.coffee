@@ -280,7 +280,7 @@ __types =
 		constructor: (@comps) ->
 			for name in @req_comps
 				if not @comps[name]?
-					throw new Error "#{@type ? @constructor} object requires value for #{name}"
+					throw new Error "#{@name ? @constructor} object requires value for #{name}"
 		
 		is: (other) ->
 			@type is other?.type and shore.is @comps, other.comps
@@ -471,27 +471,29 @@ __types =
 		
 		to_free_string: ->
 			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
-				@comps.base.to_tex @precedence
+				@comps.base.to_string @precedence
 			else
 				"#{@comps.base.to_string @precedence}^#{@comps.exponent.to_string()}"
 		
 	Integral: class Integral extends Value
 		precedence: 3
+		req_comps: sss "variable expression"
 		
 		to_free_tex: ->
 			"\\int\\left[#{@comps.expression.to_tex()}\\right]d#{@comps.variable.to_tex()}"
 		
 		to_free_string: ->
-			"int{[#{@comps.expression.to_tex()}]d#{@comps.variable.to_tex()}}"
+			"int{[#{@comps.expression.to_string()}]d#{@comps.variable.to_string()}}"
 	
 	Derivative: class Derivative extends Value
 		precedence: 3
+		req_comps: sss "variable expression"
 		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@comps.variable.to_tex()}}\\left[#{@comps.expression.to_tex()}\\right]"
 		
 		to_free_string: ->
-			"d/d#{@comps.variable.to_tex()}[#{@comps.expression.to_tex()}]"
+			"d/d#{@comps.variable.to_string()}[#{@comps.expression.to_string()}]"
 	
 	WithMarginOfError: class WithMarginOfError extends Value
 		precedence: 1.5
@@ -610,6 +612,8 @@ __definers_of_canonizers = [
 					sum += numbers.pop().comps.value
 				
 				@provider operands: [ shore.number value: sum ].concat not_numbers
+		
+		# constant coefficients
 	]
 	
 	def "Product", -> @__super__.canonizers.concat [
@@ -633,6 +637,10 @@ __definers_of_canonizers = [
 	]
 	
 	def "Exponent", -> @__super__.canonizers.concat [
+		canonization "minor", "eliminate power of one", ->
+			if @comps.exponent.is (shore 1)
+				@comps.base
+		
 		canonization "major", "exponent of numbers", ->
 			if @comps.base.type is @comps.exponent.type is shore.Number
 				x = Math.pow @comps.base.comps.value, @comps.exponent.comps.value
@@ -647,20 +655,66 @@ __definers_of_canonizers = [
 		canonization "major", "integration of constant", ->
 			if @comps.expression.known_constant
 				@comps.expression.times @comps.variable
+		
+		canonization "moderate", "rule of sums", ->
+			if @comps.expression.type is shore.Sum
+				shore.sum operands: for term in @comps.expression.comps.operands
+					shore.integral variable: @comps.variable, expression: term
+		
+		canonization "moderate", "constant coefficient", ->
+			if @comps.expression.type is shore.Product
+				terms = @comps.expression.comps.operands
+				coefficient = terms[0]
+				if coefficient.known_constant
+					coefficient.times shore.integral
+						variable: @comps.variable
+						expression: shore.product (operands: terms[1...terms.length])
+		
+		canonization "major", "integration over self", ->
+			if @comps.expression.is @comps.variable
+				@comps.expression.to_the(shore 2).over(shore 2)
+		
+		canonization "major", "power rule", ->
+			if @comps.expression.type is shore.Exponent
+				{ base: base, exponent: exponent } = @comps.expression.comps
+				new_exponent = exponent.plus (shore 1)
+				if base.is @comps.variable
+					base.to_the(exponent.minus new_exponent).over(new_exponent)
 	]
 	
 	def "Derivative", -> @__super__.canonizers.concat [
-		canonization "major", "differentiation over self", ->
+		canonization "moderate", "differentiation over self", ->
 			if @comps.variable.is @comps.expression
 				shore 1
 		
-		canonization "major", "differentiation over constant", ->
+		canonization "moderate", "differentiation over constant", ->
 			if @comps.variable.known_constant
 				shore 0
 		
-		canonization "major", "differentiation of constant", ->
+		canonization "moderate", "differentiation of constant", ->
 			if @comps.expression.known_constant
 				shore 0
+		
+		canonization "moderate", "rule of sums", ->
+			if @comps.expression.type is shore.Sum
+				shore.sum operands: for term in @comps.expression.comps.operands
+					shore.derivative (variable: @comps.variable, expression: term)
+		
+		canonization "major", "constant coefficient", ->
+			if @comps.expression.type is shore.Product
+				terms = @comps.expression.comps.operands
+				coefficient = terms[0]
+				if coefficient.known_constant
+					coefficient.times shore.derivative
+						variable: @comps.variable
+						expression: shore.product(operands: terms[1...terms.length])
+		
+		canonization "major", "power rule", ->
+			if @comps.expression.type is shore.Exponent
+				{ base: base, exponent: exponent } = @comps.expression.comps
+				if base.is @comps.variable
+					exponent.times(base).to_the(exponent.minus (shore 1))
+		
 	]
 	
 	def "PendingSubstitution", -> @__super__.canonizers.concat [

@@ -2,10 +2,8 @@
 root = this
 
 default_input = """
-	A = -g_gemini; g_gemini = 0.00015
-	v = A ~ t + v_0; v_0 = 0
-	d = v ~ t + d_0; d_0 = 1
-	t_fall = t(d=0)
+d = (((-9.8) ~ t + 5) ~ t) + 30
+A = (-4.9t^2 + 5t + 30) ` t ` t
 """
 
 mathjax_src = "dep/mathjax-1.0.1/MathJax.js"

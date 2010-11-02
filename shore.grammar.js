@@ -37,7 +37,7 @@ var parser = jison.Parser({
 		[ "left", "=" ],
 		[ "left", "+", "-" ],
 		[ "left", "*", "/" ],
-		[ "right", "THEN" ],
+		[ "left", "THEN" ],
 		[ "left", "^" ],
 		[ "left", "±" ],
 		[ "left", "UMINUS", "UPLUS" ],

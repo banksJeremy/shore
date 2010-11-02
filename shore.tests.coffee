@@ -35,7 +35,11 @@ tests = [
 	(new Test "a(a=b)", "b")
 	(new Test "x`x", "1")
 	(new Test "(2x)`x", "2")
+	(new Test "(x^2)`x", "2x")
+	(new Test "c + b + a", "a + b + c")
 	(new Test "a * a * b", "a^2 * b")
+	(new Test "(x^3 + 3x^2 + 9)`x", "3x^2 + 6x")
+	(new Test "(a + b) ~ x", "(a ~ x) + (b ~ x)")
 ]
 
 passes = 0
