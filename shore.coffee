@@ -279,9 +279,9 @@ __types =
 		eq: (other) ->
 			@type is other?.type and shore.eq @comps, other.comps
 		
-		canonize: (enough, excess) ->
+		canonize: (limit, enough) ->
+			limit = shore._significance limit
 			enough = shore._significance enough
-			excess = shore._significance excess
 			
 			result = this
 			
@@ -291,7 +291,7 @@ __types =
 				
 				[{significance: significance}, value] = next
 				
-				if excess? and significance >= excess then break
+				if limit? and significance > limit then break
 				result = value
 				if enough? and significance >= enough then break
 			

@@ -292,10 +292,10 @@
       Thing.prototype.eq = function(other) {
         return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.eq(this.comps, other.comps);
       };
-      Thing.prototype.canonize = function(enough, excess) {
+      Thing.prototype.canonize = function(limit, enough) {
         var _ref, _ref2, next, result, significance, value;
+        limit = shore._significance(limit);
         enough = shore._significance(enough);
-        excess = shore._significance(excess);
         result = this;
         while (true) {
           next = result.next_canonization();
@@ -306,7 +306,7 @@
           _ref2 = _ref[0];
           significance = _ref2.significance;
           value = _ref[1];
-          if ((typeof excess !== "undefined" && excess !== null) && (significance >= excess)) {
+          if ((typeof limit !== "undefined" && limit !== null) && significance > limit) {
             break;
           }
           result = value;

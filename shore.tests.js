@@ -1,29 +1,50 @@
 (function() {
-  var S, _i, _len, _ref, failure, passes, test, tests;
+  var S, Test, TestResult, _i, _len, _ref, passes, result, test, tests;
   S = require("./shore").S;
   S.parser = require("./shore.parser").parser;
-  test = function(start, end) {
-    var end_after, start_after;
+  Test = function(_arg, _arg2) {
+    this.output = _arg2;
+    this.input = _arg;
+    return this;
+  };
+  Test.prototype.toString = function() {
+    return "" + (this.input) + " => " + (this.output);
+  };
+  Test.prototype.run = function() {
+    var input, output;
     try {
-      start_after = start.canonize();
-      end_after = end.canonize("minor");
-      if (!start.canonize().eq(end.canonize("minor"))) {
-        return ("TEST FAILED: " + (start.to_string()) + " -> " + (end.to_string()) + " was " + (start_after.to_string()) + " -> " + (end_after.to_string()));
-      }
+      input = (S(this.input)).canonize("major");
+      output = (S(this.output)).canonize("minor");
+      return input.eq(output) ? new TestResult(this, true, "" + (input.to_string()) + " == " + (output.to_string())) : new TestResult(this, false, "" + (input.to_string()) + " != " + (output.to_string()));
     } catch (error) {
-      return ("TEST THREW: " + (error));
+      return new TestResult(this, false, "Exception: " + (error));
     }
   };
-  tests = [(test(S("1 + 1"), S("2"))), (test(S("1 + 2 + 3"), S("6"))), (test(S("2 * 2"), S("4"))), (test(S("2 * 2 * 2"), S("8"))), (test(S("2 ^ 3"), S("8"))), (test(S("a + a"), S("2a"))), (test(S("2 ~ t"), S("2t"))), (test(S("a(a=b)"), S("b")))];
+  TestResult = function(_arg, _arg2, _arg3) {
+    this.message = _arg3;
+    this.passed = _arg2;
+    this.test = _arg;
+    return this;
+  };
+  TestResult.prototype.toString = function() {
+    var prefix;
+    prefix = this.passed ? " -- " : "FAIL";
+    return "" + (prefix) + " " + (this.test) + " " + ((function() {
+      if (!this.passed) {
+        return '\n---> ' + this.message;
+      }
+    }).call(this) || '');
+  };
+  tests = [(new Test("1 + 1", "2")), (new Test("1 + 2 + 3", "6")), (new Test("2 * 2", "4")), (new Test("2 * 2 * 2", "8")), (new Test("2 ^ 3", "8")), (new Test("a + a + a + b + b", "3a + 2b")), (new Test("2 ~ t", "2t")), (new Test("a(a=b)", "b"))];
   passes = 0;
   _ref = tests;
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    failure = _ref[_i];
-    if (typeof failure !== "undefined" && failure !== null) {
-      console.log(failure);
-    } else {
+    test = _ref[_i];
+    console.log(String(result = test.run()));
+    if (result.passed) {
       passes += 1;
     }
   }
+  console.log();
   console.log("" + (passes) + " of " + (tests.length) + " tests passed.");
 }).call(this);

@@ -2,34 +2,44 @@
 S = require("./shore").S
 S.parser = require("./shore.parser").parser
 
-test = (start, end) ->
-	# a test that start.canonize() = (end.canonize "minor")
-	try
-		start_after = start.canonize()
-		end_after = end.canonize "minor"
-		
-		if not start.canonize().eq(end.canonize "minor")
-			return "TEST FAILED: #{start.to_string()} -> #{end.to_string()} was #{start_after.to_string()} -> #{end_after.to_string()}"
-	catch error
-		return "TEST THREW: #{error}"
+class Test
+	constructor: (@input, @output) ->
+	toString: -> "#{@input} => #{@output}"
+	run: ->
+		try
+			input = (S @input).canonize "major"
+			output = (S @output).canonize "minor"
+			
+			if input .eq output
+				new TestResult this, true, "#{input.to_string()} == #{output.to_string()}"
+			else
+				new TestResult this, false, "#{input.to_string()} != #{output.to_string()}"
+		catch error
+			new TestResult this, false, "Exception: #{error}"
+
+class TestResult
+	constructor: (@test, @passed, @message) ->
+	toString: ->
+		prefix = if @passed then " -- " else "FAIL"
+		"#{prefix} #{@test} #{('\n---> '+@message if not @passed) or ''}"
+
 
 tests = [
-	(test (S "1 + 1"), (S "2"))
-	(test (S "1 + 2 + 3"), (S "6"))
-	(test (S "2 * 2"), (S "4"))
-	(test (S "2 * 2 * 2"), (S "8"))
-	(test (S "2 ^ 3"), (S "8"))
-	(test (S "a + a"), (S "2a"))
-	(test (S "2 ~ t"), (S "2t"))
-	(test (S "a(a=b)"), (S "b"))
+	(new Test "1 + 1", "2")
+	(new Test "1 + 2 + 3", "6")
+	(new Test "2 * 2", "4")
+	(new Test "2 * 2 * 2", "8")
+	(new Test "2 ^ 3", "8")
+	(new Test "a + a + a + b + b", "3a + 2b")
+	(new Test "2 ~ t", "2t")
+	(new Test "a(a=b)", "b")
 ]
 
 passes = 0
 
-for failure in tests
-	if failure?
-		console.log failure
-	else
-		passes += 1
+for test in tests
+	console.log String(result = test.run())
+	passes += 1 if result.passed
 
+console.log()
 console.log "#{passes} of #{tests.length} tests passed."
