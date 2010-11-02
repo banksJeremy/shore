@@ -76,7 +76,7 @@ utility = shore.utility = shore.U =
 		# Converts an object to a string or calls its __hash__ method recursively
 		# in Arrays and Object.
 		
-		String utility.call_in object, (object) ->
+		String utility.call object, (object) ->
 			if object.__hash__?
 				object.__hash__()
 			else
@@ -134,19 +134,24 @@ utility = shore.utility = shore.U =
 		
 		typeof object is "object" and object.constructor is Object
 	
+	is_string: (object) ->
+		typeof object is "string"
+	
 	call_in: (object, f, extra_arguments...) ->
 		# Calls function on an object or recursively within Arrays and Objects.
 		
 		if utility.is_array object
 			for value in object
-				f value, extra_arguments...
+				utility.call_in value, f, extra_arguments...
 		else if utility.is_object object
 			result = {}
 			for key, value of object
-				result[key] = f value, extra_arguments...
+				result[key] = utility.call_in value, f, extra_arguments...
 			result
-		else
+		else if typeof object is "object"
 			f object, extra_arguments...
+		else # we leave functions/strings/etc alone
+			object
 
 __not_types =
 	# Merged onto shore first, as they may be required by the defenitions of
@@ -206,7 +211,19 @@ __not_types =
 	canonize: (object, arguments...) ->
 		# Canonizes an object or recrusively within Arrays and Objects.
 		
-		utility.call_in object, ((o, args...) -> o.canonize args...), arguments...
+		f = (object, arguments...) ->
+			object.canonize arguments...
+		
+		utility.call_in object, f, arguments...
+	
+	substitute: (within, original, replacement) ->
+		f = (object, original, replacement) ->
+			if object.eq original
+				replacement
+			else
+				object
+		
+		utility.call_in within, f, original, replacement
 	
 	eq: (a, b) ->
 		# Determines equality of two objects or recursively within arrays and
@@ -532,8 +549,8 @@ def = (args...) -> args
 canonization = shore.canonization
 
 __definers_of_canonizers = [
-	def "Thing", -> 
-		for significance of shore.significances
+	def "Thing", ->
+		for significance of shore._significances
 			canonization significance, "components #{significance}", ->
 				@provider shore.canonize @comps, significance, significance
 	
@@ -630,6 +647,12 @@ __definers_of_canonizers = [
 		canonization "major", "differentiation of constant", ->
 			if @comps.expression.known_constant
 				shore 0
+	]
+	
+	def "PendingSubstitution", -> @__super__.canonizers.concat [
+		canonization "major", "substitute", ->
+			[ original, replacement ] = @comps.substitution.comps.operands
+			shore.substitute @comps.expression, original, replacement
 	]
 ]
 

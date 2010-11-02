@@ -67,7 +67,7 @@
       }
     },
     hash: function(object) {
-      return String(utility.call_in(object, function(object) {
+      return String(utility.call(object, function(object) {
         var _ref;
         return (typeof (_ref = object.__hash__) !== "undefined" && _ref !== null) ? object.__hash__() : String(object);
       }));
@@ -123,6 +123,9 @@
     is_object: function(object) {
       return typeof object === "object" && object.constructor === Object;
     },
+    is_string: function(object) {
+      return typeof object === "string";
+    },
     call_in: function(object, f) {
       var _i, _len, _ref, _result, extra_arguments, key, result, value;
       extra_arguments = __slice.call(arguments, 2);
@@ -130,7 +133,7 @@
         _result = []; _ref = object;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           value = _ref[_i];
-          _result.push(f.apply(this, [value].concat(extra_arguments)));
+          _result.push(utility.call_in.apply(utility, [value, f].concat(extra_arguments)));
         }
         return _result;
       } else if (utility.is_object(object)) {
@@ -139,11 +142,13 @@
         for (key in _ref) {
           if (!__hasProp.call(_ref, key)) continue;
           value = _ref[key];
-          result[key] = f.apply(this, [value].concat(extra_arguments));
+          result[key] = utility.call_in.apply(utility, [value, f].concat(extra_arguments));
         }
         return result;
-      } else {
+      } else if (typeof object === "object") {
         return f.apply(this, [object].concat(extra_arguments));
+      } else {
+        return object;
       }
     }
   }));
@@ -196,13 +201,20 @@
       major: 2
     },
     canonize: function(object) {
-      var arguments;
+      var arguments, f;
       arguments = __slice.call(arguments, 1);
-      return utility.call_in.apply(utility, [object, (function(o) {
-        var args;
-        args = __slice.call(arguments, 1);
-        return o.canonize.apply(o, args);
-      })].concat(arguments));
+      f = function(object) {
+        arguments = __slice.call(arguments, 1);
+        return object.canonize.apply(object, arguments);
+      };
+      return utility.call_in.apply(utility, [object, f].concat(arguments));
+    },
+    substitute: function(within, original, replacement) {
+      var f;
+      f = function(object, original, replacement) {
+        return object.eq(original) ? replacement : object;
+      };
+      return utility.call_in(within, f, original, replacement);
     },
     eq: function(a, b) {
       var _i, _ref, index, key;
@@ -705,7 +717,7 @@
   __definers_of_canonizers = [
     def("Thing", function() {
       var _i, _j, _ref2, _result, significance;
-      _result = []; _ref2 = shore.significances;
+      _result = []; _ref2 = shore._significances;
       for (_j in _ref2) {
         if (!__hasProp.call(_ref2, _j)) continue;
         (function() {
@@ -837,6 +849,16 @@
           return this.comps.variable.known_constant ? shore(0) : null;
         }), canonization("major", "differentiation of constant", function() {
           return this.comps.expression.known_constant ? shore(0) : null;
+        })
+      ]);
+    }), def("PendingSubstitution", function() {
+      return this.__super__.canonizers.concat([
+        canonization("major", "substitute", function() {
+          var _ref2, original, replacement;
+          _ref2 = this.comps.substitution.comps.operands;
+          original = _ref2[0];
+          replacement = _ref2[1];
+          return shore.substitute(this.comps.expression, original, replacement);
         })
       ]);
     })
