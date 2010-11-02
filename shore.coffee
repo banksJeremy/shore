@@ -36,15 +36,20 @@ former_shore = root.shore
 
 shore = root.S = root.shore = (args...) ->
 	# The shore object is a function which can be called to create shore values.
-	# Without shore.parser it will only be able to create numbers and
-	# identifiers. If multiple arguments are provided it will return an array
-	# of values, so you can do things like [x, y, z] = shore "x", "y", "z".
+	# Without shore.parser it will only be able to create identifiers, numbers
+	# (when numbers are provided) and matricies (when 2d arrays are provided).
+	# If multiple arguments are provided it will provide a system.
 	
 	if args.length is 1
 		arg = args[0]
 		
 		if arg.is_shore_thing
 			arg
+		else if typeof arg is "object" and arg.constructor is Array
+			if arg.length and typeof arg[0] is "object" and arg[0].constructor is Array
+				shore.matrix values: arg
+			else
+				throw new Error "Unable to handle argument of 1D array."
 		else if typeof arg is "number"
 			shore.number value: arg
 		else if typeof arg is "string"
@@ -58,8 +63,7 @@ shore = root.S = root.shore = (args...) ->
 		else
 			throw new Error "Unable to handle argument of type #{typeof arg}."
 	else
-		for arg in args
-			shore arg
+		shore.system equations: (shore arg for arg in args)
 
 utility = shore.utility = shore.U =
 	# The shore.utility module contains functions that are not shore-specific.
@@ -333,6 +337,14 @@ __types =
 		to_cs: -> "(shore.#{@name.toLowerCase()} #{@comps})"
 		toString: -> @to_cs()
 		
+		_then: (other) ->
+			if other.is_a_value
+				this.times other
+			else
+				this.given other
+		
+		given: (substitution) -> shore.pending_substitution expression: this, substitution: substitution
+		
 	Value: class Value extends Thing
 		known_constant: false
 		is_a_value: true
@@ -347,14 +359,7 @@ __types =
 		equals: (other) -> shore.equality operands: [this, other]
 		integrate: (variable) -> shore.integral expression: this, variable: variable
 		differentiate: (variable) -> shore.derivative expression: this, variable: variable
-		given: (substitution) -> shore.pending_substitution expression: this, substitution: substitution
 		plus_minus: (other) -> shore.with_margin_of_error value: this, margin: other
-		
-		_then: (other) ->
-			if other.is_a_value
-				this.times other
-			else
-				this.given other
 	
 	Number: class Number extends Value
 		known_constant: true
@@ -520,6 +525,9 @@ __types =
 			else
 				@comps.value.to_tex @precedence
 	
+	Matrix: class Matrix extends Value
+		req_comps: sss "values"
+	
 	Equality: class Equality extends CANOperation
 		precedence: 1
 		
@@ -528,11 +536,13 @@ __types =
 		string_symbol: " = "
 		tex_symbol: " = "
 	
-	PendingSubstitution: class PendingSubstitution extends Value
+	PendingSubstitution: class PendingSubstitution extends Thing
 		precedence: 2.5
 		
+		req_comps: sss "expression substitution"
+		
 		constructor: (comps) ->
-			comps.is_a_value = comps.expression.is_a_value
+			@is_a_value = comps.expression.is_a_value
 			super comps
 		
 		string_symbol: ""
@@ -547,6 +557,12 @@ __types =
 			(@comps.expression.to_tex @precedence) +
 			@tex_symbol +
 			(@comps.substitution.to_tex @precedence)
+	
+	System: class System extends Thing
+		req_comps: sss "equations"
+		
+		to_free_string: -> (eq.to_string() for eq in @comps.equations).join "\n"
+		to_free_tex: -> (eq.to_tex() for eq in @comps.equations).join "\\\\\n"
 
 # Set the .type property of each type to itself
 for name, type of __types

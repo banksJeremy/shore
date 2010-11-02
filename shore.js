@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -25,6 +25,14 @@
       arg = args[0];
       if (arg.is_shore_thing) {
         return arg;
+      } else if (typeof arg === "object" && arg.constructor === Array) {
+        if (arg.length && typeof arg[0] === "object" && arg[0].constructor === Array) {
+          return shore.matrix({
+            values: arg
+          });
+        } else {
+          throw new Error("Unable to handle argument of 1D array.");
+        }
       } else if (typeof arg === "number") {
         return shore.number({
           value: arg
@@ -45,12 +53,16 @@
         throw new Error("Unable to handle argument of type " + (typeof arg) + ".");
       }
     } else {
-      _result = []; _ref = args;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        arg = _ref[_i];
-        _result.push(shore(arg));
-      }
-      return _result;
+      return shore.system({
+        equations: (function() {
+          _result = []; _ref = args;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            arg = _ref[_i];
+            _result.push(shore(arg));
+          }
+          return _result;
+        })()
+      });
     }
   }));
   utility = (shore.utility = (shore.U = {
@@ -351,6 +363,15 @@
       Thing.prototype.toString = function() {
         return this.to_cs();
       };
+      Thing.prototype._then = function(other) {
+        return other.is_a_value ? this.times(other) : this.given(other);
+      };
+      Thing.prototype.given = function(substitution) {
+        return shore.pending_substitution({
+          expression: this,
+          substitution: substitution
+        });
+      };
       return Thing;
     })(),
     Value: (function() {
@@ -409,20 +430,11 @@
           variable: variable
         });
       };
-      Value.prototype.given = function(substitution) {
-        return shore.pending_substitution({
-          expression: this,
-          substitution: substitution
-        });
-      };
       Value.prototype.plus_minus = function(other) {
         return shore.with_margin_of_error({
           value: this,
           margin: other
         });
-      };
-      Value.prototype._then = function(other) {
-        return other.is_a_value ? this.times(other) : this.given(other);
       };
       return Value;
     })(),
@@ -675,6 +687,14 @@
       };
       return WithMarginOfError;
     })(),
+    Matrix: (function() {
+      Matrix = function() {
+        return Value.apply(this, arguments);
+      };
+      __extends(Matrix, Value);
+      Matrix.prototype.req_comps = sss("values");
+      return Matrix;
+    })(),
     Equality: (function() {
       Equality = function() {
         return CANOperation.apply(this, arguments);
@@ -688,12 +708,13 @@
     })(),
     PendingSubstitution: (function() {
       PendingSubstitution = function(comps) {
-        comps.is_a_value = comps.expression.is_a_value;
+        this.is_a_value = comps.expression.is_a_value;
         PendingSubstitution.__super__.constructor.call(this, comps);
         return this;
       };
-      __extends(PendingSubstitution, Value);
+      __extends(PendingSubstitution, Thing);
       PendingSubstitution.prototype.precedence = 2.5;
+      PendingSubstitution.prototype.req_comps = sss("expression substitution");
       PendingSubstitution.prototype.string_symbol = "";
       PendingSubstitution.prototype.tex_symbol = "";
       PendingSubstitution.prototype.to_free_string = function() {
@@ -703,6 +724,36 @@
         return (this.comps.expression.to_tex(this.precedence)) + this.tex_symbol + (this.comps.substitution.to_tex(this.precedence));
       };
       return PendingSubstitution;
+    })(),
+    System: (function() {
+      System = function() {
+        return Thing.apply(this, arguments);
+      };
+      __extends(System, Thing);
+      System.prototype.req_comps = sss("equations");
+      System.prototype.to_free_string = function() {
+        var _i, _len, _ref, _result, eq;
+        return (function() {
+          _result = []; _ref = this.comps.equations;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            eq = _ref[_i];
+            _result.push(eq.to_string());
+          }
+          return _result;
+        }).call(this).join("\n");
+      };
+      System.prototype.to_free_tex = function() {
+        var _i, _len, _ref, _result, eq;
+        return (function() {
+          _result = []; _ref = this.comps.equations;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            eq = _ref[_i];
+            _result.push(eq.to_tex());
+          }
+          return _result;
+        }).call(this).join("\\\\\n");
+      };
+      return System;
     })()
   };
   _ref = __types;
