@@ -43,11 +43,13 @@ shore = root.S = root.shore = (args...) ->
 	if args.length is 1
 		arg = args[0]
 		
-		if typeof arg is "number"
-			S.number value: arg
+		if arg.is_shore_thing
+			arg
+		else if typeof arg is "number"
+			shore.number value: arg
 		else if typeof arg is "string"
 			if /^[a-zA-Z][a-zA-Z0-9]*'*$/.test arg
-				S.identifier value: arg
+				shore.identifier value: arg
 			else
 				if shore.parser?
 					shore.parser.parse arg
@@ -76,7 +78,7 @@ utility = shore.utility = shore.U =
 		# Converts an object to a string or calls its __hash__ method recursively
 		# in Arrays and Object.
 		
-		String utility.call_in object, (object) ->
+		String utility.call object, (object) ->
 			if object.__hash__?
 				object.__hash__()
 			else
@@ -115,7 +117,7 @@ utility = shore.utility = shore.U =
 		
 		for old_name of module
 			if new_name = utility.uncamel old_name
-				module[new_name] = module._make_provider module[old_name]
+				module[new_name] = module[old_name]::provider = module._make_provider module[old_name]
 	
 	extend: (destination, sources...) ->
 		# Copies all properties from each source onto destination
@@ -134,19 +136,24 @@ utility = shore.utility = shore.U =
 		
 		typeof object is "object" and object.constructor is Object
 	
+	is_string: (object) ->
+		typeof object is "string"
+	
 	call_in: (object, f, extra_arguments...) ->
 		# Calls function on an object or recursively within Arrays and Objects.
 		
 		if utility.is_array object
 			for value in object
-				f value, extra_arguments...
+				utility.call_in value, f, extra_arguments...
 		else if utility.is_object object
 			result = {}
 			for key, value of object
-				result[key] = f value, extra_arguments...
+				result[key] = utility.call_in value, f, extra_arguments...
 			result
-		else
+		else if typeof object is "object"
 			f object, extra_arguments...
+		else # we leave functions/strings/etc alone
+			object
 
 __not_types =
 	# Merged onto shore first, as they may be required by the defenitions of
@@ -206,7 +213,55 @@ __not_types =
 	canonize: (object, arguments...) ->
 		# Canonizes an object or recrusively within Arrays and Objects.
 		
-		utility.call_in ((o, args...) -> o.canonize args...), object, arguments
+		f = (object, arguments...) ->
+			if object.is_shore_thing
+				object.canonize arguments...
+			else
+				object
+		
+		utility.call_in object, f, arguments...
+	
+	substitute: (within, original, replacement) ->
+		f = (object, original, replacement) ->
+			if object.is_shore_thing
+				if object.is original
+					replacement
+				else
+					object.provider shore.substitute object.comps, original, replacement
+			else
+				object
+		
+		utility.call_in within, f, original, replacement
+	
+	is: (a, b) ->
+		# Determines equality of two objects or recursively within arrays and
+		# objects.
+		
+		if utility.is_object a
+			return false if not utility.is_object b
+			
+			for key of a
+				return false if key not of b
+			for key of b
+				return false if key not of a
+			for key of a
+				return false if not shore.is a[key], b[key]
+			true
+		else if utility.is_array a
+			return false if not utility.is_array b
+			return false if a.length isnt b.length
+			
+			for index of a
+				return false if not shore.is a[index], b[index]
+			
+			true
+		else
+			return false if a?.type isnt b?.type
+			
+			if a.is_shore_thing
+				a.is b
+			else
+				a is b
 
 utility.extend shore, __not_types
 
@@ -220,6 +275,7 @@ __types =
 		# The underlying mechanisms of all of our types, without anything of
 		# actual math.
 		
+		is_shore_thing: true
 		precedence: 0
 		
 		req_comps: []
@@ -227,39 +283,35 @@ __types =
 		constructor: (@comps) ->
 			for name in @req_comps
 				if not @comps[name]?
-					throw new Error "#{@type ? @constructor} object requires value for #{name}"
+					throw new Error "#{@name ? @constructor} object requires value for #{name}"
 		
-		eq: (other) ->
-			@type is other.type and @components is other.components
+		is: (other) ->
+			@type is other?.type and shore.is @comps, other.comps
 		
-		canonize: (enough, excess) ->
+		canonize: (limit, enough) ->
+			limit = shore._significance limit
 			enough = shore._significance enough
-			excess = shore._significance excess
 			
 			result = this
 			
 			loop
 				next = result.next_canonization()
 				if not next.length then break
+				
 				[{significance: significance}, value] = next
 				
-				if excess? and significance >= excess then break
+				if limit? and significance > limit then break
 				result = value
 				if enough? and significance >= enough then break
 			
 			result
 		
 		next_canonization: ->
-			for canonization in @get_canonizers()
+			for canonization in @canonizers
 				value = canonization.apply this
 				
-				if value and not @eq(value)
+				if value and not @is(value)
 					return [canonization, value]
-		
-		get_canonizers: -> @_get_canonizers() #(utility.nullary_proto_memo "get_canonizers",
-			#-> @_get_canonizers())
-		
-		_get_canonizers: -> []
 		
 		to_tex: (context) ->
 			context ?= 1
@@ -278,10 +330,11 @@ __types =
 		
 		to_free_string: -> "(shore.#{@type} value)"
 		to_free_tex: -> "\\text{(shore.#{@type} value)}"
-		to_cs: -> "(shore.#{@type.toLowerCase()} #{@comps})"
+		to_cs: -> "(shore.#{@name.toLowerCase()} #{@comps})"
 		toString: -> @to_cs()
 		
 	Value: class Value extends Thing
+		known_constant: false
 		is_a_value: true
 		
 		plus: (other) -> shore.sum operands: [this, other]
@@ -304,6 +357,7 @@ __types =
 				this.given other
 	
 	Number: class Number extends Value
+		known_constant: true
 		precedence: 10
 		req_comps: sss "value"
 		
@@ -386,7 +440,7 @@ __types =
 			
 			for term in @comps.operands
 				if term.type is shore.Exponent
-					exponent = term.exponent
+					exponent = term.comps.exponent
 					
 					if exponent.type is shore.Number and exponent.comps.value < 0
 						negative_exponents.push shore.exponent base: term.comps.base, exponent: exponent.neg()
@@ -406,10 +460,11 @@ __types =
 				top
 		
 		to_free_string: ->
-			(operand.to_string() for operand in @comps.operands).join ""
+			(operand.to_string(20) for operand in @comps.operands).join ""
 	
 	Exponent: class Exponent extends Value
 		precedence: 5
+		req_comps: sss "base exponent"
 		
 		to_free_tex: ->
 			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
@@ -419,27 +474,29 @@ __types =
 		
 		to_free_string: ->
 			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
-				@comps.base.to_tex @precedence
+				@comps.base.to_string @precedence
 			else
 				"#{@comps.base.to_string @precedence}^#{@comps.exponent.to_string()}"
 		
 	Integral: class Integral extends Value
 		precedence: 3
+		req_comps: sss "variable expression"
 		
 		to_free_tex: ->
 			"\\int\\left[#{@comps.expression.to_tex()}\\right]d#{@comps.variable.to_tex()}"
 		
 		to_free_string: ->
-			"int{[#{@comps.expression.to_tex()}]d#{@comps.variable.to_tex()}}"
+			"int{[#{@comps.expression.to_string()}]d#{@comps.variable.to_string()}}"
 	
 	Derivative: class Derivative extends Value
 		precedence: 3
+		req_comps: sss "variable expression"
 		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@comps.variable.to_tex()}}\\left[#{@comps.expression.to_tex()}\\right]"
 		
 		to_free_string: ->
-			"d/d#{@comps.variable.to_tex()}[#{@comps.expression.to_tex()}]"
+			"d/d#{@comps.variable.to_string()}[#{@comps.expression.to_string()}]"
 	
 	WithMarginOfError: class WithMarginOfError extends Value
 		precedence: 1.5
@@ -448,7 +505,7 @@ __types =
 		string_symbol: " ± "
 		
 		to_free_string: ->
-			if not @margin.eq (shore 0)
+			if not @margin.is (shore 0)
 				"#{@comps.value.to_string @precedence}
 				 #{@string_symbol}
 				 #{@comps.margin.to_string @precedence}"
@@ -456,7 +513,7 @@ __types =
 				@comps.value.to_string @precedence
 		
 		to_free_tex: ->
-			if not @margin.eq (shore 0)
+			if not @margin.is (shore 0)
 				"#{@comps.value.to_tex @precedence}
 				 #{@tex_symbol}
 				 #{@comps.margin.to_tex @precedence}"
@@ -494,47 +551,182 @@ __types =
 # Set the .type property of each type to itself
 for name, type of __types
 	type::type = type
+	type::name = name
 
 utility.extend shore, __types
 utility.make_providers shore
 
+# in defining canonizations
+def = (args...) -> args
+canonization = shore.canonization
+
 __definers_of_canonizers = [
-	"Thing", -> 
-		for significance of shore.significances
+	def "Thing", ->
+		for significance of shore._significances
 			canonization significance, "components #{significance}", ->
 				@provider shore.canonize @comps, significance, significance
 	
-	"CANOperation", -> @__super__.canonizers.concat [
+	def "CANOperation", -> @__super__.canonizers.concat [
 		canonization "minor", "single argument", ->
-			@operands[0] if @operands.length is 1
+			@comps.operands[0] if @comps.operands.length is 1
 		
 		canonization "minor", "no arguments", ->
-			@get_nullary() if @operands.length is 0 and @get_nullary
+			@get_nullary() if @comps.operands.length is 0 and @get_nullary
+		
+		canonization "minor", "commutativity", ->
+			# expands out instances of the same thing in itself
+			can_expand = false
+			for operand in @comps.operands
+				if @type is operand.type
+					can_expand = true
+					break
+			
+			if can_expand
+				new_operands = []
+				
+				for operand in @comps.operands
+					if @type is operand.type
+						for suboperand in operand.comps.operands
+							new_operands.push suboperand
+					else
+						new_operands.push operand
+				
+				@provider operands: new_operands
+		
+		canonization "major", "remove redundant nullaries", ->
+			null # TODO
 	]
 	
-	"Sum", -> @__super__.canonizers.concat [
+	def "Sum", -> @__super__.canonizers.concat [
 		canonization "major", "numbers in sum", ->
 			numbers = []
 			not_numbers = []
 			
-			for operand in @operands
+			for operand in @comps.operands
 				if operand.type is shore.Number
 					numbers.push operand
 				else
 					not_numbers.push operand
 			
 			if numbers.length > 1
-				sum = @get_nullary().value
+				sum = @get_nullary().comps.value
 				
 				while numbers.length
-					sum += numbers.pop().value
+					sum += numbers.pop().comps.value
 				
-				shore.sum operands: [ shore.number sum ].concat not_numbers
+				@provider operands: [ shore.number value: sum ].concat not_numbers
+		
+		# constant coefficients
+	]
+	
+	def "Product", -> @__super__.canonizers.concat [
+		canonization "major", "numbers in product", ->
+			numbers = []
+			not_numbers = []
+			
+			for operand in @comps.operands
+				if operand.type is shore.Number
+					numbers.push operand
+				else
+					not_numbers.push operand
+			
+			if numbers.length > 1
+				product = @get_nullary().comps.value
+				
+				while numbers.length
+					product *= numbers.pop().comps.value
+				
+				@provider operands: [ shore.number value: product ].concat not_numbers
+	]
+	
+	def "Exponent", -> @__super__.canonizers.concat [
+		canonization "minor", "eliminate power of one", ->
+			if @comps.exponent.is (shore 1)
+				@comps.base
+		
+		canonization "major", "exponent of numbers", ->
+			if @comps.base.type is @comps.exponent.type is shore.Number
+				x = Math.pow @comps.base.comps.value, @comps.exponent.comps.value
+				shore.number value: x
+	]
+	
+	def "Integral", -> @__super__.canonizers.concat [
+		canonization "major", "integration over constant", ->
+			if @comps.variable.known_constant
+				shore 0
+		
+		canonization "major", "integration of constant", ->
+			if @comps.expression.known_constant
+				@comps.expression.times @comps.variable
+		
+		canonization "moderate", "rule of sums", ->
+			if @comps.expression.type is shore.Sum
+				shore.sum operands: for term in @comps.expression.comps.operands
+					shore.integral variable: @comps.variable, expression: term
+		
+		canonization "moderate", "constant coefficient", ->
+			if @comps.expression.type is shore.Product
+				terms = @comps.expression.comps.operands
+				coefficient = terms[0]
+				if coefficient.known_constant
+					coefficient.times shore.integral
+						variable: @comps.variable
+						expression: shore.product (operands: terms[1...terms.length])
+		
+		canonization "major", "integration over self", ->
+			if @comps.expression.is @comps.variable
+				@comps.expression.to_the(shore 2).over(shore 2)
+		
+		canonization "major", "power rule", ->
+			if @comps.expression.type is shore.Exponent
+				{ base: base, exponent: exponent } = @comps.expression.comps
+				new_exponent = exponent.plus (shore 1)
+				if base.is @comps.variable
+					base.to_the(exponent.minus new_exponent).over(new_exponent)
+	]
+	
+	def "Derivative", -> @__super__.canonizers.concat [
+		canonization "moderate", "differentiation over self", ->
+			if @comps.variable.is @comps.expression
+				shore 1
+		
+		canonization "moderate", "differentiation over constant", ->
+			if @comps.variable.known_constant
+				shore 0
+		
+		canonization "moderate", "differentiation of constant", ->
+			if @comps.expression.known_constant
+				shore 0
+		
+		canonization "moderate", "rule of sums", ->
+			if @comps.expression.type is shore.Sum
+				shore.sum operands: for term in @comps.expression.comps.operands
+					shore.derivative (variable: @comps.variable, expression: term)
+		
+		canonization "major", "constant coefficient", ->
+			if @comps.expression.type is shore.Product
+				terms = @comps.expression.comps.operands
+				coefficient = terms[0]
+				if coefficient.known_constant
+					coefficient.times shore.derivative
+						variable: @comps.variable
+						expression: shore.product(operands: terms[1...terms.length])
+		
+		canonization "major", "power rule", ->
+			if @comps.expression.type is shore.Exponent
+				{ base: base, exponent: exponent } = @comps.expression.comps
+				if base.is @comps.variable
+					exponent.times(base).to_the(exponent.minus (shore 1))
+		
+	]
+	
+	def "PendingSubstitution", -> @__super__.canonizers.concat [
+		canonization "major", "substitute", ->
+			[ original, replacement ] = @comps.substitution.comps.operands
+			shore.substitute @comps.expression, original, replacement
 	]
 ]
 
-for index of __definers_of_canonizers
-	if not index % 2
-		[name, definer] = [__definers_of_canonizers[index], __definers_of_canonizers[index + 1]]
-		shore[name].canonizers = definer.apply shore[name]
-
+for definition in __definers_of_canonizers
+	[name, definer] = definition
+	shore[name]::canonizers = definer.apply shore[name]

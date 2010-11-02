@@ -51,15 +51,11 @@ TODO
 ----
 
 ### `v0.1`
-  
+
   - Canonical ordering of objects, even if unrelated to true value ordering.
   - Canonization of `shore.Sum`, `shore.Product`.
   - Merge `shore.Exponent` into `shore.Product`.
-  - All defining attributes go onto `shore.Value().components`, which can
-    typically be canonized without requiring class-specific code.
-    That'd manage _eq nicely as well.
   - Support engineering notation in `shore.parser`.
-  - Maybe put interface in main.html and only have an index.html in gh-pages.
 
 ### `v0.2`
 
@@ -71,11 +67,13 @@ TODO
 
 ### `v1.0`
 
+  - x ~ ~ t for double integral, etc.
   - Make the code decent
   - Write at least some basic documentation
   - Documentation!
   - Organize code better, clearly distinguishing library from interface.
   - Make interface code better, so it can be dropped into something else.
+    - split much of main.coffee into shore.ui.coffee
 
 ### `v1.1`
 

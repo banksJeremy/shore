@@ -1,4 +1,4 @@
-/* Jison generated parser */
+if (shore === undefined) { var shore = require ? require('./shore').shore : {} }if (this.exports) { exports.shore = shore }/* Jison generated parser */
 shore.parser = (function(){
 var parser = {trace: function trace() { },
 yy: {},
