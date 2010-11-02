@@ -11,9 +11,9 @@ class Test
 			output = (S @output).canonize "minor"
 			
 			if input.is output
-				new TestResult this, true, "#{input.to_string()} == #{output.to_string()}"
+				new TestResult this, true, "#{input.to_string()} is #{output.to_string()}"
 			else
-				new TestResult this, false, "#{input.to_string()} != #{output.to_string()}"
+				new TestResult this, false, "#{input.to_string()} isn't #{output.to_string()}"
 		catch error
 			new TestResult this, false, "Exception: #{error}"
 
@@ -33,6 +33,9 @@ tests = [
 	(new Test "a + a + a + b + b", "3a + 2b")
 	(new Test "2 ~ t", "2t")
 	(new Test "a(a=b)", "b")
+	(new Test "x`x", "1")
+	(new Test "(2x)`x", "2")
+	(new Test "a * a * b", "a^2 * b")
 ]
 
 passes = 0

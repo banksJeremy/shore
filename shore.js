@@ -23,7 +23,9 @@
     args = __slice.call(arguments, 0);
     if (args.length === 1) {
       arg = args[0];
-      if (typeof arg === "number") {
+      if (arg.is_shore_thing) {
+        return arg;
+      } else if (typeof arg === "number") {
         return shore.number({
           value: arg
         });
@@ -205,14 +207,14 @@
       arguments = __slice.call(arguments, 1);
       f = function(object) {
         arguments = __slice.call(arguments, 1);
-        return object.canonize.apply(object, arguments);
+        return object.is_shore_thing ? object.canonize.apply(object, arguments) : object;
       };
       return utility.call_in.apply(utility, [object, f].concat(arguments));
     },
     substitute: function(within, original, replacement) {
       var f;
       f = function(object, original, replacement) {
-        return object.is(original) ? replacement : object;
+        return object.is_shore_thing && object.is(original) ? replacement : object;
       };
       return utility.call_in(within, f, original, replacement);
     },
@@ -267,7 +269,7 @@
         if (((typeof a === "undefined" || a === null) ? undefined : a.type) !== ((typeof b === "undefined" || b === null) ? undefined : b.type)) {
           return false;
         }
-        return (typeof (_ref = a.is) !== "undefined" && _ref !== null) ? a.is(b) : a === b;
+        return a.is_shore_thing ? a.is(b) : a === b;
       }
     }
   };
@@ -287,6 +289,7 @@
         }
         return this;
       };
+      Thing.prototype.is_shore_thing = true;
       Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
       Thing.prototype.is = function(other) {
@@ -613,6 +616,7 @@
       };
       __extends(Exponent, Value);
       Exponent.prototype.precedence = 5;
+      Exponent.prototype.req_comps = sss("base exponent");
       Exponent.prototype.to_free_tex = function() {
         return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_tex(this.precedence) : ("{" + (this.comps.base.to_tex(this.precedence)) + "}^{" + (this.comps.exponent.to_tex()) + "}");
       };
@@ -829,6 +833,18 @@
                   value: product
                 })
               ].concat(not_numbers)
+            });
+          }
+        })
+      ]);
+    }), def("Exponent", function() {
+      return this.__super__.canonizers.concat([
+        canonization("major", "exponent of numbers", function() {
+          var x;
+          if ((this.comps.base.type === this.comps.exponent.type) && (this.comps.exponent.type === shore.Number)) {
+            x = Math.pow(this.comps.base.comps.value, this.comps.exponent.comps.value);
+            return shore.number({
+              value: x
             });
           }
         })

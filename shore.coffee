@@ -43,7 +43,9 @@ shore = root.S = root.shore = (args...) ->
 	if args.length is 1
 		arg = args[0]
 		
-		if typeof arg is "number"
+		if arg.is_shore_thing
+			arg
+		else if typeof arg is "number"
 			shore.number value: arg
 		else if typeof arg is "string"
 			if /^[a-zA-Z][a-zA-Z0-9]*'*$/.test arg
@@ -212,13 +214,16 @@ __not_types =
 		# Canonizes an object or recrusively within Arrays and Objects.
 		
 		f = (object, arguments...) ->
-			object.canonize arguments...
+			if object.is_shore_thing
+				object.canonize arguments...
+			else
+				object
 		
 		utility.call_in object, f, arguments...
 	
 	substitute: (within, original, replacement) ->
 		f = (object, original, replacement) ->
-			if object.is original
+			if object.is_shore_thing and object.is original
 				replacement
 			else
 				object
@@ -250,8 +255,8 @@ __not_types =
 		else
 			return false if a?.type isnt b?.type
 			
-			if a.is?
-				a.is(b)
+			if a.is_shore_thing
+				a.is b
 			else
 				a is b
 
@@ -267,6 +272,7 @@ __types =
 		# The underlying mechanisms of all of our types, without anything of
 		# actual math.
 		
+		is_shore_thing: true
 		precedence: 0
 		
 		req_comps: []
@@ -455,6 +461,7 @@ __types =
 	
 	Exponent: class Exponent extends Value
 		precedence: 5
+		req_comps: sss "base exponent"
 		
 		to_free_tex: ->
 			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
@@ -623,6 +630,13 @@ __definers_of_canonizers = [
 					product *= numbers.pop().comps.value
 				
 				@provider operands: [ shore.number value: product ].concat not_numbers
+	]
+	
+	def "Exponent", -> @__super__.canonizers.concat [
+		canonization "major", "exponent of numbers", ->
+			if @comps.base.type is @comps.exponent.type is shore.Number
+				x = Math.pow @comps.base.comps.value, @comps.exponent.comps.value
+				shore.number value: x
 	]
 	
 	def "Integral", -> @__super__.canonizers.concat [

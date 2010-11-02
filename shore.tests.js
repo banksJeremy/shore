@@ -15,7 +15,7 @@
     try {
       input = (S(this.input)).canonize("major");
       output = (S(this.output)).canonize("minor");
-      return input.is(output) ? new TestResult(this, true, "" + (input.to_string()) + " == " + (output.to_string())) : new TestResult(this, false, "" + (input.to_string()) + " != " + (output.to_string()));
+      return input.is(output) ? new TestResult(this, true, "" + (input.to_string()) + " is " + (output.to_string())) : new TestResult(this, false, "" + (input.to_string()) + " isn't " + (output.to_string()));
     } catch (error) {
       return new TestResult(this, false, "Exception: " + (error));
     }
@@ -35,7 +35,7 @@
       }
     }).call(this) || '');
   };
-  tests = [(new Test("1 + 1", "2")), (new Test("1 + 2 + 3", "6")), (new Test("2 * 2", "4")), (new Test("2 * 2 * 2", "8")), (new Test("2 ^ 3", "8")), (new Test("a + a + a + b + b", "3a + 2b")), (new Test("2 ~ t", "2t")), (new Test("a(a=b)", "b"))];
+  tests = [(new Test("1 + 1", "2")), (new Test("1 + 2 + 3", "6")), (new Test("2 * 2", "4")), (new Test("2 * 2 * 2", "8")), (new Test("2 ^ 3", "8")), (new Test("a + a + a + b + b", "3a + 2b")), (new Test("2 ~ t", "2t")), (new Test("a(a=b)", "b")), (new Test("x`x", "1")), (new Test("(2x)`x", "2")), (new Test("a * a * b", "a^2 * b"))];
   passes = 0;
   _ref = tests;
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
