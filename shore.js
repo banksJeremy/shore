@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Equation, Exponent, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Equation, Exponent, Identifier, Integral, MapByHash, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -133,6 +133,74 @@
         return 1;
       }
     },
+    MapByHash: (function() {
+      MapByHash = function(values) {
+        this.data = {};
+        this.update(values);
+        return this;
+      };
+      MapByHash.prototype.sorted_keys = function() {
+        var _i, _len, _ref, _result, hash, hashes;
+        (hashes = (function() {
+          _result = []; _ref = this.data;
+          for (hash in _ref) {
+            if (!__hasProp.call(_ref, hash)) continue;
+            _i = _ref[hash];
+            _result.push(hash);
+          }
+          return _result;
+        }).call(this)).sort();
+        _result = []; _ref = hashes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          hash = _ref[_i];
+          _result.push(this.data[hash][0]);
+        }
+        return _result;
+      };
+      MapByHash.prototype.sorted_items = function() {
+        var _i, _len, _ref, _result, hash, hashes;
+        (hashes = (function() {
+          _result = []; _ref = this.data;
+          for (hash in _ref) {
+            if (!__hasProp.call(_ref, hash)) continue;
+            _i = _ref[hash];
+            _result.push(hash);
+          }
+          return _result;
+        }).call(this)).sort();
+        _result = []; _ref = hashes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          hash = _ref[_i];
+          _result.push(this.data[hash]);
+        }
+        return _result;
+      };
+      MapByHash.prototype.contains = function(key) {
+        var _ref;
+        return (typeof (_ref = this.data[utility.hash(key)]) !== "undefined" && _ref !== null);
+      };
+      MapByHash.prototype.get = function(key) {
+        var _ref, value;
+        _ref = this.data[utility.hash(key)];
+        key = _ref[0];
+        value = _ref[1];
+        return value;
+      };
+      MapByHash.prototype.set = function(key, value) {
+        return (this.data[utility.hash(key)] = [key, value]);
+      };
+      MapByHash.prototype.update = function(values) {
+        var _ref, _result, key, value;
+        _result = []; _ref = values;
+        for (key in _ref) {
+          if (!__hasProp.call(_ref, key)) continue;
+          value = _ref[key];
+          _result.push(this.set(key, value));
+        }
+        return _result;
+      };
+      return MapByHash;
+    })(),
     memoize: function(f, memory, hasher) {
       var memoized;
       hasher = (typeof hasher !== "undefined" && hasher !== null) ? hasher : utility.hash;
@@ -985,6 +1053,53 @@
               ].concat(not_numbers)
             });
           }
+        }), canonization("moderate", "constant coefficients", function() {
+          var _i, _len, _ref2, _ref3, _result, anything_done, coefficient, map, operand, term;
+          map = new utility.MapByHash();
+          anything_done = false;
+          _ref2 = this.comps.operands;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            operand = _ref2[_i];
+            if (operand.type === shore.Product && operand.comps.operands.length && operand.comps.operands[0].type === shore.Number) {
+              coefficient = operand.comps.operands[0].comps.value;
+              term = this.provider({
+                operands: operand.comps.operands.slice(1, operand.comps.operands.length)
+              });
+            } else {
+              coefficient = 1;
+              term = operand;
+            }
+            if (map.contains(term)) {
+              anything_done = true;
+              map.set(term, map.get(term) + coefficient);
+            } else {
+              map.set(term, coefficient);
+            }
+          }
+          console.log(anything_done, (this.provider({
+            operands: (function() {
+              _result = []; _ref2 = map.sorted_items();
+              for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+                _ref3 = _ref2[_i];
+                term = _ref3[0];
+                coefficient = _ref3[1];
+                _result.push((shore(coefficient)).times(term));
+              }
+              return _result;
+            })()
+          })).to_string());
+          return anything_done ? this.provider({
+            operands: (function() {
+              _result = []; _ref2 = map.sorted_items();
+              for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+                _ref3 = _ref2[_i];
+                term = _ref3[0];
+                coefficient = _ref3[1];
+                _result.push((shore(coefficient)).times(term));
+              }
+              return _result;
+            })()
+          }) : null;
         })
       ]);
     }), def("Product", function() {

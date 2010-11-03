@@ -105,6 +105,33 @@ utility = shore.utility = shore.U =
 		else
 			1
 	
+	MapByHash: class MapByHash
+		constructor: (values) ->
+			@data = {}
+			@update values
+		
+		sorted_keys: ->
+			(hashes = hash for hash of @data).sort()
+			return (@data[hash][0] for hash in hashes)
+		
+		sorted_items: ->
+			(hashes = hash for hash of @data).sort()
+			return (@data[hash] for hash in hashes)
+		
+		contains: (key) ->
+			return @data[utility.hash(key)]?
+		
+		get: (key) ->
+			[key, value] = @data[utility.hash(key)]
+			value
+		
+		set: (key, value) ->
+			@data[utility.hash(key)] = [key, value]
+		
+		update: (values) ->
+			for key, value of values
+				@set key, value
+	
 	memoize: (f, memory, hasher) ->
 		# Memoizes a function using a specified memory object and hash function.
 		# 
@@ -684,7 +711,32 @@ __definers_of_canonizers = [
 				
 				@provider operands: [ shore.number value: sum ].concat not_numbers
 		
-		# constant coefficients
+		canonization "moderate", "constant coefficients", ->
+			map = new utility.MapByHash()
+			anything_done = false
+			
+			for operand in @comps.operands
+				if operand.type is shore.Product and
+				   operand.comps.operands.length and
+				   operand.comps.operands[0].type is shore.Number
+					coefficient = operand.comps.operands[0].comps.value
+					term = @provider operands: operand.comps.operands[1...operand.comps.operands.length] 
+				else
+					coefficient = 1
+					term = operand
+				
+				if map.contains(term)
+					anything_done = true
+					map.set(term, map.get(term) + coefficient)
+				else
+					map.set(term, coefficient)
+			
+			console.log anything_done, (		@provider operands: (for [term, coefficient] in map.sorted_items()
+						(shore coefficient).times term)).to_string()
+			
+			if anything_done
+				@provider operands: (for [term, coefficient] in map.sorted_items()
+					(shore coefficient).times term)
 	]
 	
 	def "Product", -> @__super__.canonizers.concat [
@@ -705,6 +757,8 @@ __definers_of_canonizers = [
 					product *= numbers.pop().comps.value
 				
 				@provider operands: [ shore.number value: product ].concat not_numbers
+		
+		# constant powers
 	]
 	
 	def "Exponent", -> @__super__.canonizers.concat [

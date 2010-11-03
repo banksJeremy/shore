@@ -13,8 +13,8 @@
   Test.prototype.run = function() {
     var input, output;
     try {
-      input = (S(this.input)).canonize("major");
-      output = (S(this.output)).canonize("minor");
+      input = (S(this.input)).canonize();
+      output = (S(this.output)).canonize();
       return input.is(output) ? new TestResult(this, true, "" + (input.to_string()) + " is " + (output.to_string())) : new TestResult(this, false, "" + (input.to_string()) + " isn't " + (output.to_string()));
     } catch (error) {
       return new TestResult(this, false, "Exception: " + (error));

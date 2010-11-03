@@ -168,7 +168,7 @@ processing it to plain-text output.";
           ($("form")).submit();
           return false;
         } else {
-          return scale_textarea(input_box, +1);
+          return scale_textarea(input_box, em_pixels, +1);
         }
       }
     });

@@ -7,8 +7,8 @@ class Test
 	toString: -> "#{@input} => #{@output}"
 	run: ->
 		try
-			input = (S @input).canonize "major"
-			output = (S @output).canonize "minor"
+			input = (S @input).canonize()
+			output = (S @output).canonize()
 			
 			if input.is output
 				new TestResult this, true, "#{input.to_string()} is #{output.to_string()}"
