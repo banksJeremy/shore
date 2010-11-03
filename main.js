@@ -1,5 +1,5 @@
 (function() {
-  var decode, default_input, ems_per_pixel_in, encode, escape_html, get_qs, main, mathjax_load, mathjax_src, mj_wait, occurences, process_math, root, scale_textarea, texscapeify;
+  var decode, default_input, ems_per_pixel_in, encode, escape_html, get_qs, main, mathjax_load, mathjax_src, mj_wait, occurences, process_math, root, scale_textarea;
   root = this;
   default_input = "d = (((g ~ t + 5) ~ t) + 30)(g = -9.8)\nA = (-4.9t^2 + 5t + 30) ` t ` t";
   mathjax_src = "dep/mathjax-1.0.1/MathJax.js";
@@ -71,30 +71,12 @@ processing it to plain-text output.";
   escape_html = function(raw) {
     return raw.replace("&", "&amp").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
   };
-  texscapeify = function(value) {
-    return (escape_html(value.to_tex())).replace(/=/, "&=");
-  };
   process_math = function(input, output_element) {
-    var _i, _j, _len, _len2, _ref, _ref2, expression, line, out, output_parts, parsed, parsed_line;
+    var out, output_parts, parsed;
     "Parses an input string then display and format the input, steps and result\
 	in a given element.";
-    parsed = [];
     try {
-      _ref = input.split(/\n/);
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
-        if (line.length) {
-          parsed_line = [];
-          _ref2 = line.split(/;/);
-          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-            expression = _ref2[_j];
-            if (expression.length) {
-              parsed_line.push(shore.parser.parse(expression));
-            }
-          }
-          parsed.push(parsed_line);
-        }
-      }
+      parsed = shore(input);
     } catch (e) {
       if (!/^(Parse|Lexical) error/.test(e.message)) {
         throw e;
@@ -113,68 +95,28 @@ processing it to plain-text output.";
     if ((typeof MathJax === "undefined" || MathJax === null) ? undefined : MathJax.isReady) {
       out("<h3 id=output_input>Input</h3>");
       out("<div>\\begin{align}");
-      _ref = parsed;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
-        _ref2 = line;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          expression = _ref2[_j];
-          out(texscapeify(expression));
-          out(" & ");
-        }
-        out(" \\\\\n<br>");
-      }
+      out(escape_html(parsed.to_tex()));
       out("\\end{align}</div>");
       out("<h3 id=output_steps>Steps</h3>");
       out("<div>\\begin{align}");
       out("\\end{align}</div>");
       out("<h3 id=output_results>Results</h3>");
       out("<div>\\begin{align}");
-      _ref = parsed;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
-        _ref2 = line;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          expression = _ref2[_j];
-          out(texscapeify(expression.canonize()));
-          out(" & ");
-        }
-        out(" \\\\\n<br>");
-      }
+      out(escape_html(parsed.canonize().to_tex()));
       out("\\end{align}</div>");
       output_element.html(output_parts.join(""));
       MathJax.Hub.Queue(["Typeset", MathJax.Hub, (output_element.get(0))]);
     } else {
       out("<h3 id=output_input>Input</h3>");
       out("<pre>");
-      _ref = parsed;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
-        _ref2 = line;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          expression = _ref2[_j];
-          out(escape_html(expression.to_string()));
-          out("\t");
-        }
-        out("\n");
-      }
+      out(escape_html(expression.to_string()));
       out("</pre>");
       out("<h3 id=output_steps>Steps</h3>");
       out("<pre>");
       out("</pre>");
       out("<h3 id=output_results>Results</h3>");
       out("<pre>");
-      _ref = parsed;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
-        _ref2 = line;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          expression = _ref2[_j];
-          out(escape_html(expression.canonize().to_string()));
-          out("\t");
-        }
-        out("\n");
-      }
+      out(escape_html(expression.canonize().to_string()));
       out("</pre>");
       output_element.html(output_parts.join(""));
     }

@@ -51,7 +51,7 @@ var parser = jison.Parser({
 	"bnf": {
 		"expressions": [
 			[ "e EOF", "return $1;" ],
-			[ "lines EOF", "return shore.apply($1)"],
+			[ "lines EOF", "return shore.apply(shore, $1)"],
 			[ "EOF", "return undefined;" ],
 		],
 		
@@ -77,7 +77,7 @@ var parser = jison.Parser({
 			[ "e e", "$$ = $1._then($2);", { "prec": "THEN" } ],
 			
 			[ "( e )", "$$ = $2;" ],
-			[ "matrix", "$$ = $2;" ],
+			[ "matrix", "$$ = $1;" ],
 			
 			[ "NUMBER", "$$ = shore(Number(yytext));"],
 			[ "IDENTIFIER", "$$ = shore(String(yytext));"],

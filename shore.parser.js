@@ -11,7 +11,7 @@ var $$ = arguments[5],$0=arguments[5].length;
 switch(arguments[4]) {
 case 1:return $$[$0-2+1-1];
 break;
-case 2:return shore.apply($$[$0-2+1-1])
+case 2:return shore.apply(shore, $$[$0-2+1-1])
 break;
 case 3:return undefined;
 break;
@@ -47,7 +47,7 @@ case 18:this.$ = $$[$0-2+1-1]._then($$[$0-2+2-1]);
 break;
 case 19:this.$ = $$[$0-3+2-1];
 break;
-case 20:this.$ = $$[$0-1+2-1];
+case 20:this.$ = $$[$0-1+1-1];
 break;
 case 21:this.$ = shore(Number(yytext));
 break;
