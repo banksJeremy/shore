@@ -89,10 +89,21 @@ utility = shore.utility = shore.U =
 			if utility.is_array object
 				"L{#{(utility.hash o for o in object).join "|"}}"
 			else if typeof object is "object"
-				(sorted_keys = (key for key of object)).sort()
+				(sorted_keys = (key for key of object)).sort utility.compare_by_hash
 				"O{#{(utility.hash k + ":" + utility.hash object[k] for k in sorted_keys).join "|"}}"
 			else
 				String object
+	
+	compare_by_hash: (a, b) ->
+		ha = utility.hash a
+		hb = utility.hash b
+		
+		if ha > hb
+			1
+		else if ha == hb
+			0
+		else
+			-1
 	
 	memoize: (f, memory, hasher) ->
 		# Memoizes a function using a specified memory object and hash function.
@@ -367,7 +378,7 @@ __types =
 		pos: -> this
 		neg: -> (shore (-1)).times(this)
 		to_the: (other) -> shore.exponent base: this, exponent: other
-		equals: (other) -> shore.equality operands: [this, other]
+		equals: (other) -> shore.equality values: [this, other]
 		integrate: (variable) -> shore.integral expression: this, variable: variable
 		differentiate: (variable) -> shore.derivative expression: this, variable: variable
 		plus_minus: (other) -> shore.with_margin_of_error value: this, margin: other
@@ -550,14 +561,26 @@ __types =
 			}
 			\\end{matrix}"
 	
-	Equality: class Equality extends CANOperation
+	Equation: class Equation extends Thing
 		precedence: 1
+		req_comps: sss "values"
 		
-		is_a_value: false # >_< HACK
+		to_free_tex: (symbol) ->
+			symbol ?= @tex_symbol
+			
+			(((value.to_tex @precedence) for value in @comps.values)
+			 .join symbol)
 		
+		to_free_string: (symbol) ->
+			symbol ?= @string_symbol
+			
+			(((value.to_string @precedence) for value in @comps.values)
+			 .join symbol)
+	
+	Equality: class Equality extends Equation
 		string_symbol: " = "
 		tex_symbol: " = "
-	
+		
 	PendingSubstitution: class PendingSubstitution extends Thing
 		precedence: 2.5
 		
@@ -632,8 +655,14 @@ __definers_of_canonizers = [
 				
 				@provider operands: new_operands
 		
+		canonization "moderate", "sort items", ->
+			# order is sort-of arbitrary at the moment but we need it to be something
+			
+			@provider operands: @comps.operands.sort utility.compare_by_hash
+		
 		canonization "major", "remove redundant nullaries", ->
-			null # TODO
+			n = @get_nullary()
+			@provider operands: (o for o in @comps.operands when not o.is n)
 	]
 	
 	def "Sum", -> @__super__.canonizers.concat [
@@ -761,7 +790,7 @@ __definers_of_canonizers = [
 	
 	def "PendingSubstitution", -> @__super__.canonizers.concat [
 		canonization "major", "substitute", ->
-			[ original, replacement ] = @comps.substitution.comps.operands
+			[ original, replacement ] = @comps.substitution.comps.values
 			shore.substitute @comps.expression, original, replacement
 	]
 ]

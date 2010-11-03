@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Equation, Exponent, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -107,7 +107,7 @@
               _result.push(key);
             }
             return _result;
-          })()).sort();
+          })()).sort(utility.compare_by_hash);
           return "O{" + ((function() {
             _result = []; _ref = sorted_keys;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -119,6 +119,18 @@
         } else {
           return String(object);
         }
+      }
+    },
+    compare_by_hash: function(a, b) {
+      var ha, hb;
+      ha = utility.hash(a);
+      hb = utility.hash(b);
+      if (ha > hb) {
+        return 1;
+      } else if (ha === hb) {
+        return 0;
+      } else {
+        return -1;
       }
     },
     memoize: function(f, memory, hasher) {
@@ -459,7 +471,7 @@
       };
       Value.prototype.equals = function(other) {
         return shore.equality({
-          operands: [this, other]
+          values: [this, other]
         });
       };
       Value.prototype.integrate = function(variable) {
@@ -761,13 +773,44 @@
       };
       return Matrix;
     })(),
+    Equation: (function() {
+      Equation = function() {
+        return Thing.apply(this, arguments);
+      };
+      __extends(Equation, Thing);
+      Equation.prototype.precedence = 1;
+      Equation.prototype.req_comps = sss("values");
+      Equation.prototype.to_free_tex = function(symbol) {
+        var _i, _len, _ref, _result, value;
+        symbol = (typeof symbol !== "undefined" && symbol !== null) ? symbol : this.tex_symbol;
+        return (function() {
+          _result = []; _ref = this.comps.values;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            value = _ref[_i];
+            _result.push(value.to_tex(this.precedence));
+          }
+          return _result;
+        }).call(this).join(symbol);
+      };
+      Equation.prototype.to_free_string = function(symbol) {
+        var _i, _len, _ref, _result, value;
+        symbol = (typeof symbol !== "undefined" && symbol !== null) ? symbol : this.string_symbol;
+        return (function() {
+          _result = []; _ref = this.comps.values;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            value = _ref[_i];
+            _result.push(value.to_string(this.precedence));
+          }
+          return _result;
+        }).call(this).join(symbol);
+      };
+      return Equation;
+    })(),
     Equality: (function() {
       Equality = function() {
-        return CANOperation.apply(this, arguments);
+        return Equation.apply(this, arguments);
       };
-      __extends(Equality, CANOperation);
-      Equality.prototype.precedence = 1;
-      Equality.prototype.is_a_value = false;
+      __extends(Equality, Equation);
       Equality.prototype.string_symbol = " = ";
       Equality.prototype.tex_symbol = " = ";
       return Equality;
@@ -815,7 +858,7 @@
           _result = []; _ref = this.comps.equations;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             eq = _ref[_i];
-            _result.push(eq.to_tex(0, "&="));
+            _result.push(eq.to_tex(0, " &= "));
           }
           return _result;
         }).call(this).join(" \\\\\n");
@@ -893,8 +936,25 @@
               operands: new_operands
             });
           }
+        }), canonization("moderate", "sort items", function() {
+          return this.provider({
+            operands: this.comps.operands.sort(utility.compare_by_hash)
+          });
         }), canonization("major", "remove redundant nullaries", function() {
-          return null;
+          var _i, _len, _ref2, _result, n, o;
+          n = this.get_nullary();
+          return this.provider({
+            operands: (function() {
+              _result = []; _ref2 = this.comps.operands;
+              for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+                o = _ref2[_i];
+                if (!o.is(n)) {
+                  _result.push(o);
+                }
+              }
+              return _result;
+            }).call(this)
+          });
         })
       ]);
     }), def("Sum", function() {
@@ -1066,7 +1126,7 @@
       return this.__super__.canonizers.concat([
         canonization("major", "substitute", function() {
           var _ref2, original, replacement;
-          _ref2 = this.comps.substitution.comps.operands;
+          _ref2 = this.comps.substitution.comps.values;
           original = _ref2[0];
           replacement = _ref2[1];
           return shore.substitute(this.comps.expression, original, replacement);
