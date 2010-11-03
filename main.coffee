@@ -198,7 +198,7 @@ $ main = ->
 				($ "form").submit()
 				false # suppress newline
 			else
-				scale_textarea input_box, +1
+				scale_textarea input_box, em_pixels, +1
 	
 	input_box.keyup (event) -> scale_textarea input_box, em_pixels
 	scale_textarea input_box, em_pixels

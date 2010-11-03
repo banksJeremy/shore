@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Equation, Exponent, ExternalNumericFunction, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -39,7 +39,7 @@
         });
       } else if (typeof arg === "string") {
         if (/^[a-zA-Z][a-zA-Z0-9]*'*$/.test(arg)) {
-          return shore.identifier({
+          return arg in shore.predefined_identifiers ? shore.predefined_identifiers[arg] : shore.identifier({
             value: arg
           });
         } else {
@@ -107,7 +107,7 @@
               _result.push(key);
             }
             return _result;
-          })()).sort();
+          })()).sort(utility.compare_by_hash);
           return "O{" + ((function() {
             _result = []; _ref = sorted_keys;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -119,6 +119,18 @@
         } else {
           return String(object);
         }
+      }
+    },
+    compare_by_hash: function(a, b) {
+      var ha, hb;
+      ha = utility.hash(a);
+      hb = utility.hash(b);
+      if (ha > hb) {
+        return -1;
+      } else if (ha === hb) {
+        return 0;
+      } else {
+        return 1;
       }
     },
     memoize: function(f, memory, hasher) {
@@ -217,13 +229,7 @@
       theta: ["θ", "\\theta"],
       pi: ["π", "\\pi"],
       tau: ["τ", "\\tau"],
-      mu: ["μ", "\\mu"],
-      sin: ["sin", "\\sin"],
-      cos: ["cos", "\\cos"],
-      tan: ["tan", "\\tan"],
-      arcsin: ["arcsin", "\\arcsin"],
-      arccos: ["arccos", "\\arccos"],
-      arctan: ["arctan", "\\arctan"]
+      mu: ["μ", "\\mu"]
     },
     _make_provider: function(cls) {
       return utility.memoize(function() {
@@ -259,6 +265,12 @@
         return object.is_shore_thing ? object.canonize.apply(object, arguments) : object;
       };
       return utility.call_in.apply(utility, [object, f].concat(arguments));
+    },
+    to_string: function(object) {
+      return object.is_shore_thing ? object.to_string() : String(object);
+    },
+    to_tex: function(object) {
+      return object.is_shore_thing ? object.to_tex() : String(object);
     },
     substitute: function(within, original, replacement) {
       var f;
@@ -341,13 +353,26 @@
       Thing.prototype.is_shore_thing = true;
       Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
+      Thing.prototype.variables = utility.memoize(function() {
+        var all;
+        all = {};
+        if (this.type === shore.Identifier) {
+          all[this.comps.value] = true;
+        }
+        shore.utility.call_in(this.comps, function(o) {
+          if (o.is_shore_thing) {
+            return utility.extend(all, o.variables());
+          }
+        });
+        return all;
+      });
       Thing.prototype.is = function(other) {
         return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.is(this.comps, other.comps);
       };
       Thing.prototype.__hash__ = function() {
         return this.name + ":" + utility.hash(this.comps);
       };
-      Thing.prototype.canonize = function(limit, enough) {
+      Thing.prototype.canonize = utility.memoize(function(limit, enough) {
         var _ref, _ref2, next, result, significance, value;
         limit = shore._significance(limit);
         enough = shore._significance(enough);
@@ -370,7 +395,7 @@
           }
         }
         return result;
-      };
+      });
       Thing.prototype.next_canonization = function() {
         var _i, _len, _ref, _result, canonization, value;
         _result = []; _ref = this.canonizers;
@@ -459,7 +484,7 @@
       };
       Value.prototype.equals = function(other) {
         return shore.equality({
-          operands: [this, other]
+          values: [this, other]
         });
       };
       Value.prototype.integrate = function(variable) {
@@ -761,16 +786,90 @@
       };
       return Matrix;
     })(),
+    Equation: (function() {
+      Equation = function() {
+        return Thing.apply(this, arguments);
+      };
+      __extends(Equation, Thing);
+      Equation.prototype.precedence = 1;
+      Equation.prototype.req_comps = sss("values");
+      Equation.prototype.to_free_tex = function(symbol) {
+        var _i, _len, _ref, _result, value;
+        symbol = (typeof symbol !== "undefined" && symbol !== null) ? symbol : this.tex_symbol;
+        return (function() {
+          _result = []; _ref = this.comps.values;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            value = _ref[_i];
+            _result.push(value.to_tex(this.precedence));
+          }
+          return _result;
+        }).call(this).join(symbol);
+      };
+      Equation.prototype.to_free_string = function(symbol) {
+        var _i, _len, _ref, _result, value;
+        symbol = (typeof symbol !== "undefined" && symbol !== null) ? symbol : this.string_symbol;
+        return (function() {
+          _result = []; _ref = this.comps.values;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            value = _ref[_i];
+            _result.push(value.to_string(this.precedence));
+          }
+          return _result;
+        }).call(this).join(symbol);
+      };
+      return Equation;
+    })(),
     Equality: (function() {
       Equality = function() {
-        return CANOperation.apply(this, arguments);
+        return Equation.apply(this, arguments);
       };
-      __extends(Equality, CANOperation);
-      Equality.prototype.precedence = 1;
-      Equality.prototype.is_a_value = false;
+      __extends(Equality, Equation);
       Equality.prototype.string_symbol = " = ";
       Equality.prototype.tex_symbol = " = ";
       return Equality;
+    })(),
+    ExternalNumericFunction: (function() {
+      ExternalNumericFunction = function() {
+        return Value.apply(this, arguments);
+      };
+      __extends(ExternalNumericFunction, Value);
+      ExternalNumericFunction.prototype.req_comps = sss("identifier arguments f");
+      ExternalNumericFunction.prototype.specified = function() {
+        var _i, _len, _ref, arg;
+        _ref = this.comps.arguments;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          arg = _ref[_i];
+          if (arg.type === shore.Identifier) {
+            return false;
+          }
+        }
+        return true;
+      };
+      ExternalNumericFunction.prototype.to_string = function() {
+        var _i, _len, _ref, _result, a, args;
+        args = __slice.call(arguments, 0);
+        return !this.specified() ? this.comps.identifier.to_string.apply(this.comps.identifier, args) : (this.comps.identifier.to_string.apply(this.comps.identifier, args)) + ("_external(" + ((function() {
+          _result = []; _ref = this.comps.arguments;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            a = _ref[_i];
+            _result.push(shore.to_string(a));
+          }
+          return _result;
+        }).apply(this, arguments).join(', ')) + ")");
+      };
+      ExternalNumericFunction.prototype.to_tex = function() {
+        var _i, _len, _ref, _result, a, args;
+        args = __slice.call(arguments, 0);
+        return !this.specified() ? this.comps.identifier.to_tex.apply(this.comps.identifier, args) : (this.comps.identifier.to_tex.apply(this.comps.identifier, args)) + ("_{external}(" + ((function() {
+          _result = []; _ref = this.comps.arguments;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            a = _ref[_i];
+            _result.push(shore.to_tex(a));
+          }
+          return _result;
+        }).apply(this, arguments).join(', ')) + ")");
+      };
+      return ExternalNumericFunction;
     })(),
     PendingSubstitution: (function() {
       PendingSubstitution = function(comps) {
@@ -815,7 +914,7 @@
           _result = []; _ref = this.comps.equations;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             eq = _ref[_i];
-            _result.push(eq.to_tex(0, "&="));
+            _result.push(eq.to_tex(0, " &= "));
           }
           return _result;
         }).call(this).join(" \\\\\n");
@@ -832,6 +931,44 @@
   }
   utility.extend(shore, __types);
   utility.make_providers(shore);
+  shore.predefined_identifiers = {
+    sin: shore.external_numeric_function({
+      identifier: shore.identifier({
+        value: "sin",
+        tex_value: "\\sin"
+      }),
+      arguments: [
+        shore.identifier({
+          value: "theta"
+        })
+      ],
+      f: Math.sin
+    }),
+    cos: shore.external_numeric_function({
+      identifier: shore.identifier({
+        value: "cos",
+        tex_value: "\\cos"
+      }),
+      arguments: [
+        shore.identifier({
+          value: "theta"
+        })
+      ],
+      f: Math.cos
+    }),
+    tan: shore.external_numeric_function({
+      identifier: shore.identifier({
+        value: "tan",
+        tex_value: "\\tan"
+      }),
+      arguments: [
+        shore.identifier({
+          value: "theta"
+        })
+      ],
+      f: Math.tan
+    })
+  };
   def = function() {
     var args;
     args = __slice.call(arguments, 0);
@@ -893,8 +1030,25 @@
               operands: new_operands
             });
           }
+        }), canonization("moderate", "sort items", function() {
+          return this.provider({
+            operands: this.comps.operands.sort(utility.compare_by_hash)
+          });
         }), canonization("major", "remove redundant nullaries", function() {
-          return null;
+          var _i, _len, _ref2, _result, n, o;
+          n = this.get_nullary();
+          return this.provider({
+            operands: (function() {
+              _result = []; _ref2 = this.comps.operands;
+              for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+                o = _ref2[_i];
+                if (!o.is(n)) {
+                  _result.push(o);
+                }
+              }
+              return _result;
+            }).call(this)
+          });
         })
       ]);
     }), def("Sum", function() {
@@ -929,7 +1083,10 @@
       ]);
     }), def("Product", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "numbers in product", function() {
+        canonization("major", "ZERO IT", function() {
+          var _i, _len, _ref2, _ref3;
+          return (function(){ (_ref2 = (shore(0))); for (var _i=0, _len=(_ref3 = this.comps.operands).length; _i<_len; _i++) { if (_ref3[_i] === _ref2) return true; } return false; }).call(this) ? (shore(0)) : null;
+        }), canonization("major", "numbers in product", function() {
           var _i, _len, _ref2, not_numbers, numbers, operand, product;
           numbers = [];
           not_numbers = [];
@@ -1066,10 +1223,28 @@
       return this.__super__.canonizers.concat([
         canonization("major", "substitute", function() {
           var _ref2, original, replacement;
-          _ref2 = this.comps.substitution.comps.operands;
+          _ref2 = this.comps.substitution.comps.values;
           original = _ref2[0];
           replacement = _ref2[1];
           return shore.substitute(this.comps.expression, original, replacement);
+        })
+      ]);
+    }), def("ExternalNumericFunction", function() {
+      return this.__super__.canonizers.concat([
+        canonization("minor", "apply", function() {
+          var _i, _len, _ref2, argument, values;
+          values = [];
+          _ref2 = this.comps.arguments;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            argument = _ref2[_i];
+            if (argument.type !== shore.Number) {
+              return null;
+            }
+            values.push(argument.comps.value);
+          }
+          return shore.number({
+            value: this.comps.f.apply(this, values)
+          });
         })
       ]);
     })
