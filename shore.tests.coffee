@@ -32,6 +32,7 @@ tests = [
 	(new Test "2 ^ 3", "8")
 	(new Test "a + a + a + b + b", "3a + 2b")
 	(new Test "1x", "x")
+	(new Test "0(a + b + c)", "0")
 	(new Test "2x - x", "x")
 	(new Test "2 ~ t", "2t")
 	(new Test "a(a=b)", "b")

@@ -688,6 +688,10 @@ __definers_of_canonizers = [
 	]
 	
 	def "Product", -> @__super__.canonizers.concat [
+		canonization "major", "ZERO IT", ->
+			if (shore 0) in @comps.operands
+				(shore 0)
+		
 		canonization "major", "numbers in product", ->
 			numbers = []
 			not_numbers = []

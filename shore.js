@@ -989,7 +989,10 @@
       ]);
     }), def("Product", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "numbers in product", function() {
+        canonization("major", "ZERO IT", function() {
+          var _i, _len, _ref2, _ref3;
+          return (function(){ (_ref2 = (shore(0))); for (var _i=0, _len=(_ref3 = this.comps.operands).length; _i<_len; _i++) { if (_ref3[_i] === _ref2) return true; } return false; }).call(this) ? (shore(0)) : null;
+        }), canonization("major", "numbers in product", function() {
           var _i, _len, _ref2, not_numbers, numbers, operand, product;
           numbers = [];
           not_numbers = [];
