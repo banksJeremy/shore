@@ -312,6 +312,19 @@ __types =
 		
 		req_comps: []
 		
+		identifier_string_set: utility.memoize ->
+			all = {}
+			
+			if @type is shore.Identifier
+				all[@comps.value] = true
+			
+			shore.utility.call_in @comps, (o) -> utility.extend all, o.identifier_string_set() if o.is_shore_thing
+			
+			all
+		
+		uses_identifier: (o) ->
+			o.comps.value of @identifier_string_set()
+		
 		constructor: (@comps) ->
 			for name in @req_comps
 				if not @comps[name]?
@@ -323,7 +336,7 @@ __types =
 		__hash__: ->
 			@name + ":" + utility.hash @comps
 		
-		canonize: (limit, enough) ->
+		canonize: utility.memoize (limit, enough) ->
 			limit = shore._significance limit
 			enough = shore._significance enough
 			

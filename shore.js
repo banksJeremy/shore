@@ -353,13 +353,26 @@
       Thing.prototype.is_shore_thing = true;
       Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
+      Thing.prototype.variables = utility.memoize(function() {
+        var all;
+        all = {};
+        if (this.type === shore.Identifier) {
+          all[this.comps.value] = true;
+        }
+        shore.utility.call_in(this.comps, function(o) {
+          if (o.is_shore_thing) {
+            return utility.extend(all, o.variables());
+          }
+        });
+        return all;
+      });
       Thing.prototype.is = function(other) {
         return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.is(this.comps, other.comps);
       };
       Thing.prototype.__hash__ = function() {
         return this.name + ":" + utility.hash(this.comps);
       };
-      Thing.prototype.canonize = function(limit, enough) {
+      Thing.prototype.canonize = utility.memoize(function(limit, enough) {
         var _ref, _ref2, next, result, significance, value;
         limit = shore._significance(limit);
         enough = shore._significance(enough);
@@ -382,7 +395,7 @@
           }
         }
         return result;
-      };
+      });
       Thing.prototype.next_canonization = function() {
         var _i, _len, _ref, _result, canonization, value;
         _result = []; _ref = this.canonizers;
