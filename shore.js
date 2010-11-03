@@ -126,11 +126,11 @@
       ha = utility.hash(a);
       hb = utility.hash(b);
       if (ha > hb) {
-        return 1;
+        return -1;
       } else if (ha === hb) {
         return 0;
       } else {
-        return -1;
+        return 1;
       }
     },
     memoize: function(f, memory, hasher) {

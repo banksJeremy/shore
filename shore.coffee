@@ -99,11 +99,11 @@ utility = shore.utility = shore.U =
 		hb = utility.hash b
 		
 		if ha > hb
-			1
+			-1
 		else if ha == hb
 			0
 		else
-			-1
+			1
 	
 	memoize: (f, memory, hasher) ->
 		# Memoizes a function using a specified memory object and hash function.
