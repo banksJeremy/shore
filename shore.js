@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Equation, Exponent, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Equation, Exponent, ExternalNumericFunction, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -39,7 +39,7 @@
         });
       } else if (typeof arg === "string") {
         if (/^[a-zA-Z][a-zA-Z0-9]*'*$/.test(arg)) {
-          return shore.identifier({
+          return arg in shore.predefined_identifiers ? shore.predefined_identifiers[arg] : shore.identifier({
             value: arg
           });
         } else {
@@ -229,13 +229,7 @@
       theta: ["θ", "\\theta"],
       pi: ["π", "\\pi"],
       tau: ["τ", "\\tau"],
-      mu: ["μ", "\\mu"],
-      sin: ["sin", "\\sin"],
-      cos: ["cos", "\\cos"],
-      tan: ["tan", "\\tan"],
-      arcsin: ["arcsin", "\\arcsin"],
-      arccos: ["arccos", "\\arccos"],
-      arctan: ["arctan", "\\arctan"]
+      mu: ["μ", "\\mu"]
     },
     _make_provider: function(cls) {
       return utility.memoize(function() {
@@ -271,6 +265,12 @@
         return object.is_shore_thing ? object.canonize.apply(object, arguments) : object;
       };
       return utility.call_in.apply(utility, [object, f].concat(arguments));
+    },
+    to_string: function(object) {
+      return object.is_shore_thing ? object.to_string() : String(object);
+    },
+    to_tex: function(object) {
+      return object.is_shore_thing ? object.to_tex() : String(object);
     },
     substitute: function(within, original, replacement) {
       var f;
@@ -815,6 +815,49 @@
       Equality.prototype.tex_symbol = " = ";
       return Equality;
     })(),
+    ExternalNumericFunction: (function() {
+      ExternalNumericFunction = function() {
+        return Value.apply(this, arguments);
+      };
+      __extends(ExternalNumericFunction, Value);
+      ExternalNumericFunction.prototype.req_comps = sss("identifier arguments f");
+      ExternalNumericFunction.prototype.specified = function() {
+        var _i, _len, _ref, arg;
+        _ref = this.comps.arguments;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          arg = _ref[_i];
+          if (arg.type === shore.Identifier) {
+            return false;
+          }
+        }
+        return true;
+      };
+      ExternalNumericFunction.prototype.to_string = function() {
+        var _i, _len, _ref, _result, a, args;
+        args = __slice.call(arguments, 0);
+        return !this.specified() ? this.comps.identifier.to_string.apply(this.comps.identifier, args) : (this.comps.identifier.to_string.apply(this.comps.identifier, args)) + ("_external(" + ((function() {
+          _result = []; _ref = this.comps.arguments;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            a = _ref[_i];
+            _result.push(shore.to_string(a));
+          }
+          return _result;
+        }).apply(this, arguments).join(', ')) + ")");
+      };
+      ExternalNumericFunction.prototype.to_tex = function() {
+        var _i, _len, _ref, _result, a, args;
+        args = __slice.call(arguments, 0);
+        return !this.specified() ? this.comps.identifier.to_tex.apply(this.comps.identifier, args) : (this.comps.identifier.to_tex.apply(this.comps.identifier, args)) + ("_{external}(" + ((function() {
+          _result = []; _ref = this.comps.arguments;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            a = _ref[_i];
+            _result.push(shore.to_tex(a));
+          }
+          return _result;
+        }).apply(this, arguments).join(', ')) + ")");
+      };
+      return ExternalNumericFunction;
+    })(),
     PendingSubstitution: (function() {
       PendingSubstitution = function(comps) {
         this.is_a_value = comps.expression.is_a_value;
@@ -875,6 +918,44 @@
   }
   utility.extend(shore, __types);
   utility.make_providers(shore);
+  shore.predefined_identifiers = {
+    sin: shore.external_numeric_function({
+      identifier: shore.identifier({
+        value: "sin",
+        tex_value: "\\sin"
+      }),
+      arguments: [
+        shore.identifier({
+          value: "theta"
+        })
+      ],
+      f: Math.sin
+    }),
+    cos: shore.external_numeric_function({
+      identifier: shore.identifier({
+        value: "cos",
+        tex_value: "\\cos"
+      }),
+      arguments: [
+        shore.identifier({
+          value: "theta"
+        })
+      ],
+      f: Math.cos
+    }),
+    tan: shore.external_numeric_function({
+      identifier: shore.identifier({
+        value: "tan",
+        tex_value: "\\tan"
+      }),
+      arguments: [
+        shore.identifier({
+          value: "theta"
+        })
+      ],
+      f: Math.tan
+    })
+  };
   def = function() {
     var args;
     args = __slice.call(arguments, 0);
@@ -1133,6 +1214,24 @@
           original = _ref2[0];
           replacement = _ref2[1];
           return shore.substitute(this.comps.expression, original, replacement);
+        })
+      ]);
+    }), def("ExternalNumericFunction", function() {
+      return this.__super__.canonizers.concat([
+        canonization("minor", "apply", function() {
+          var _i, _len, _ref2, argument, values;
+          values = [];
+          _ref2 = this.comps.arguments;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            argument = _ref2[_i];
+            if (argument.type !== shore.Number) {
+              return null;
+            }
+            values.push(argument.comps.value);
+          }
+          return shore.number({
+            value: this.comps.f.apply(this, values)
+          });
         })
       ]);
     })

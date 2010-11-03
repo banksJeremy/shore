@@ -54,7 +54,10 @@ shore = root.S = root.shore = (args...) ->
 			shore.number value: arg
 		else if typeof arg is "string"
 			if /^[a-zA-Z][a-zA-Z0-9]*'*$/.test arg
-				shore.identifier value: arg
+				if arg of shore.predefined_identifiers
+					shore.predefined_identifiers[arg]
+				else
+					shore.identifier value: arg
 			else
 				if shore.parser?
 					shore.parser.parse arg
@@ -203,12 +206,6 @@ __not_types =
 		pi: [ "π", "\\pi" ]
 		tau: [ "τ" , "\\tau" ]
 		mu: [ "μ", "\\mu" ]
-		sin: [ "sin", "\\sin" ]
-		cos: [ "cos", "\\cos" ]
-		tan: [ "tan", "\\tan" ]
-		arcsin: [ "arcsin", "\\arcsin" ]
-		arccos: [ "arccos", "\\arccos" ]
-		arctan: [ "arctan", "\\arctan" ]
 	
 	_make_provider: (cls) ->
 		# Used to generate shore.foo_bar from shore.FooBar.
@@ -243,6 +240,18 @@ __not_types =
 				object
 		
 		utility.call_in object, f, arguments...
+	
+	to_string: (object) ->
+		if object.is_shore_thing
+			object.to_string()
+		else
+			String object
+	
+	to_tex: (object) ->
+		if object.is_shore_thing
+			object.to_tex()
+		else
+			String object
 	
 	substitute: (within, original, replacement) ->
 		f = (object, original, replacement) ->
@@ -581,6 +590,27 @@ __types =
 		string_symbol: " = "
 		tex_symbol: " = "
 		
+	ExternalNumericFunction: class ExternalNumericFunction extends Value
+		req_comps: sss "identifier arguments f"
+		
+		specified: ->
+			for arg in @comps.arguments
+				if arg.type is shore.Identifier
+					return false
+			true
+		
+		to_string: (args...) ->
+			if not @specified()
+				@comps.identifier.to_string args...
+			else
+				(@comps.identifier.to_string args...) + "_external(#{(shore.to_string a for a in  @comps.arguments).join ', '})"
+		
+		to_tex: (args...) ->
+			if not @specified()
+				@comps.identifier.to_tex args...
+			else
+				(@comps.identifier.to_tex args...) + "_{external}(#{(shore.to_tex a for a in  @comps.arguments).join ', '})"
+	
 	PendingSubstitution: class PendingSubstitution extends Thing
 		precedence: 2.5
 		
@@ -617,6 +647,20 @@ for name, type of __types
 
 utility.extend shore, __types
 utility.make_providers shore
+
+shore.predefined_identifiers =
+	sin: shore.external_numeric_function
+		identifier: shore.identifier (value: "sin", tex_value: "\\sin")
+		arguments: [shore.identifier (value: "theta")]
+		f: Math.sin
+	cos: shore.external_numeric_function
+		identifier: shore.identifier (value: "cos", tex_value: "\\cos")
+		arguments: [shore.identifier (value: "theta")]
+		f: Math.cos
+	tan: shore.external_numeric_function
+		identifier: shore.identifier (value: "tan", tex_value: "\\tan")
+		arguments: [shore.identifier (value: "theta")]
+		f: Math.tan
 
 # in defining canonizations
 def = (args...) -> args
@@ -796,6 +840,16 @@ __definers_of_canonizers = [
 		canonization "major", "substitute", ->
 			[ original, replacement ] = @comps.substitution.comps.values
 			shore.substitute @comps.expression, original, replacement
+	]
+	
+	def "ExternalNumericFunction", -> @__super__.canonizers.concat [
+		canonization "minor", "apply", ->
+			values = []
+			for argument in @comps.arguments
+				if argument.type isnt shore.Number
+					return
+				values.push argument.comps.value
+			shore.number value: @comps.f.apply this, values
 	]
 ]
 
