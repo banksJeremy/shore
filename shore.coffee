@@ -411,13 +411,17 @@ __types =
 		
 		req_comps: sss "operands"
 		
-		to_free_tex: ->
+		to_free_tex: (symbol) ->
+			symbol ?= @tex_symbol
+			
 			(((operand.to_tex @precedence) for operand in @comps.operands)
-			 .join @tex_symbol)
+			 .join symbol)
 		
-		to_free_string: ->
+		to_free_string: (symbol) ->
+			symbol ?= @string_symbol
+			
 			(((operand.to_string @precedence) for operand in @comps.operands)
-			 .join @string_symbol)
+			 .join symbol)
 		
 	Sum: class Sum extends CANOperation
 		precedence: 2
@@ -542,7 +546,7 @@ __types =
 		to_free_tex: ->
 			"\\begin{matrix}
 			#{
-				((v.to_tex() for v in row).join('&') for row in @comps.values).join(' \\\\')
+				((v.to_tex() for v in row).join('&') for row in @comps.values).join(' \\\\\n')
 			}
 			\\end{matrix}"
 	
@@ -577,10 +581,11 @@ __types =
 			(@comps.substitution.to_tex @precedence)
 	
 	System: class System extends Thing
+		precedence: 1000
 		req_comps: sss "equations"
 		
-		to_free_string: -> (eq.to_string() for eq in @comps.equations).join "\n"
-		to_free_tex: -> (eq.to_tex() for eq in @comps.equations).join " \\\\\n"
+		to_free_string: -> (eq.to_string for eq in @comps.equations).join "\n"
+		to_free_tex: -> (eq.to_tex 0, " &= " for eq in @comps.equations).join " \\\\\n"
 
 # Set the .type property of each type to itself
 for name, type of __types

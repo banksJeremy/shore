@@ -384,12 +384,16 @@
         return _result;
       };
       Thing.prototype.to_tex = function(context) {
+        var args;
+        args = __slice.call(arguments, 1);
         context = (typeof context !== "undefined" && context !== null) ? context : 1;
-        return this.precedence < context ? ("\\left(" + (this.to_free_tex()) + "\\right)") : this.to_free_tex();
+        return this.precedence < context ? ("\\left(" + (this.to_free_tex.apply(this, args)) + "\\right)") : this.to_free_tex.apply(this, args);
       };
       Thing.prototype.to_string = function(context) {
+        var args;
+        args = __slice.call(arguments, 1);
         context = (typeof context !== "undefined" && context !== null) ? context : 0;
-        return this.precedence < context ? ("(" + (this.to_free_string()) + ")") : this.to_free_string();
+        return this.precedence < context ? ("(" + (this.to_free_string.apply(this, args)) + ")") : this.to_free_string.apply(this, args);
       };
       Thing.prototype.to_free_string = function() {
         return "(shore." + (this.type) + " value)";
@@ -546,8 +550,9 @@
       };
       __extends(CANOperation, Value);
       CANOperation.prototype.req_comps = sss("operands");
-      CANOperation.prototype.to_free_tex = function() {
+      CANOperation.prototype.to_free_tex = function(symbol) {
         var _i, _len, _ref, _result, operand;
+        symbol = (typeof symbol !== "undefined" && symbol !== null) ? symbol : this.tex_symbol;
         return (function() {
           _result = []; _ref = this.comps.operands;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -555,10 +560,11 @@
             _result.push(operand.to_tex(this.precedence));
           }
           return _result;
-        }).call(this).join(this.tex_symbol);
+        }).call(this).join(symbol);
       };
-      CANOperation.prototype.to_free_string = function() {
+      CANOperation.prototype.to_free_string = function(symbol) {
         var _i, _len, _ref, _result, operand;
+        symbol = (typeof symbol !== "undefined" && symbol !== null) ? symbol : this.string_symbol;
         return (function() {
           _result = []; _ref = this.comps.operands;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -566,7 +572,7 @@
             _result.push(operand.to_string(this.precedence));
           }
           return _result;
-        }).call(this).join(this.string_symbol);
+        }).call(this).join(symbol);
       };
       return CANOperation;
     })(),
@@ -750,7 +756,7 @@
             })().join('&'));
           }
           return _result;
-        }).call(this).join(' \\\\')) + "\
+        }).call(this).join(' \\\\\n')) + "\
 			\\end{matrix}";
       };
       return Matrix;
@@ -790,6 +796,7 @@
         return Thing.apply(this, arguments);
       };
       __extends(System, Thing);
+      System.prototype.precedence = 1000;
       System.prototype.req_comps = sss("equations");
       System.prototype.to_free_string = function() {
         var _i, _len, _ref, _result, eq;
@@ -797,7 +804,7 @@
           _result = []; _ref = this.comps.equations;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             eq = _ref[_i];
-            _result.push(eq.to_string());
+            _result.push(eq.to_string);
           }
           return _result;
         }).call(this).join("\n");
@@ -808,7 +815,7 @@
           _result = []; _ref = this.comps.equations;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             eq = _ref[_i];
-            _result.push(eq.to_tex());
+            _result.push(eq.to_tex(0, "&="));
           }
           return _result;
         }).call(this).join(" \\\\\n");
