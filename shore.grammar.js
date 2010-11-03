@@ -12,7 +12,10 @@ var jison  = new require("jison")
 var parser = jison.Parser({
 	"lex": {
 		"rules": [
-			[ "\\s+", "" ],
+			[ "[ \t]+", "" ],
+			[ "[\\n\\r]+", "return 'NEWLINE';" ],
+			[ ",", "return 'COL_SEP';" ],
+			[ ";", "return 'ROW_SEP';" ],
 			[ "([0-9]*\\.[0-9]+|[0-9]+)", "return 'NUMBER';" ],
 			[ "[a-zA-Z][a-zA-Z0-9]*'*", "return 'IDENTIFIER';" ],
 			[ "=", "return '=';" ],
@@ -40,15 +43,21 @@ var parser = jison.Parser({
 		[ "left", "THEN" ],
 		[ "left", "^" ],
 		[ "left", "±" ],
+		[ "left", "~", "`" ],
 		[ "left", "UMINUS", "UPLUS" ],
 		[ "right", "_" ],
-		[ "left", "~", "`" ],
 	],
 	
 	"bnf": {
 		"expressions": [
 			[ "e EOF", "return $1;" ],
+			[ "lines EOF", "return shore.apply(shore, $1)"],
 			[ "EOF", "return undefined;" ],
+		],
+		
+		"lines": [
+			["e NEWLINE e", "$$ = [$1, $3];"],
+			["lines NEWLINE e", "$1.push($3); $$ = $1;"],
 		],
 		
 		"e": [
@@ -67,19 +76,30 @@ var parser = jison.Parser({
 			
 			[ "e e", "$$ = $1._then($2);", { "prec": "THEN" } ],
 			
-			[ "literal", "$$ = $1;" ],
-			[ "parenthesized", "$$ = $1;" ],
-		],
-		
-		"parenthesized": [
 			[ "( e )", "$$ = $2;" ],
-			[ "[ e ]", "$$ = $2;" ],
-		],
-		
-		"literal": [
+			[ "matrix", "$$ = $1;" ],
+			
 			[ "NUMBER", "$$ = shore(Number(yytext));"],
 			[ "IDENTIFIER", "$$ = shore(String(yytext));"],
-		]
+		],
+		
+		"matrix_row": [
+			[ "e COL_SEP e", "$$ = [$1, $3] "],
+			[ "matrix_row COL_SEP e", "$1.push($3); $$ = $1;"],
+		],
+		
+		"matrix_cols": [
+			[ "matrix_row ROW_SEP matrix_row", "$$ = [$1, $3];" ],
+			[ "e ROW_SEP matrix_row", "$$ = [[$1], $3];" ],
+			[ "matrix_row ROW_SEP e", "$$ = [$1, [$3]];" ],
+			[ "e ROW_SEP e", "$$ = [[$1], [$3]];" ],
+		],
+		
+		"matrix": [
+			[ "[ matrix_cols ]", "$$ = shore($2);" ],
+			[ "[ matrix_row ]", "$$ = shore([$2]);" ],
+			[ "[ e ]", "$$ = shore([[$2]]);" ],
+		],
 	}
 })
 

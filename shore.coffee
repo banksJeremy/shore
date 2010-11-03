@@ -36,15 +36,20 @@ former_shore = root.shore
 
 shore = root.S = root.shore = (args...) ->
 	# The shore object is a function which can be called to create shore values.
-	# Without shore.parser it will only be able to create numbers and
-	# identifiers. If multiple arguments are provided it will return an array
-	# of values, so you can do things like [x, y, z] = shore "x", "y", "z".
+	# Without shore.parser it will only be able to create identifiers, numbers
+	# (when numbers are provided) and matricies (when 2d arrays are provided).
+	# If multiple arguments are provided it will provide a system.
 	
 	if args.length is 1
 		arg = args[0]
 		
 		if arg.is_shore_thing
 			arg
+		else if typeof arg is "object" and arg.constructor is Array
+			if arg.length and typeof arg[0] is "object" and arg[0].constructor is Array
+				shore.matrix values: utility.call_in arg, shore
+			else
+				throw new Error "Unable to handle argument of 1D array."
 		else if typeof arg is "number"
 			shore.number value: arg
 		else if typeof arg is "string"
@@ -57,9 +62,10 @@ shore = root.S = root.shore = (args...) ->
 					throw new Error "shore.parser is not available to interpret expression: #{arg}"
 		else
 			throw new Error "Unable to handle argument of type #{typeof arg}."
+	else if args.length
+		shore.system equations: (shore arg for arg in args)
 	else
-		for arg in args
-			shore arg
+		shore # ?
 
 utility = shore.utility = shore.U =
 	# The shore.utility module contains functions that are not shore-specific.
@@ -75,12 +81,16 @@ utility = shore.utility = shore.U =
 			return parts.join "_"
 	
 	hash: (object) ->
-		# Converts an object to a string or calls its __hash__ method recursively
-		# in Arrays and Object.
-		
-		String utility.call object, (object) ->
-			if object.__hash__?
-				object.__hash__()
+		if object.__hashed__?
+			object.__hashed__
+		else if object.__hash__? # only define on immutable types
+			object.__hashed__ = "OH{#{object.__hash__()}}"
+		else
+			if utility.is_array object
+				"L{#{(utility.hash o for o in object).join "|"}}"
+			else if typeof object is "object"
+				(sorted_keys = (key for key of object)).sort()
+				"O{#{(utility.hash k + ":" + utility.hash object[k] for k in sorted_keys).join "|"}}"
 			else
 				String object
 	
@@ -90,7 +100,7 @@ utility = shore.utility = shore.U =
 		# Memory defaults to a new empty object.
 		# Hasher defaults to utility.hash.
 		
-		hasher ?= hash
+		hasher ?= utility.hash
 		memory ?= {}
 		
 		memoized = (arguments...) ->
@@ -101,9 +111,11 @@ utility = shore.utility = shore.U =
 			if key of memory
 				memoized.memory[key]
 			else
-				memoized.memory[key] = f.apply this, arguments...
+				memoized.memory[key] = f.apply this, arguments
 		
 		memoized.memory = memory
+		memoized.hasher = hasher
+		
 		memoized
 	
 	sss: (s) ->
@@ -159,6 +171,8 @@ __not_types =
 	# Merged onto shore first, as they may be required by the defenitions of
 	# shore types.
 	
+	__hashed__: "!!SHORE!!"
+	
 	former_S: former_S,
 	former_shore: former_shore,
 	
@@ -187,10 +201,8 @@ __not_types =
 	
 	_make_provider: (cls) ->
 		# Used to generate shore.foo_bar from shore.FooBar.
-		# 
-		# Just new for now, later we'll memoize.
 		
-		(args...) -> new cls args...
+		utility.memoize (args...) -> new cls args...
 	
 	_significance: (x) ->
 		if x of shore._significances
@@ -203,7 +215,7 @@ __not_types =
 		f
 	
 	canonization: (significance, name, f) ->
-		(shore._signified significance, f)
+		(shore._signified significance, utility.memoize f)
 	
 	_significances:
 		minor: 0
@@ -288,6 +300,9 @@ __types =
 		is: (other) ->
 			@type is other?.type and shore.is @comps, other.comps
 		
+		__hash__: ->
+			@name + ":" + utility.hash @comps
+		
 		canonize: (limit, enough) ->
 			limit = shore._significance limit
 			enough = shore._significance enough
@@ -313,25 +328,33 @@ __types =
 				if value and not @is(value)
 					return [canonization, value]
 		
-		to_tex: (context) ->
+		to_tex: (context, args...) ->
 			context ?= 1
 			
 			if @precedence < context
-				"\\left(#{@to_free_tex()}\\right)"
+				"\\left(#{@to_free_tex args...}\\right)"
 			else
-				@to_free_tex()
+				@to_free_tex args...
 		
-		to_string: (context) ->
+		to_string: (context, args...) ->
 			context ?= 0
 			if @precedence < context
-				"(#{@to_free_string()})"
+				"(#{@to_free_string args...})"
 			else
-				@to_free_string()
+				@to_free_string args...
 		
 		to_free_string: -> "(shore.#{@type} value)"
 		to_free_tex: -> "\\text{(shore.#{@type} value)}"
 		to_cs: -> "(shore.#{@name.toLowerCase()} #{@comps})"
 		toString: -> @to_cs()
+		
+		_then: (other) ->
+			if other.is_a_value
+				this.times other
+			else
+				this.given other
+		
+		given: (substitution) -> shore.pending_substitution expression: this, substitution: substitution
 		
 	Value: class Value extends Thing
 		known_constant: false
@@ -347,14 +370,7 @@ __types =
 		equals: (other) -> shore.equality operands: [this, other]
 		integrate: (variable) -> shore.integral expression: this, variable: variable
 		differentiate: (variable) -> shore.derivative expression: this, variable: variable
-		given: (substitution) -> shore.pending_substitution expression: this, substitution: substitution
 		plus_minus: (other) -> shore.with_margin_of_error value: this, margin: other
-		
-		_then: (other) ->
-			if other.is_a_value
-				this.times other
-			else
-				this.given other
 	
 	Number: class Number extends Value
 		known_constant: true
@@ -395,13 +411,17 @@ __types =
 		
 		req_comps: sss "operands"
 		
-		to_free_tex: ->
+		to_free_tex: (symbol) ->
+			symbol ?= @tex_symbol
+			
 			(((operand.to_tex @precedence) for operand in @comps.operands)
-			 .join @tex_symbol)
+			 .join symbol)
 		
-		to_free_string: ->
+		to_free_string: (symbol) ->
+			symbol ?= @string_symbol
+			
 			(((operand.to_string @precedence) for operand in @comps.operands)
-			 .join @string_symbol)
+			 .join symbol)
 		
 	Sum: class Sum extends CANOperation
 		precedence: 2
@@ -520,6 +540,16 @@ __types =
 			else
 				@comps.value.to_tex @precedence
 	
+	Matrix: class Matrix extends Value
+		req_comps: sss "values"
+		
+		to_free_tex: ->
+			"\\begin{matrix}
+			#{
+				((v.to_tex() for v in row).join('&') for row in @comps.values).join(' \\\\\n')
+			}
+			\\end{matrix}"
+	
 	Equality: class Equality extends CANOperation
 		precedence: 1
 		
@@ -528,11 +558,13 @@ __types =
 		string_symbol: " = "
 		tex_symbol: " = "
 	
-	PendingSubstitution: class PendingSubstitution extends Value
+	PendingSubstitution: class PendingSubstitution extends Thing
 		precedence: 2.5
 		
+		req_comps: sss "expression substitution"
+		
 		constructor: (comps) ->
-			comps.is_a_value = comps.expression.is_a_value
+			@is_a_value = comps.expression.is_a_value
 			super comps
 		
 		string_symbol: ""
@@ -547,6 +579,13 @@ __types =
 			(@comps.expression.to_tex @precedence) +
 			@tex_symbol +
 			(@comps.substitution.to_tex @precedence)
+	
+	System: class System extends Thing
+		precedence: 1000
+		req_comps: sss "equations"
+		
+		to_free_string: -> (eq.to_string for eq in @comps.equations).join "\n"
+		to_free_tex: -> (eq.to_tex 0, " &= " for eq in @comps.equations).join " \\\\\n"
 
 # Set the .type property of each type to itself
 for name, type of __types

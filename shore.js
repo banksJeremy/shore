@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Number, PendingSubstitution, Product, Sum, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Exponent, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -25,6 +25,14 @@
       arg = args[0];
       if (arg.is_shore_thing) {
         return arg;
+      } else if (typeof arg === "object" && arg.constructor === Array) {
+        if (arg.length && typeof arg[0] === "object" && arg[0].constructor === Array) {
+          return shore.matrix({
+            values: utility.call_in(arg, shore)
+          });
+        } else {
+          throw new Error("Unable to handle argument of 1D array.");
+        }
       } else if (typeof arg === "number") {
         return shore.number({
           value: arg
@@ -44,13 +52,19 @@
       } else {
         throw new Error("Unable to handle argument of type " + (typeof arg) + ".");
       }
+    } else if (args.length) {
+      return shore.system({
+        equations: (function() {
+          _result = []; _ref = args;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            arg = _ref[_i];
+            _result.push(shore(arg));
+          }
+          return _result;
+        })()
+      });
     } else {
-      _result = []; _ref = args;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        arg = _ref[_i];
-        _result.push(shore(arg));
-      }
-      return _result;
+      return shore;
     }
   }));
   utility = (shore.utility = (shore.U = {
@@ -69,23 +83,57 @@
       }
     },
     hash: function(object) {
-      return String(utility.call(object, function(object) {
-        var _ref;
-        return (typeof (_ref = object.__hash__) !== "undefined" && _ref !== null) ? object.__hash__() : String(object);
-      }));
+      var _i, _len, _ref, _result, k, key, o, sorted_keys;
+      if (typeof (_ref = object.__hashed__) !== "undefined" && _ref !== null) {
+        return object.__hashed__;
+      } else if (typeof (_ref = object.__hash__) !== "undefined" && _ref !== null) {
+        return (object.__hashed__ = ("OH{" + (object.__hash__()) + "}"));
+      } else {
+        if (utility.is_array(object)) {
+          return "L{" + ((function() {
+            _result = []; _ref = object;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              o = _ref[_i];
+              _result.push(utility.hash(o));
+            }
+            return _result;
+          })().join("|")) + "}";
+        } else if (typeof object === "object") {
+          (sorted_keys = (function() {
+            _result = []; _ref = object;
+            for (key in _ref) {
+              if (!__hasProp.call(_ref, key)) continue;
+              _i = _ref[key];
+              _result.push(key);
+            }
+            return _result;
+          })()).sort();
+          return "O{" + ((function() {
+            _result = []; _ref = sorted_keys;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              k = _ref[_i];
+              _result.push(utility.hash(k + ":" + utility.hash(object[k])));
+            }
+            return _result;
+          })().join("|")) + "}";
+        } else {
+          return String(object);
+        }
+      }
     },
     memoize: function(f, memory, hasher) {
       var memoized;
-      hasher = (typeof hasher !== "undefined" && hasher !== null) ? hasher : hash;
+      hasher = (typeof hasher !== "undefined" && hasher !== null) ? hasher : utility.hash;
       memory = (typeof memory !== "undefined" && memory !== null) ? memory : {};
       memoized = function() {
         var arguments, key;
         arguments = __slice.call(arguments, 0);
         "The memoized copy of a function.";
         key = memoized.hasher([this].concat(arguments));
-        return key in memory ? memoized.memory[key] : (memoized.memory[key] = f.apply.apply(f, [this].concat(arguments)));
+        return key in memory ? memoized.memory[key] : (memoized.memory[key] = f.apply(this, arguments));
       };
       memoized.memory = memory;
+      memoized.hasher = hasher;
       return memoized;
     },
     sss: function(s) {
@@ -155,6 +203,7 @@
     }
   }));
   __not_types = {
+    __hashed__: "!!SHORE!!",
     former_S: former_S,
     former_shore: former_shore,
     no_conflict: function(deep) {
@@ -177,7 +226,7 @@
       arctan: ["arctan", "\\arctan"]
     },
     _make_provider: function(cls) {
-      return function() {
+      return utility.memoize(function() {
         var _ctor, _ref, _result, args;
         args = __slice.call(arguments, 0);
         return (function() {
@@ -185,7 +234,7 @@
           __extends(ctor, _ctor = cls);
           return typeof (_result = _ctor.apply(_ref = new ctor, args)) === "object" ? _result : _ref;
         }).call(this);
-      };
+      });
     },
     _significance: function(x) {
       return x in shore._significances ? this._significances[x] : x;
@@ -195,7 +244,7 @@
       return f;
     },
     canonization: function(significance, name, f) {
-      return shore._signified(significance, f);
+      return shore._signified(significance, utility.memoize(f));
     },
     _significances: {
       minor: 0,
@@ -295,6 +344,9 @@
       Thing.prototype.is = function(other) {
         return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.is(this.comps, other.comps);
       };
+      Thing.prototype.__hash__ = function() {
+        return this.name + ":" + utility.hash(this.comps);
+      };
       Thing.prototype.canonize = function(limit, enough) {
         var _ref, _ref2, next, result, significance, value;
         limit = shore._significance(limit);
@@ -332,12 +384,16 @@
         return _result;
       };
       Thing.prototype.to_tex = function(context) {
+        var args;
+        args = __slice.call(arguments, 1);
         context = (typeof context !== "undefined" && context !== null) ? context : 1;
-        return this.precedence < context ? ("\\left(" + (this.to_free_tex()) + "\\right)") : this.to_free_tex();
+        return this.precedence < context ? ("\\left(" + (this.to_free_tex.apply(this, args)) + "\\right)") : this.to_free_tex.apply(this, args);
       };
       Thing.prototype.to_string = function(context) {
+        var args;
+        args = __slice.call(arguments, 1);
         context = (typeof context !== "undefined" && context !== null) ? context : 0;
-        return this.precedence < context ? ("(" + (this.to_free_string()) + ")") : this.to_free_string();
+        return this.precedence < context ? ("(" + (this.to_free_string.apply(this, args)) + ")") : this.to_free_string.apply(this, args);
       };
       Thing.prototype.to_free_string = function() {
         return "(shore." + (this.type) + " value)";
@@ -350,6 +406,15 @@
       };
       Thing.prototype.toString = function() {
         return this.to_cs();
+      };
+      Thing.prototype._then = function(other) {
+        return other.is_a_value ? this.times(other) : this.given(other);
+      };
+      Thing.prototype.given = function(substitution) {
+        return shore.pending_substitution({
+          expression: this,
+          substitution: substitution
+        });
       };
       return Thing;
     })(),
@@ -409,20 +474,11 @@
           variable: variable
         });
       };
-      Value.prototype.given = function(substitution) {
-        return shore.pending_substitution({
-          expression: this,
-          substitution: substitution
-        });
-      };
       Value.prototype.plus_minus = function(other) {
         return shore.with_margin_of_error({
           value: this,
           margin: other
         });
-      };
-      Value.prototype._then = function(other) {
-        return other.is_a_value ? this.times(other) : this.given(other);
       };
       return Value;
     })(),
@@ -494,8 +550,9 @@
       };
       __extends(CANOperation, Value);
       CANOperation.prototype.req_comps = sss("operands");
-      CANOperation.prototype.to_free_tex = function() {
+      CANOperation.prototype.to_free_tex = function(symbol) {
         var _i, _len, _ref, _result, operand;
+        symbol = (typeof symbol !== "undefined" && symbol !== null) ? symbol : this.tex_symbol;
         return (function() {
           _result = []; _ref = this.comps.operands;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -503,10 +560,11 @@
             _result.push(operand.to_tex(this.precedence));
           }
           return _result;
-        }).call(this).join(this.tex_symbol);
+        }).call(this).join(symbol);
       };
-      CANOperation.prototype.to_free_string = function() {
+      CANOperation.prototype.to_free_string = function(symbol) {
         var _i, _len, _ref, _result, operand;
+        symbol = (typeof symbol !== "undefined" && symbol !== null) ? symbol : this.string_symbol;
         return (function() {
           _result = []; _ref = this.comps.operands;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -514,7 +572,7 @@
             _result.push(operand.to_string(this.precedence));
           }
           return _result;
-        }).call(this).join(this.string_symbol);
+        }).call(this).join(symbol);
       };
       return CANOperation;
     })(),
@@ -675,6 +733,34 @@
       };
       return WithMarginOfError;
     })(),
+    Matrix: (function() {
+      Matrix = function() {
+        return Value.apply(this, arguments);
+      };
+      __extends(Matrix, Value);
+      Matrix.prototype.req_comps = sss("values");
+      Matrix.prototype.to_free_tex = function() {
+        var _i, _j, _len, _len2, _ref, _ref2, _result, _result2, row, v;
+        return "\\begin{matrix}\
+			" + ((function() {
+          _result = []; _ref = this.comps.values;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            row = _ref[_i];
+            _result.push((function() {
+              _result2 = []; _ref2 = row;
+              for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+                v = _ref2[_j];
+                _result2.push(v.to_tex());
+              }
+              return _result2;
+            })().join('&'));
+          }
+          return _result;
+        }).call(this).join(' \\\\\n')) + "\
+			\\end{matrix}";
+      };
+      return Matrix;
+    })(),
     Equality: (function() {
       Equality = function() {
         return CANOperation.apply(this, arguments);
@@ -688,12 +774,13 @@
     })(),
     PendingSubstitution: (function() {
       PendingSubstitution = function(comps) {
-        comps.is_a_value = comps.expression.is_a_value;
+        this.is_a_value = comps.expression.is_a_value;
         PendingSubstitution.__super__.constructor.call(this, comps);
         return this;
       };
-      __extends(PendingSubstitution, Value);
+      __extends(PendingSubstitution, Thing);
       PendingSubstitution.prototype.precedence = 2.5;
+      PendingSubstitution.prototype.req_comps = sss("expression substitution");
       PendingSubstitution.prototype.string_symbol = "";
       PendingSubstitution.prototype.tex_symbol = "";
       PendingSubstitution.prototype.to_free_string = function() {
@@ -703,6 +790,37 @@
         return (this.comps.expression.to_tex(this.precedence)) + this.tex_symbol + (this.comps.substitution.to_tex(this.precedence));
       };
       return PendingSubstitution;
+    })(),
+    System: (function() {
+      System = function() {
+        return Thing.apply(this, arguments);
+      };
+      __extends(System, Thing);
+      System.prototype.precedence = 1000;
+      System.prototype.req_comps = sss("equations");
+      System.prototype.to_free_string = function() {
+        var _i, _len, _ref, _result, eq;
+        return (function() {
+          _result = []; _ref = this.comps.equations;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            eq = _ref[_i];
+            _result.push(eq.to_string);
+          }
+          return _result;
+        }).call(this).join("\n");
+      };
+      System.prototype.to_free_tex = function() {
+        var _i, _len, _ref, _result, eq;
+        return (function() {
+          _result = []; _ref = this.comps.equations;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            eq = _ref[_i];
+            _result.push(eq.to_tex(0, "&="));
+          }
+          return _result;
+        }).call(this).join(" \\\\\n");
+      };
+      return System;
     })()
   };
   _ref = __types;
