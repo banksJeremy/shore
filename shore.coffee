@@ -187,6 +187,17 @@ __not_types =
 	
 	__hashed__: "!!SHORE!!"
 	
+	compare_by_highest_power: (a, b) ->
+		ap = a.highest_numeric_power()
+		bp = b.highest_numeric_power()
+			
+		if ap > bp
+			return -1
+		else if ap < bp
+			return 1
+		
+		utility.compare_by_hash a, b
+	
 	former_S: former_S,
 	former_shore: former_shore,
 	
@@ -404,6 +415,8 @@ __types =
 		integrate: (variable) -> shore.integral expression: this, variable: variable
 		differentiate: (variable) -> shore.derivative expression: this, variable: variable
 		plus_minus: (other) -> shore.with_margin_of_error value: this, margin: other
+		
+		highest_numeric_power: -> 0
 	
 	Number: class Number extends Value
 		known_constant: true
@@ -455,6 +468,16 @@ __types =
 			
 			(((operand.to_string @precedence) for operand in @comps.operands)
 			 .join symbol)
+		
+		highest_numeric_power: ->
+			o = null
+			
+			for o in @comps.operands
+				p = o.highest_numeric_power()
+				
+				o = p if p > o or not o?
+			
+			o ? 0
 		
 	Sum: class Sum extends CANOperation
 		precedence: 2
@@ -530,6 +553,12 @@ __types =
 				@comps.base.to_string @precedence
 			else
 				"#{@comps.base.to_string @precedence}^#{@comps.exponent.to_string()}"
+		
+		highest_numeric_power: ->
+			if @comps.exponent.type is shore.Number
+				@comps.exponent.comps.value
+			else
+				0
 		
 	Integral: class Integral extends Value
 		precedence: 3
@@ -715,7 +744,12 @@ __definers_of_canonizers = [
 		canonization "moderate", "sort items", ->
 			# order is sort-of arbitrary at the moment but we need it to be something
 			
-			@provider operands: @comps.operands.sort utility.compare_by_hash
+			if @type is shore.Sum
+				cmp = shore.compare_by_highest_power
+			else
+				cmp = utility.compare_by_hash
+			
+			@provider operands: @comps.operands.sort cmp
 		
 		canonization "major", "remove redundant nullaries", ->
 			n = @get_nullary()

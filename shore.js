@@ -216,6 +216,17 @@
   }));
   __not_types = {
     __hashed__: "!!SHORE!!",
+    compare_by_highest_power: function(a, b) {
+      var ap, bp;
+      ap = a.highest_numeric_power();
+      bp = b.highest_numeric_power();
+      if (ap > bp) {
+        return -1;
+      } else if (ap < bp) {
+        return 1;
+      }
+      return utility.compare_by_hash(a, b);
+    },
     former_S: former_S,
     former_shore: former_shore,
     no_conflict: function(deep) {
@@ -353,7 +364,7 @@
       Thing.prototype.is_shore_thing = true;
       Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
-      Thing.prototype.variables = utility.memoize(function() {
+      Thing.prototype.identifier_string_set = utility.memoize(function() {
         var all;
         all = {};
         if (this.type === shore.Identifier) {
@@ -361,11 +372,14 @@
         }
         shore.utility.call_in(this.comps, function(o) {
           if (o.is_shore_thing) {
-            return utility.extend(all, o.variables());
+            return utility.extend(all, o.identifier_string_set());
           }
         });
         return all;
       });
+      Thing.prototype.uses_identifier = function(o) {
+        return o.comps.value in this.identifier_string_set();
+      };
       Thing.prototype.is = function(other) {
         return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.is(this.comps, other.comps);
       };
@@ -505,6 +519,9 @@
           margin: other
         });
       };
+      Value.prototype.highest_numeric_power = function() {
+        return 0;
+      };
       return Value;
     })(),
     Number: (function() {
@@ -598,6 +615,19 @@
           }
           return _result;
         }).call(this).join(symbol);
+      };
+      CANOperation.prototype.highest_numeric_power = function() {
+        var _i, _len, _ref, o, p;
+        o = null;
+        _ref = this.comps.operands;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          o = _ref[_i];
+          p = o.highest_numeric_power();
+          if (p > o || !(typeof o !== "undefined" && o !== null)) {
+            o = p;
+          }
+        }
+        return (typeof o !== "undefined" && o !== null) ? o : 0;
       };
       return CANOperation;
     })(),
@@ -705,6 +735,9 @@
       };
       Exponent.prototype.to_free_string = function() {
         return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_string(this.precedence) : ("" + (this.comps.base.to_string(this.precedence)) + "^" + (this.comps.exponent.to_string()));
+      };
+      Exponent.prototype.highest_numeric_power = function() {
+        return this.comps.exponent.type === shore.Number ? this.comps.exponent.comps.value : 0;
       };
       return Exponent;
     })(),
@@ -1031,8 +1064,14 @@
             });
           }
         }), canonization("moderate", "sort items", function() {
+          var cmp;
+          if (this.type === shore.Sum) {
+            cmp = shore.compare_by_highest_power;
+          } else {
+            cmp = utility.compare_by_hash;
+          }
           return this.provider({
-            operands: this.comps.operands.sort(utility.compare_by_hash)
+            operands: this.comps.operands.sort(cmp)
           });
         }), canonization("major", "remove redundant nullaries", function() {
           var _i, _len, _ref2, _result, n, o;
