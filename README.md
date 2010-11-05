@@ -76,7 +76,7 @@ TODO
 
 ### `v1.0`
 
-  - x ~ ~ t for double integral, etc.
+  - `x ~ ~ t` for double integral, etc.
   - Make the code decent.
   - Documentation!
 
