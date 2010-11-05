@@ -1,20 +1,42 @@
-all: clean parser.js shore.js main.js
+all: clean-old shore.js shore.parser.js shore.interface.js main.js main.css
+
+test: all
+	node shore.tests.js
 
 open: all
 	open main.html
 
-test: all
-	./shore.tests.coffee
-	node shore.tests.js
+# remove files older than their sources
 
-clean:
-	rm -f shore.js shore.parser.js main.js
+clean-old:
+	for name in shore shore.interface shore.tests main; do \
+		[ -e $$name.js ] && [ $$name.js -ot $$name.coffee ] && \
+		rm -v $$name.js; true; \
+	done
+	
+	[ -e shore.parser.js ] && [ shore.parser.js -ot shore.grammar.js ] && \
+		rm -v shore.parser.js; true
 
-main.js:
-	./main.coffee
+# requiring coffeescript...
 
 shore.js:
-	./shore.coffee
+	coffee -c shore.coffee
 
-parser.js:
-	./shore.grammar.js -q > shore.parser.js
+shore.interface.js:
+	coffee -c shore.interface.coffee
+
+shore.tests.js:
+	coffee -c shore.tests.coffee
+
+main.js:
+	coffee -c main.coffee
+
+# requiring node.js and jison
+
+shore.parser.js:
+	node shore.grammar.js -q > shore.parser.js
+
+# requiring sass
+
+main.css:
+	sass -C main.sass main.css

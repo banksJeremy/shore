@@ -27,18 +27,36 @@ presumably using node.js. But not yet.
 
 Modifying the parser requires node.js and Jison.
 
+Dependencies
+------------
+
+### To Use
+
+- Web browser
+- [MathJax](http://www.mathjax.org/) recommended (place in `dep/mathjax-1.0.1`)
+  
+  A plain-text fallback is available but it's not very good.
+
+### To Build Shore (Excluding Parser)
+
+- [CoffeeScript](http://jashkenas.github.com/coffee-script/)
+
+### To Build Parser
+
+- [Jison](http://zaach.github.com/jison/)
+- [node.js](http://nodejs.org/)
+
+### To Build Stylesheet
+
+- [Sass][http://sass-lang.com/]
+
 Credits
 -------
 
 Author: Jeremy Banks <<jeremy@jeremybanks.com>>
 
-Shore makes use of the following:
-
-  - [CoffeeScript](http://jashkenas.github.com/coffee-script/)
-  - [Jison](http://zaach.github.com/jison/)
-  - [jQuery](http://jquery.com/) and the
-    [Address plugin](http://www.asual.com/jquery/address/)
-  - [MathJax](http://www.mathjax.org/)
+Shore includes [jQuery][http://jquery.com/] by John Resig and the
+[jQuery Address plugin](http://www.asual.com/jquery/address/) by Rostislav Hristov.
 
 See `LICENSE` file for copyright/license information.
 
@@ -52,17 +70,17 @@ TODO
 
 ### `v0.1`
 
-  - Canonical ordering of objects, even if unrelated to true value ordering.
-  - Canonization of `shore.Sum`, `shore.Product`.
+  - Organize canonizations better.
   - Merge `shore.Exponent` into `shore.Product`.
   - Support engineering notation in `shore.parser`.
+  - All simple canonizations of `shore.Product`, `shore.Exponent`,
+    `shore.Derivative`, `shore.Integral`
+  - Make interface code better, so it can be dropped into something else.
+    - split much of main.coffee into shore.ui.coffee
 
 ### `v0.2`
 
   - Complete initial version of `shore.WithMarginOfError`.
-  - Complete initial version of `shore.Derivative`.
-  - Complete initial version of `shore.Integral`.
-    - No support for anything difficult.
   - Pretty formatting for `shore.Number`?
 
 ### `v1.0`
@@ -71,9 +89,6 @@ TODO
   - Make the code decent
   - Write at least some basic documentation
   - Documentation!
-  - Organize code better, clearly distinguishing library from interface.
-  - Make interface code better, so it can be dropped into something else.
-    - split much of main.coffee into shore.ui.coffee
 
 ### `v1.1`
 
