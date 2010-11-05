@@ -56,34 +56,30 @@ TODO
 
 ### `v0.1`
 
-  - Organize canonizations better.
-  - Merge `shore.Exponent` into `shore.Product`.
-  - Support engineering notation in `shore.parser`.
-  - All simple canonizations of `shore.Product`, `shore.Exponent`,
-    `shore.Derivative`, `shore.Integral`
-  - Make interface code better, so it can be dropped into something else.
-    - split much of main.coffee into shore.ui.coffee
+  - Merge `shore.Exponent` with `shore.Product`.
+  - Implement all simple canonizations.
 
 ### `v0.2`
 
+  - `shore.System`
+    - Parsed from multiline input.
+    - Can substitute value to solve simple systems.
+
+### `v0.3`
+
+  - Organize canonizations better.
+  - Support engineering notation in `shore.parser`.
   - Complete initial version of `shore.WithMarginOfError`.
   - Pretty formatting for `shore.Number`?
 
 ### `v1.0`
 
   - x ~ ~ t for double integral, etc.
-  - Make the code decent
-  - Write at least some basic documentation
+  - Make the code decent.
+  - Write at least some basic documentation.
   - Documentation!
 
 ### `v1.1`
-
-  - `shore.System`
-    - Parsed from multiline input.
-    - Can substitute value to solve simple systems.
-    - Maybe add/remove restrictions where appropriate?
-
-### `v1.2`
 
 - `shore.Inequality`
   - Just ≠ for now.
@@ -97,3 +93,5 @@ TODO
   - Make nice on iPod touch/iPhone.
   - Maybe allow more classical functions via subscripts:  
     fib_n = fib_(n-1) + fib_(n-2); fib_0 = fib_1 = 1
+  - A node.js server script that allows for graceful degradation to
+    performing calculations server-side in the absence of enabled JavaScript.
