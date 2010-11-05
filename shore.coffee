@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee -c
 ###
-Shore Math Module
+Shore
 http://jeremybanks.github.com/shore/
 
 Copyright Jeremy Banks <jeremy@jeremybanks.com>

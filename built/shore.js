@@ -9,7 +9,7 @@
     child.__super__ = parent.prototype;
   };
   /*
-  Shore Math Module
+  Shore
   http://jeremybanks.github.com/shore/
 
   Copyright Jeremy Banks <jeremy@jeremybanks.com>
@@ -353,7 +353,7 @@
       Thing.prototype.is_shore_thing = true;
       Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
-      Thing.prototype.variables = utility.memoize(function() {
+      Thing.prototype.identifier_string_set = utility.memoize(function() {
         var all;
         all = {};
         if (this.type === shore.Identifier) {
@@ -361,11 +361,14 @@
         }
         shore.utility.call_in(this.comps, function(o) {
           if (o.is_shore_thing) {
-            return utility.extend(all, o.variables());
+            return utility.extend(all, o.identifier_string_set());
           }
         });
         return all;
       });
+      Thing.prototype.uses_identifier = function(o) {
+        return o.comps.value in this.identifier_string_set();
+      };
       Thing.prototype.is = function(other) {
         return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.is(this.comps, other.comps);
       };

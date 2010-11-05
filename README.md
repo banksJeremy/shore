@@ -8,39 +8,45 @@ About
 -----
 
 Shore is a math library implemented in CoffeeScript. A browser interface is
-included, along with the compiled JavaScript, so it should be usable on its
-own or as library "out-of-the-box".
+included.
 
 Developed with Chrome, should work the same in Safari, a bit less polished in 
 Firefox and Opera, and remain functional in IE.
 
-The interface has a LaTeX-style output format that requires you download
-MathJax to `dep/MathJax`. If you do not it will fall back to plain-text output,
-but at least for the moment this isn't given much attention.
+Compiled copies of all files are included. Recommendedly after downloading
+MathJax you just need to open main.html and you're off.
 
-Using the library on its own requires only `shore.*`, but you'll
-probably also want to include `shore.parser.*`.
+Dependencies
+------------
 
-It is intended that this will eventually be able to gracefully degrade in the
-absence of JavaScript and allow the calculations to be performed server-side,
-presumably using node.js. But not yet.
+### To Use Library
 
-Modifying the parser requires node.js and Jison.
+- *Your Imagination*
+
+### To Use Interface
+
+- Web browser
+- [MathJax](http://www.mathjax.org/) in `dep/mathjax-1.0.1` (recommended, a
+  plain-text fallback is available for use without but it's not very good)
+
+### To Build Shore (Excluding Parser)
+
+- [CoffeeScript](http://jashkenas.github.com/coffee-script/)
+
+### To Build Parser
+
+- [Jison](http://zaach.github.com/jison/)
+- [node.js](http://nodejs.org/)
+
+### To Build Stylesheet
+
+- [Sass](http://sass-lang.com/)
 
 Credits
 -------
 
-Author: Jeremy Banks <<jeremy@jeremybanks.com>>
-
-Shore makes use of the following:
-
-  - [CoffeeScript](http://jashkenas.github.com/coffee-script/)
-  - [Jison](http://zaach.github.com/jison/)
-  - [jQuery](http://jquery.com/) and the
-    [Address plugin](http://www.asual.com/jquery/address/)
-  - [MathJax](http://www.mathjax.org/)
-
-See `LICENSE` file for copyright/license information.
+Shore is developed by Jeremy Banks <<jeremy@jeremybanks.com>>. Please see
+`LICENSE` file for complete credits and copyright/license information.
 
 Documentation
 -------------
@@ -52,37 +58,29 @@ TODO
 
 ### `v0.1`
 
-  - Canonical ordering of objects, even if unrelated to true value ordering.
-  - Canonization of `shore.Sum`, `shore.Product`.
-  - Merge `shore.Exponent` into `shore.Product`.
-  - Support engineering notation in `shore.parser`.
+  - Merge `shore.Exponent` with `shore.Product`.
+  - Implement all simple canonizations.
 
 ### `v0.2`
-
-  - Complete initial version of `shore.WithMarginOfError`.
-  - Complete initial version of `shore.Derivative`.
-  - Complete initial version of `shore.Integral`.
-    - No support for anything difficult.
-  - Pretty formatting for `shore.Number`?
-
-### `v1.0`
-
-  - x ~ ~ t for double integral, etc.
-  - Make the code decent
-  - Write at least some basic documentation
-  - Documentation!
-  - Organize code better, clearly distinguishing library from interface.
-  - Make interface code better, so it can be dropped into something else.
-    - split much of main.coffee into shore.ui.coffee
-
-### `v1.1`
 
   - `shore.System`
     - Parsed from multiline input.
     - Can substitute value to solve simple systems.
-    - Maybe add/remove restrictions where appropriate?
 
-### `v1.2`
+### `v0.3`
+
+  - Organize canonizations better.
+  - Support engineering notation in `shore.parser`.
+  - Complete initial version of `shore.WithMarginOfError`.
+  - Pretty formatting for `shore.Number`?
+
+### `v1.0`
+
+  - `x ~ ~ t` for double integral, etc.
+  - Make the code decent.
+  - Documentation!
+
+### `v1.1`
 
 - `shore.Inequality`
   - Just ≠ for now.
@@ -91,9 +89,10 @@ TODO
 
 ### Non-concrete Future Thinkings
 
-  - Memoization.
   - Abstract away identifier values.
   - Support HTML5 offline cache?
   - Make nice on iPod touch/iPhone.
-  - Maybe allow more classical functions via subscripts:
-    fib_n = fib_(n-1) + fib_(n-2); fib_0 = fib_1 = 1
+  - Maybe allow more conventional functions via subscripts:  
+    `fib_n = fib_(n-1) + fib_(n-2); fib_0 = fib_1 = 1`
+  - A node.js server script that allows for graceful degradation to
+    performing calculations server-side in the absence of enabled JavaScript.
