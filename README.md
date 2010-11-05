@@ -13,7 +13,8 @@ included.
 Developed with Chrome, should work the same in Safari, a bit less polished in 
 Firefox and Opera, and remain functional in IE.
 
-Compiled copies of all files are included.
+Compiled copies of all files are included. Recommendedly after downloading
+MathJax you just need to open main.html and you're off.
 
 Dependencies
 ------------
@@ -25,7 +26,8 @@ Dependencies
 ### To Use Interface
 
 - Web browser
-- [MathJax](http://www.mathjax.org/) in `dep/mathjax-1.0.1` (recommended, a plain-text fallback is available for use without but it's not very good)
+- [MathJax](http://www.mathjax.org/) in `dep/mathjax-1.0.1` (recommended, a
+  plain-text fallback is available for use without but it's not very good)
 
 ### To Build Shore (Excluding Parser)
 
@@ -76,7 +78,6 @@ TODO
 
   - x ~ ~ t for double integral, etc.
   - Make the code decent.
-  - Write at least some basic documentation.
   - Documentation!
 
 ### `v1.1`
@@ -91,7 +92,7 @@ TODO
   - Abstract away identifier values.
   - Support HTML5 offline cache?
   - Make nice on iPod touch/iPhone.
-  - Maybe allow more classical functions via subscripts:  
-    fib_n = fib_(n-1) + fib_(n-2); fib_0 = fib_1 = 1
+  - Maybe allow more conventional functions via subscripts:  
+    `fib_n = fib_(n-1) + fib_(n-2); fib_0 = fib_1 = 1`
   - A node.js server script that allows for graceful degradation to
     performing calculations server-side in the absence of enabled JavaScript.
