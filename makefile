@@ -2,7 +2,7 @@ BUILD_DIR = built
 
 all: clean-old $(BUILD_DIR)/shore.js $(BUILD_DIR)/shore.parser.js \
      $(BUILD_DIR)/shore.ui.js $(BUILD_DIR)/shore.tests.js \
-     $(BUILD_DIR)/style.css $(BUILD_DIR)/main.js
+     $(BUILD_DIR)/main.html $(BUILD_DIR)/style.css $(BUILD_DIR)/main.js
 
 open: all
 	open main.html
@@ -30,6 +30,10 @@ clean-old:
 	([ $(BUILD_DIR)/style.css -ot style.sass ] || \
 	 [ $(BUILD_DIR)/style.css -ot useful.sass ]) && \
 		rm -v $(BUILD_DIR)/style.css; true
+	
+	[ -e $(BUILD_DIR)/main.html ] && \
+	[ $(BUILD_DIR)/main.html -ot main.haml ] && \
+		rm -v $(BUILD_DIR)/main.html; true
 
 # requiring coffeescript...
 
@@ -50,7 +54,11 @@ $(BUILD_DIR)/main.js:
 $(BUILD_DIR)/shore.parser.js:
 	node shore.grammar.js -q > $(BUILD_DIR)/shore.parser.js
 
-# requiring sass
+# requiring haml/sass
+
+$(BUILD_DIR)/main.html:
+	haml -f html5 main.haml $(BUILD_DIR)/main.html
 
 $(BUILD_DIR)/style.css:
 	sass -C style.sass $(BUILD_DIR)/style.css
+

@@ -1,0 +1,33 @@
+!!! 5
+%html(lang="en")
+	%head
+		%title Shore Math [Noun]
+		%meta(charset="utf-8")
+		%meta(html-equiv="X-UA-Compatible" content="IE=EmulateIE7")
+		
+		%link(rel="stylesheet" href="style.css")
+		
+		%script(src="../dep/jquery-1.3.4.js")
+		%script(src="../dep/jquery.address-1.3.js")
+		
+		%script(src="shore.js")
+		%script(src="shore.parser.js")
+		%script(src="shore.ui.js")
+		
+		%script(src="main.js")
+	%body
+		.centering
+			.box
+				%h1
+					%a(href="./main.html") Shore <span>Math [Noun]</span>
+				%form
+					%textarea#input(name="i")
+					%input.submit(type="submit" value="Calculate")
+			.box.result#results(style="display: none;")
+			.footer
+				<a href="http://jeremybanks.github.com/shore/">Shore</a>      |
+				is developed by                                               |
+				<a href="mailto:jeremy@jeremybanks.ca">Jeremy Banks</a>.      |
+				The source and full credits are available                     |
+				<a href="http://github.com/jeremybanks/shore"> on GitHub</a>. |
+

@@ -1,44 +1,50 @@
 Shore (original code):
   http://jeremybanks.github.com/shore/
   
-  Copyright (c) 2010 Jeremy Banks
+  Copyright 2010 Jeremy Banks
   Used and distributed under under the MIT License.
 
 CoffeeScript:
   http://jashkenas.github.com/coffee-script/
   
-  Copyright (c) 2010 Jeremy Ashkenas
+  Copyright 2010 Jeremy Ashkenas
   Used and distributed under the MIT License.
 
 Jison:
   http://zaach.github.com/jison/
   
-  Copyright (c) 2009 Zachary Carter
+  Copyright 2009 Zachary Carter
   Used and distributed under the MIT License.
 
 jQuery:
   http://jquery.com/
   
-  Copyright (c) 2010 John Resig, http://jquery.com/
+  Copyright 2010 John Resig, http://jquery.com/
   Used and distributed under the MIT License.
 
 jQuery Address plugin:
   http://www.asual.com/jquery/address/
   
-  Copyright (c) 2009-2010 Rostislav Hristov
+  Copyright 2009-2010 Rostislav Hristov
+  Used and distributed under the MIT License.
+
+Sass
+  http://sass-lang.com/
+  
+  Copyright 2006-2009 Hampton Catlin and Nathan Weizenbaum
+  Used and distributed under the MIT License.
+
+Haml
+  http://haml-lang.com/
+  
+  Copyright 2006-2009 Hampton Catlin, Nathan Weizenbaum, and Chris Eppstein
   Used and distributed under the MIT License.
 
 MathJax:
   http://www.mathjax.org/
   
-  Copyright (c) 2009-2010 Design Science, Inc.
+  Copyright 2009-2010 Design Science, Inc.
   Used and distributed under the Apache License 2.0.
-
-Sass
-	http://sass-lang.com/
-	
-	Copyright (c) 2006-2009 Hampton Catlin and Nathan Weizenbaum
-	Used and distributed under the MIT License.
 
 MIT License
 -----------

@@ -14,7 +14,7 @@ Developed with Chrome, should work the same in Safari, a bit less polished in
 Firefox and Opera, and remain functional in IE.
 
 Compiled copies of all files are included. Recommendedly after downloading
-MathJax you just need to open main.html and you're off.
+MathJax you just need to open built/main.html and you're off.
 
 Dependencies
 ------------
@@ -38,7 +38,11 @@ Dependencies
 - [Jison](http://zaach.github.com/jison/)
 - [node.js](http://nodejs.org/)
 
-### To Build Stylesheet
+### To Build Pages
+
+- [Haml](http://haml-lang.com/)
+
+### To Build Styles
 
 - [Sass](http://sass-lang.com/)
 

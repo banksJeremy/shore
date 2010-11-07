@@ -92,7 +92,7 @@ $ main = ->
 	"Since it's not strictly necessary we don't load MathJax until after all
 	of the required scripts."
 	
-	shore.ui.load_mathjax "dep/mathjax-1.0.1/MathJax.js"
+	shore.ui.load_mathjax "../dep/mathjax-1.0.1/MathJax.js"
 	qs = shore.ui.parse_qs()
 	
 	input_box = $ "#input"
