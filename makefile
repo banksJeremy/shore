@@ -27,7 +27,8 @@ clean-old:
 		rm -v $(BUILD_DIR)/shore.parser.js; true
 	
 	[ -e $(BUILD_DIR)/style.css ] && \
-	[ $(BUILD_DIR)/style.css -ot style.sass ] && \
+	([ $(BUILD_DIR)/style.css -ot style.sass ] || \
+	 [ $(BUILD_DIR)/style.css -ot useful.sass ]) && \
 		rm -v $(BUILD_DIR)/style.css; true
 
 # requiring coffeescript...
