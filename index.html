@@ -5,6 +5,13 @@
 		<meta charset="utf-8">
 		
 		<link rel=stylesheet href="built/style.css">
+		<script src="dep/jquery-1.3.4.js"></script>
+		<script src="built/shore.js"></script>
+		<script src="built/shore.ui.js"></script>
+		<script>// all of that just for this...
+		$(function(){
+			shore.ui.configure_textarea($("#input"))
+		})</script>
 		
 		<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7">
 		<!-- this is required for MathJax to work properly in IE8+ -->
