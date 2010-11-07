@@ -1,123 +1,128 @@
 @mixin ms-filter($name, $quoted_attributes)
-  filter: unquote("progid:DXImageTransform.Microsoft.") + $name + "(" + unquote($quoted_attributes) + ")"
-  -ms-filter: quote(unquote("progid:DXImageTransform.Microsoft.") + $name + "(" + unquote($quoted_attributes)) + ")"
+	filter: unquote("progid:DXImageTransform.Microsoft.") + $name + "(" + unquote($quoted_attributes) + ")"
+	-ms-filter: quote(unquote("progid:DXImageTransform.Microsoft.") + $name + "(" + unquote($quoted_attributes)) + ")"
 
 @mixin border-radius($radius)
-  -webkit-border-radius: $radius
-  -moz-border-radius: $radius
-  border-radius: $radius
+	-webkit-border-radius: $radius
+	-moz-border-radius: $radius
+	border-radius: $radius
 
 @mixin box-shadow($xoff, $yoff, $blur, $color:b)
-  -webkit-box-shadow: $xoff $yoff $blur $color
-  -moz-box-shadow: $xoff $yoff $blur $color
-  box-shadow: $xoff $yoff $blur $color
+	-webkit-box-shadow: $xoff $yoff $blur $color
+	-moz-box-shadow: $xoff $yoff $blur $color
+	box-shadow: $xoff $yoff $blur $color
 
-@mixin text-shadow($xoff, $yoff, $blur, $color)  
-  text-shadow: $xoff $yoff $blur $color
-  
-  @if alpha($color) != 1
-    @warn "Alpha channel dropped from text-shadow for IE"
-  
-  $ie-color: rgb(red($color), green($color), blue($color))
-  
-  @include ms-filter(gradient, "color=#{$ie-color}, offx=#{$xoff / 1px}, offy=#{$yoff / 1px}")
+@mixin text-shadow($xoff, $yoff, $blur, $color)	 
+	text-shadow: $xoff $yoff $blur $color
+	
+	@if alpha($color) != 1
+		@warn "Alpha channel dropped from text-shadow for IE"
+	
+	$ie-color: rgb(red($color), green($color), blue($color))
+	
+	@include ms-filter(gradient, "color=#{$ie-color}, offx=#{$xoff / 1px}, offy=#{$yoff / 1px}")
 
 @mixin vertical-gradient-background($top, $bottom)
-  background: mix($top, $bottom)
-  background: -moz-linear-gradient(top, $top 0%, $bottom 100%)
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, $top), color-stop(100%, $bottom))
-  
-  @if alpha($top) != 1 or alpha($bottom) != 1
-    @warn "Alpha channel dropped from vertical-gradient-background for IE"
-  
-  $ie-top: rgb(red($top), green($top), blue($top))
-  $ie-bottom: rgb(red($bottom), green($bottom), blue($bottom))
-  
-  @include ms-filter(gradient, "startColorstr=#{$ie-top}, endColorstr=#{$ie-bottom}, GradientType=0")
+	background: mix($top, $bottom)
+	background: -moz-linear-gradient(top, $top 0%, $bottom 100%)
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, $top), color-stop(100%, $bottom))
+	
+	@if alpha($top) != 1 or alpha($bottom) != 1
+		@warn "Alpha channel dropped from vertical-gradient-background for IE"
+	
+	$ie-top: rgb(red($top), green($top), blue($top))
+	$ie-bottom: rgb(red($bottom), green($bottom), blue($bottom))
+	
+	@include ms-filter(gradient, "startColorstr=#{$ie-top}, endColorstr=#{$ie-bottom}, GradientType=0")
 
 *
-  margin: 0
-  border: 0
-  padding: 0
+	margin: 0
+	border: 0
+	padding: 0
 
-h1
-  @include text-shadow(1px, 1px, 2px, rgba(48, 64, 92, .75))
-  
-  span
-    font-size: 80%
-  
-  a
-    text-decoration: none
-    color: black
+body	
+	background: rgb(48, 64, 92)
+	color: rgb(255, 255, 240)
+	font-family: sans-serif
+	font-size: 125%
+	text-align: center
 
-a
-  color: rgb(255, 255, 200)
-
-p
-  margin: 1em 0
-
-body
-  font-family: sans-serif
-  font-size: 125%
-  background: rgb(48, 64, 92)
-  text-align: center
-
-h1, h2, h3, h4, h5, h6
-  margin: auto
-
-.centering
-  text-align: left
-  width: 32em
-  max-width: 100%
-  margin: 1em auto
-
-.box
-  padding: 1em
-  background: rgb(255, 255, 240)
-  @include border-radius(.5em)
-  @include box-shadow(0, 0, 4px, rgb(255, 255, 240))
-  margin-top: .25em
-
-.footer
-  color: rgb(255, 255, 240)
-  font-size: 75%
-  text-align: center
-  margin: 1em
-
-input.submit
-  font-size: large
-  border: 1px solid black
-  @include border-radius(.5em)
-  padding: .4em
-  font-weight: bold
-  @include box-shadow(0, 0, 2px, black)
-  cursor: pointer
-  @include vertical-gradient-background(#EEE, #BBB)
-
-input.submit:hover
-  @include box-shadow(0, 0, 3px, black)
-  @include vertical-gradient-background(#DDD, #AAA)
-
-input.submit:active
-  @include box-shadow(0, 0, 4px, black)
-  @include vertical-gradient-background(#999, #BBB)
-
-#input
-  @include border-radius(.5em)
-  border: 1px solid black
-  display: block
-  padding: .2em
-  width: 90%
-  margin: .5em auto
-  height: 2em
-  line-height: 1em
-  font-size: 100%
-  @include box-shadow(0, 0, 2px, black)
-
-form .buttons
-  margin-top: .5em
-  text-align: center
-
-h3
-  @include text-shadow(1px, 1px, 2px, rgba(48, 64, 92, .40))
-  padding: .25em
+	a
+		color: rgb(255, 255, 200)
+	
+	p
+		margin: 1em 0
+	
+	h1, h2, h3, h4, h5, h6
+		margin: auto
+	
+	.centering
+		text-align: left
+		width: 32em
+		max-width: 100%
+		margin: 1em auto
+	
+	.box
+		padding: 1em
+		background: rgb(255, 255, 240)
+		@include border-radius(.5em)
+		@include box-shadow(0, 0, 4px, rgb(255, 255, 240))
+		margin-top: .25em
+		
+		color: black
+		
+		a
+			color: red
+		
+		h1
+			@include text-shadow(1px, 1px, 2px, rgba(48, 64, 92, .75))
+		
+			span
+				font-size: 80%
+		
+			a
+				text-decoration: none
+				color: black
+		
+		input.submit
+			font-size: large
+			border: 1px solid black
+			@include border-radius(.5em)
+			padding: .4em
+			font-weight: bold
+			@include box-shadow(0, 0, 2px, black)
+			cursor: pointer
+			@include vertical-gradient-background(#EEE, #BBB)
+		
+		input.submit:hover
+			@include box-shadow(0, 0, 3px, black)
+			@include vertical-gradient-background(#DDD, #AAA)
+		
+		input.submit:active
+			@include box-shadow(0, 0, 4px, black)
+			@include vertical-gradient-background(#999, #BBB)
+		
+		#input
+			@include border-radius(.5em)
+			border: 1px solid black
+			display: block
+			padding: .2em
+			width: 90%
+			margin: .5em auto
+			height: 2em
+			line-height: 1em
+			font-size: 100%
+			@include box-shadow(0, 0, 2px, black)
+		
+		form .buttons
+			margin-top: .5em
+			text-align: center
+		
+		h3
+			@include text-shadow(1px, 1px, 2px, rgba(48, 64, 92, .40))
+			padding: .25em
+	
+	.footer
+		font-size: 75%
+		text-align: center
+		margin: 1em
