@@ -11,7 +11,7 @@ test: all
 	node $(BUILD_DIR)/shore.tests.js
 
 clean:
-	rm -rf build
+	rm -rf $(BUILD_DIR)
 
 # remove files older than their sources
 

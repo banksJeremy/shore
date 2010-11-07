@@ -212,6 +212,18 @@
       } else {
         return object;
       }
+    },
+    occurences: function(string, target_character) {
+      var _i, _len, _ref, character, result;
+      result = 0;
+      _ref = string;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        character = _ref[_i];
+        if (character === target_character) {
+          result += 1;
+        }
+      }
+      return result;
     }
   }));
   __not_types = {
@@ -351,7 +363,6 @@
         return this;
       };
       Thing.prototype.is_shore_thing = true;
-      Thing.prototype.precedence = 0;
       Thing.prototype.req_comps = [];
       Thing.prototype.identifier_string_set = utility.memoize(function() {
         var all;
@@ -411,6 +422,7 @@
         }
         return _result;
       };
+      Thing.prototype.precedence = 0;
       Thing.prototype.to_tex = function(context) {
         var args;
         args = __slice.call(arguments, 1);
