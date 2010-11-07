@@ -180,6 +180,15 @@ utility = shore.utility = shore.U =
 			f object, extra_arguments...
 		else # we leave functions/strings/etc alone
 			object
+	
+	occurences: (string, target_character) ->
+		 # Counts the occurrences of a given character in a string.
+		
+		result = 0
+		for character in string
+			if character is target_character
+				result += 1
+		result
 
 __not_types =
 	# Merged onto shore first, as they may be required by the defenitions of
@@ -308,7 +317,6 @@ __types =
 		# actual math.
 		
 		is_shore_thing: true
-		precedence: 0
 		
 		req_comps: []
 		
@@ -360,6 +368,9 @@ __types =
 				
 				if value and not @is(value)
 					return [canonization, value]
+		
+		precedence: 0
+		# this needs to be more nuanced
 		
 		to_tex: (context, args...) ->
 			context ?= 1

@@ -2,7 +2,7 @@ BUILD_DIR = built
 
 all: clean-old $(BUILD_DIR)/shore.js $(BUILD_DIR)/shore.parser.js \
      $(BUILD_DIR)/shore.ui.js $(BUILD_DIR)/shore.tests.js \
-     $(BUILD_DIR)/main.css $(BUILD_DIR)/main.js
+     $(BUILD_DIR)/style.css $(BUILD_DIR)/main.js
 
 open: all
 	open main.html
@@ -11,7 +11,7 @@ test: all
 	node $(BUILD_DIR)/shore.tests.js
 
 clean:
-	rm -rf build
+	rm -rf $(BUILD_DIR)
 
 # remove files older than their sources
 
@@ -25,6 +25,10 @@ clean-old:
 	[ -e $(BUILD_DIR)/shore.parser.js ] && \
 	[ $(BUILD_DIR)/shore.parser.js -ot shore.grammar.js ] && \
 		rm -v $(BUILD_DIR)/shore.parser.js; true
+	
+	[ -e $(BUILD_DIR)/style.css ] && \
+	[ $(BUILD_DIR)/style.css -ot style.sass ] && \
+		rm -v $(BUILD_DIR)/style.css; true
 
 # requiring coffeescript...
 
@@ -47,5 +51,5 @@ $(BUILD_DIR)/shore.parser.js:
 
 # requiring sass
 
-$(BUILD_DIR)/main.css:
-	sass -C main.sass $(BUILD_DIR)/main.css
+$(BUILD_DIR)/style.css:
+	sass -C style.sass $(BUILD_DIR)/style.css
