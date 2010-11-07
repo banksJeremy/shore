@@ -23,7 +23,7 @@ process_math = (input, output_element) ->
 		
 		output_element.empty()
 		output_element.append (($ "<pre>").css whiteSpace: "pre-line")
-			.text e.message.replace "on line 1", "in \"#{expression}\""
+			.text e.message.replace "on line 1", "in \"#{input}\""
 		output_element.show()
 		return
 	
@@ -57,7 +57,7 @@ process_math = (input, output_element) ->
 		out "<h3 id=output_input>Input</h3>"
 		out "<pre>"
 		
-		out shore.ui.escape_html expression.to_string()
+		out shore.ui.escape_html parsed.to_string()
 		
 		out "</pre>"
 		
@@ -68,7 +68,7 @@ process_math = (input, output_element) ->
 		out "<h3 id=output_results>Results</h3>"
 		out "<pre>"
 		
-		out shore.ui.escape_html expression.canonize().to_string()
+		out shore.ui.escape_html parsed.canonize().to_string()
 		
 		out "</pre>"
 		

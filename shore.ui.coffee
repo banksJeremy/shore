@@ -24,7 +24,8 @@ ui = (this.shore ?= {}).ui =
 
 			MathJax.Hub.Startup.onload();
 			MathJax.Hub.Register.StartupHook("End", function() {
-				if (var callback = shore.ui.__load_mathjax_callback__) callback();
+				var callback;
+				if (callback = shore.ui.__load_mathjax_callback__) callback();
 			});
 		"""
 		
@@ -47,9 +48,9 @@ ui = (this.shore ?= {}).ui =
 	
 	escape_html: (original) ->
 		pattern = ui.escape_html._pattern ?=
-			/(#{(c for c of ui.html_entities).join "|")}/g
+			/(#{(c for c of ui.html_entities).join "|"})/g
 		
-		original.replace pattern, (c) -> ui.html_chars[c]
+		original.replace pattern, (c) -> ui.html_entities[c]
 	
 	scale_textarea: (textarea, pixels_per_line, modifier) ->
 		# Set the height of a jQuery textarea based on the newlines contained.
