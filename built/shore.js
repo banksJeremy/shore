@@ -265,9 +265,10 @@
       return shore._signified(significance, utility.memoize(f));
     },
     _significances: {
-      minor: 0,
-      moderate: 1,
-      major: 2
+      invisible: 0,
+      organization: 1,
+      significant: 2,
+      overwhelming: 3
     },
     canonize: function(object) {
       var arguments, f;
@@ -759,6 +760,7 @@
       };
       __extends(WithMarginOfError, Value);
       WithMarginOfError.prototype.precedence = 1.5;
+      WithMarginOfError.prototype.req_comps = sss("value margin");
       WithMarginOfError.prototype.tex_symbol = " \\pm ";
       WithMarginOfError.prototype.string_symbol = " ± ";
       WithMarginOfError.prototype.to_free_string = function() {
@@ -1007,15 +1009,15 @@
       return _result;
     }), def("CANOperation", function() {
       return this.__super__.canonizers.concat([
-        canonization("minor", "single argument", function() {
+        canonization("invisible", "single argument", function() {
           if (this.comps.operands.length === 1) {
             return this.comps.operands[0];
           }
-        }), canonization("minor", "no arguments", function() {
+        }), canonization("invisible", "no arguments", function() {
           if (this.comps.operands.length === 0 && this.get_nullary) {
             return this.get_nullary();
           }
-        }), canonization("minor", "commutativity", function() {
+        }), canonization("invisible", "commutativity", function() {
           var _i, _j, _len, _len2, _ref2, _ref3, can_expand, new_operands, operand, suboperand;
           can_expand = false;
           _ref2 = this.comps.operands;
@@ -1045,11 +1047,11 @@
               operands: new_operands
             });
           }
-        }), canonization("moderate", "sort items", function() {
+        }), canonization("organization", "sort items", function() {
           return this.provider({
             operands: this.comps.operands.sort(utility.compare_by_hash)
           });
-        }), canonization("major", "remove redundant nullaries", function() {
+        }), canonization("overwhelming", "remove redundant nullaries", function() {
           var _i, _len, _ref2, _result, n, o;
           n = this.get_nullary();
           return this.provider({
@@ -1068,7 +1070,7 @@
       ]);
     }), def("Sum", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "numbers in sum", function() {
+        canonization("overwhelming", "numbers in sum", function() {
           var _i, _len, _ref2, not_numbers, numbers, operand, sum;
           numbers = [];
           not_numbers = [];
@@ -1098,10 +1100,10 @@
       ]);
     }), def("Product", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "ZERO IT", function() {
+        canonization("overwhelming", "ZERO IT", function() {
           var _i, _len, _ref2, _ref3;
           return (function(){ (_ref2 = (shore(0))); for (var _i=0, _len=(_ref3 = this.comps.operands).length; _i<_len; _i++) { if (_ref3[_i] === _ref2) return true; } return false; }).call(this) ? (shore(0)) : null;
-        }), canonization("major", "numbers in product", function() {
+        }), canonization("overwhelming", "numbers in product", function() {
           var _i, _len, _ref2, not_numbers, numbers, operand, product;
           numbers = [];
           not_numbers = [];
@@ -1131,9 +1133,9 @@
       ]);
     }), def("Exponent", function() {
       return this.__super__.canonizers.concat([
-        canonization("minor", "eliminate power of one", function() {
+        canonization("invisible", "eliminate power of one", function() {
           return this.comps.exponent.is(shore(1)) ? this.comps.base : null;
-        }), canonization("major", "exponent of numbers", function() {
+        }), canonization("overwhelming", "exponent of numbers", function() {
           var x;
           if ((this.comps.base.type === this.comps.exponent.type) && (this.comps.exponent.type === shore.Number)) {
             x = Math.pow(this.comps.base.comps.value, this.comps.exponent.comps.value);
@@ -1145,11 +1147,11 @@
       ]);
     }), def("Integral", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "integration over constant", function() {
+        canonization("overwhelming", "integration over constant", function() {
           return this.comps.variable.known_constant ? shore(0) : null;
-        }), canonization("major", "integration of constant", function() {
+        }), canonization("overwhelming", "integration of constant", function() {
           return this.comps.expression.known_constant ? this.comps.expression.times(this.comps.variable) : null;
-        }), canonization("moderate", "rule of sums", function() {
+        }), canonization("organization", "rule of sums", function() {
           var _i, _len, _ref2, _result, term;
           return this.comps.expression.type === shore.Sum ? shore.sum({
             operands: (function() {
@@ -1164,7 +1166,7 @@
               return _result;
             }).call(this)
           }) : null;
-        }), canonization("moderate", "constant coefficient", function() {
+        }), canonization("organization", "constant coefficient", function() {
           var coefficient, terms;
           if (this.comps.expression.type === shore.Product) {
             terms = this.comps.expression.comps.operands;
@@ -1176,9 +1178,9 @@
               })
             })) : null;
           }
-        }), canonization("major", "integration over self", function() {
+        }), canonization("overwhelming", "integration over self", function() {
           return this.comps.expression.is(this.comps.variable) ? this.comps.expression.to_the(shore(2)).over(shore(2)) : null;
-        }), canonization("major", "power rule", function() {
+        }), canonization("overwhelming", "power rule", function() {
           var _ref2, base, exponent, new_exponent;
           if (this.comps.expression.type === shore.Exponent) {
             _ref2 = this.comps.expression.comps;
@@ -1191,13 +1193,13 @@
       ]);
     }), def("Derivative", function() {
       return this.__super__.canonizers.concat([
-        canonization("moderate", "differentiation over self", function() {
+        canonization("organization", "differentiation over self", function() {
           return this.comps.variable.is(this.comps.expression) ? shore(1) : null;
-        }), canonization("moderate", "differentiation over constant", function() {
+        }), canonization("organization", "differentiation over constant", function() {
           return this.comps.variable.known_constant ? shore(0) : null;
-        }), canonization("moderate", "differentiation of constant", function() {
+        }), canonization("organization", "differentiation of constant", function() {
           return this.comps.expression.known_constant ? shore(0) : null;
-        }), canonization("moderate", "rule of sums", function() {
+        }), canonization("organization", "sum rule", function() {
           var _i, _len, _ref2, _result, term;
           return this.comps.expression.type === shore.Sum ? shore.sum({
             operands: (function() {
@@ -1212,7 +1214,7 @@
               return _result;
             }).call(this)
           }) : null;
-        }), canonization("major", "constant coefficient", function() {
+        }), canonization("significant", "constant coefficient", function() {
           var coefficient, terms;
           if (this.comps.expression.type === shore.Product) {
             terms = this.comps.expression.comps.operands;
@@ -1224,7 +1226,29 @@
               })
             })) : null;
           }
-        }), canonization("major", "power rule", function() {
+        }), canonization("significant", "product rule", function() {
+          var _ref2, _ref3, _result, _result2, factors, i, j;
+          if (this.comps.expression.type === shore.Product) {
+            factors = this.comps.expression.comps.operands;
+            return shore.sum({
+              operands: (function() {
+                _result = []; _ref2 = factors.length;
+                for (i = 0; (0 <= _ref2 ? i < _ref2 : i > _ref2); (0 <= _ref2 ? i += 1 : i -= 1)) {
+                  _result.push(shore.product({
+                    operands: (function() {
+                      _result2 = []; _ref3 = factors.length;
+                      for (j = 0; (0 <= _ref3 ? j < _ref3 : j > _ref3); (0 <= _ref3 ? j += 1 : j -= 1)) {
+                        _result2.push(i === j ? factors[j].differentiate(this.comps.variable) : factors[j]);
+                      }
+                      return _result2;
+                    }).call(this)
+                  }));
+                }
+                return _result;
+              }).call(this)
+            });
+          }
+        }), canonization("overwhelming", "power rule", function() {
           var _ref2, base, exponent;
           if (this.comps.expression.type === shore.Exponent) {
             _ref2 = this.comps.expression.comps;
@@ -1236,7 +1260,7 @@
       ]);
     }), def("PendingSubstitution", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "substitute", function() {
+        canonization("overwhelming", "substitute", function() {
           var _ref2, original, replacement;
           _ref2 = this.comps.substitution.comps.values;
           original = _ref2[0];
@@ -1246,7 +1270,7 @@
       ]);
     }), def("ExternalNumericFunction", function() {
       return this.__super__.canonizers.concat([
-        canonization("minor", "apply", function() {
+        canonization("invisible", "apply", function() {
           var _i, _len, _ref2, argument, values;
           values = [];
           _ref2 = this.comps.arguments;

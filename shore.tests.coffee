@@ -44,6 +44,7 @@ tests = [
 	(new Test "a * a * b", "a^2 * b")
 	(new Test "(x^3 + 3x^2 + 9)`x", "3x^2 + 6x")
 	(new Test "(a + b) ~ x", "(a ~ x) + (b ~ x)")
+	(new Test "(b*a) ` x", "(a * (b`x)) + ((a`x) * b)")
 ]
 
 passes = 0
