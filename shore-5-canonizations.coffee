@@ -164,7 +164,7 @@ __definers_of_canonizers = [
 		canonization "significant", "product rule", ->
 			if @comps.expression.type is shore.Product
 				factors = @comps.expression.comps.operands
-		
+				
 				shore.sum operands: for i in [0...factors.length]
 					shore.product operands: for j in [0...factors.length]
 						if i is j
@@ -181,6 +181,7 @@ __definers_of_canonizers = [
 		canonization "overwhelming", "hard-coded", ->
 			for [variable, result] in @derivatives
 				return result if variable.is @comps.variable
+			null
 	]
 	
 	def "PendingSubstitution", -> @__super__.canonizers.concat [

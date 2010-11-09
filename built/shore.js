@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Equation, Exponent, ExternalNumericFunction, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Equation, Exponent, ExternalNumericFunction, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, nix_tinys, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -951,6 +951,9 @@
   }
   utility.extend(shore, __types);
   utility.make_providers(shore);
+  nix_tinys = function(v) {
+    return Math.abs(v < 1e-12) ? 0 : v;
+  };
   shore.builtins = {
     sin: shore.external_numeric_function({
       identifier: shore.identifier({
@@ -963,7 +966,7 @@
         })
       ],
       f: function(v) {
-        return Math.sin(v % (2 * Math.PI));
+        return nix_tinys(Math.sin(v));
       }
     }),
     cos: shore.external_numeric_function({
@@ -977,7 +980,7 @@
         })
       ],
       f: function(v) {
-        return Math.cos(v % (2 * Math.PI));
+        return nix_tinys(Math.cos(v));
       }
     }),
     tan: shore.external_numeric_function({
@@ -991,13 +994,19 @@
         })
       ],
       f: function(v) {
-        return Math.tan(v % (2 * Math.PI));
+        return nix_tinys(Math.tan(v));
       }
     }),
     pi: shore.number({
       value: Math.PI,
       id: (shore.identifier({
         value: "pi"
+      }))
+    }),
+    tau: shore.number({
+      value: 2 * Math.PI,
+      id: (shore.identifier({
+        value: "tau"
       }))
     })
   };
@@ -1288,8 +1297,8 @@
             return base.is(this.comps.variable) ? exponent.times(base).to_the(exponent.minus(shore(1))) : null;
           }
         }), canonization("overwhelming", "hard-coded", function() {
-          var _i, _len, _ref2, _ref3, _result, result, variable;
-          _result = []; _ref2 = this.derivatives;
+          var _i, _len, _ref2, _ref3, result, variable;
+          _ref2 = this.derivatives;
           for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
             _ref3 = _ref2[_i];
             variable = _ref3[0];
@@ -1298,7 +1307,7 @@
               return result;
             }
           }
-          return _result;
+          return null;
         })
       ]);
     }), def("PendingSubstitution", function() {
