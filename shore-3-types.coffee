@@ -118,8 +118,18 @@ __types =
 		req_comps: sss "value"
 		
 		neg: -> shore.number value: -@comps.value
-		to_free_tex: -> String @comps.value
-		to_free_string: -> String @comps.value
+		
+		to_free_tex: ->
+			if @comps.id?
+				@comps.id.to_free_tex arguments...
+			else
+				String @comps.value
+		
+		to_free_string: ->
+			if @comps.id?
+				@comps.id.to_free_string arguments...
+			else
+				String @comps.value
 	
 	Identifier: class Identifier extends Value
 		precedence: 10
@@ -170,7 +180,7 @@ __types =
 		string_symbol: " + "
 		tex_symbol: " + "
 		
-		to_free_text: -> super().replace /\+ *\-/, "-" # HACK
+		to_free_string: -> super().replace /\+ *\-/, "-" # HACK
 		to_free_tex: -> super().replace /\+ *\-/, "-" # HACK
 	
 	Product: class Product extends CANOperation
@@ -320,17 +330,17 @@ __types =
 					return false
 			true
 		
-		to_string: (args...) ->
+		to_string: ->
 			if not @specified()
-				@comps.identifier.to_string args...
+				@comps.identifier.to_string arguments...
 			else
-				(@comps.identifier.to_string args...) + "_external(#{(shore.to_string a for a in  @comps.arguments).join ', '})"
+				(@comps.identifier.to_string arguments...) + "_external(#{(shore.to_string a for a in  @comps.arguments).join ', '})"
 		
-		to_tex: (args...) ->
+		to_tex: ->
 			if not @specified()
-				@comps.identifier.to_tex args...
+				@comps.identifier.to_tex arguments...
 			else
-				(@comps.identifier.to_tex args...) + "_{external}(#{(shore.to_tex a for a in  @comps.arguments).join ', '})"
+				(@comps.identifier.to_tex arguments...) + "_{external}(#{(shore.to_tex a for a in  @comps.arguments).join ', '})"
 	
 	PendingSubstitution: class PendingSubstitution extends Thing
 		precedence: 2.5

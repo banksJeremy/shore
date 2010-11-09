@@ -2,15 +2,18 @@ shore.builtins =
 	sin: shore.external_numeric_function
 		identifier: shore.identifier (value: "sin", tex_value: "\\sin")
 		arguments: [shore.identifier value: "theta"]
-		f: Math.sin
+		f: (v) -> Math.sin v % (2 * Math.PI)
 	cos: shore.external_numeric_function
 		identifier: shore.identifier (value: "cos", tex_value: "\\cos")
 		arguments: [shore.identifier value: "theta"]
-		f: Math.cos
+		f: (v) -> Math.cos v % (2 * Math.PI)
 	tan: shore.external_numeric_function
 		identifier: shore.identifier (value: "tan", tex_value: "\\tan")
 		arguments: [shore.identifier value: "theta"]
-		f: Math.tan
+		f: (v) -> Math.tan v % (2 * Math.PI)
+	pi: shore.number
+		value: Math.PI
+		id: (shore.identifier value: "pi")
 
 shore.builtins.sin.derivatives = [
 	[shore "theta", shore.builtins.cos]

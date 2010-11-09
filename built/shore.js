@@ -540,10 +540,12 @@
         });
       };
       Number.prototype.to_free_tex = function() {
-        return String(this.comps.value);
+        var _ref;
+        return (typeof (_ref = this.comps.id) !== "undefined" && _ref !== null) ? this.comps.id.to_free_tex.apply(this.comps.id, arguments) : String(this.comps.value);
       };
       Number.prototype.to_free_string = function() {
-        return String(this.comps.value);
+        var _ref;
+        return (typeof (_ref = this.comps.id) !== "undefined" && _ref !== null) ? this.comps.id.to_free_string.apply(this.comps.id, arguments) : String(this.comps.value);
       };
       return Number;
     })(),
@@ -631,8 +633,8 @@
       };
       Sum.prototype.string_symbol = " + ";
       Sum.prototype.tex_symbol = " + ";
-      Sum.prototype.to_free_text = function() {
-        return Sum.__super__.to_free_text.call(this).replace(/\+ *\-/, "-");
+      Sum.prototype.to_free_string = function() {
+        return Sum.__super__.to_free_string.call(this).replace(/\+ *\-/, "-");
       };
       Sum.prototype.to_free_tex = function() {
         return Sum.__super__.to_free_tex.call(this).replace(/\+ *\-/, "-");
@@ -866,9 +868,8 @@
         return true;
       };
       ExternalNumericFunction.prototype.to_string = function() {
-        var _i, _len, _ref, _result, a, args;
-        args = __slice.call(arguments, 0);
-        return !this.specified() ? this.comps.identifier.to_string.apply(this.comps.identifier, args) : (this.comps.identifier.to_string.apply(this.comps.identifier, args)) + ("_external(" + ((function() {
+        var _i, _len, _ref, _result, a;
+        return !this.specified() ? this.comps.identifier.to_string.apply(this.comps.identifier, arguments) : (this.comps.identifier.to_string.apply(this.comps.identifier, arguments)) + ("_external(" + ((function() {
           _result = []; _ref = this.comps.arguments;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             a = _ref[_i];
@@ -878,9 +879,8 @@
         }).apply(this, arguments).join(', ')) + ")");
       };
       ExternalNumericFunction.prototype.to_tex = function() {
-        var _i, _len, _ref, _result, a, args;
-        args = __slice.call(arguments, 0);
-        return !this.specified() ? this.comps.identifier.to_tex.apply(this.comps.identifier, args) : (this.comps.identifier.to_tex.apply(this.comps.identifier, args)) + ("_{external}(" + ((function() {
+        var _i, _len, _ref, _result, a;
+        return !this.specified() ? this.comps.identifier.to_tex.apply(this.comps.identifier, arguments) : (this.comps.identifier.to_tex.apply(this.comps.identifier, arguments)) + ("_{external}(" + ((function() {
           _result = []; _ref = this.comps.arguments;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             a = _ref[_i];
@@ -962,7 +962,9 @@
           value: "theta"
         })
       ],
-      f: Math.sin
+      f: function(v) {
+        return Math.sin(v % (2 * Math.PI));
+      }
     }),
     cos: shore.external_numeric_function({
       identifier: shore.identifier({
@@ -974,7 +976,9 @@
           value: "theta"
         })
       ],
-      f: Math.cos
+      f: function(v) {
+        return Math.cos(v % (2 * Math.PI));
+      }
     }),
     tan: shore.external_numeric_function({
       identifier: shore.identifier({
@@ -986,7 +990,15 @@
           value: "theta"
         })
       ],
-      f: Math.tan
+      f: function(v) {
+        return Math.tan(v % (2 * Math.PI));
+      }
+    }),
+    pi: shore.number({
+      value: Math.PI,
+      id: (shore.identifier({
+        value: "pi"
+      }))
     })
   };
   shore.builtins.sin.derivatives = [[shore("theta", shore.builtins.cos)]];
