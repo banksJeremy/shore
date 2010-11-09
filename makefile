@@ -1,7 +1,8 @@
 BUILD_DIR = built
 
 core-parts = shore-1-base.coffee shore-2-not-types.coffee \
-             shore-3-types.coffee shore-4-canonizations.coffee
+             shore-3-types.coffee shore-4-builtins.coffee \
+             shore-5-canonizations.coffee
 
 all: clean-old $(BUILD_DIR)/shore.js $(BUILD_DIR)/shore.parser.js \
      $(BUILD_DIR)/shore.ui.js $(BUILD_DIR)/shore.tests.js \
@@ -24,7 +25,8 @@ clean-old:
 	([ $(BUILD_DIR)/shore.js -ot shore-1-base.coffee ] || \
 	 [ $(BUILD_DIR)/shore.js -ot shore-2-not-types.coffee ] || \
 	 [ $(BUILD_DIR)/shore.js -ot shore-3-types.coffee ] || \
-	 [ $(BUILD_DIR)/shore.js -ot shore-4-canonizations.coffee ]) && \
+	 [ $(BUILD_DIR)/shore.js -ot shore-4-builtins.coffee ] || \
+	 [ $(BUILD_DIR)/shore.js -ot shore-5-canonizations.coffee ]) && \
 		rm -v $(BUILD_DIR)/shore.js; true;
 	
 	for name in shore.ui shore.tests main; do \

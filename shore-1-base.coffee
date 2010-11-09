@@ -21,6 +21,7 @@ Released under the MIT License
 # 	defines most aspects of the types in the shore module.
 # shore-4-canonizations.coffee
 # 	defines the canonization methods of the types.
+"use strict"
 
 root = this
 
@@ -47,8 +48,8 @@ shore = root.S = root.shore = (args...) ->
 			shore.number value: arg
 		else if typeof arg is "string"
 			if /^[a-zA-Z][a-zA-Z0-9]*'*$/.test arg
-				if arg of shore.predefined_identifiers
-					shore.predefined_identifiers[arg]
+				if arg of shore.builtins
+					shore.builtins[arg]
 				else
 					shore.identifier value: arg
 			else

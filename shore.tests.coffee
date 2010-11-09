@@ -45,6 +45,9 @@ tests = [
 	(new Test "(x^3 + 3x^2 + 9)`x", "3x^2 + 6x")
 	(new Test "(a + b) ~ x", "(a ~ x) + (b ~ x)")
 	(new Test "(b*a) ` x", "(a * (b`x)) + ((a`x) * b)")
+	(new Test "sin ` theta", "cos")
+	(new Test "(-sin) ~ theta", "cos")
+	(new Test "(x^2 sin(theta=x)) ` x", "2x sin(theta=x) + x^2 cos(theta=x)")
 ]
 
 passes = 0

@@ -15,6 +15,7 @@
   Copyright Jeremy Banks <jeremy@jeremybanks.com>
   Released under the MIT License
   */
+  "use strict";
   root = this;
   former_S = root.S;
   former_shore = root.shore;
@@ -39,7 +40,7 @@
         });
       } else if (typeof arg === "string") {
         if (/^[a-zA-Z][a-zA-Z0-9]*'*$/.test(arg)) {
-          return arg in shore.predefined_identifiers ? shore.predefined_identifiers[arg] : shore.identifier({
+          return arg in shore.builtins ? shore.builtins[arg] : shore.identifier({
             value: arg
           });
         } else {
@@ -466,6 +467,8 @@
       __extends(Value, Thing);
       Value.prototype.known_constant = false;
       Value.prototype.is_a_value = true;
+      Value.prototype.derivatives = [];
+      Value.prototype.integrals = [];
       Value.prototype.plus = function(other) {
         return shore.sum({
           operands: [this, other]
@@ -948,7 +951,7 @@
   }
   utility.extend(shore, __types);
   utility.make_providers(shore);
-  shore.predefined_identifiers = {
+  shore.builtins = {
     sin: shore.external_numeric_function({
       identifier: shore.identifier({
         value: "sin",
@@ -986,6 +989,10 @@
       f: Math.tan
     })
   };
+  shore.builtins.sin.derivatives = [[shore("theta", shore.builtins.cos)]];
+  shore.builtins.sin.integrals = [[shore("theta", shore.builtins.cos.neg())]];
+  shore.builtins.cos.derivatives = [[shore("theta", shore.builtins.sin.neg())]];
+  shore.builtins.cos.integrals = [[shore("theta", shore.builtins.sin)]];
   def = function() {
     var args;
     args = __slice.call(arguments, 0);
@@ -1071,7 +1078,7 @@
     }), def("Sum", function() {
       return this.__super__.canonizers.concat([
         canonization("overwhelming", "numbers in sum", function() {
-          var _i, _len, _ref2, not_numbers, numbers, operand, sum;
+          var _i, _len, _ref2, not_numbers, number, numbers, operand, sum;
           numbers = [];
           not_numbers = [];
           _ref2 = this.comps.operands;
@@ -1085,8 +1092,10 @@
           }
           if (numbers.length > 1) {
             sum = this.get_nullary().comps.value;
-            while (numbers.length) {
-              sum += numbers.pop().comps.value;
+            _ref2 = numbers;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              number = _ref2[_i];
+              sum += number.comps.value;
             }
             return this.provider({
               operands: [
@@ -1104,7 +1113,7 @@
           var _i, _len, _ref2, _ref3;
           return (function(){ (_ref2 = (shore(0))); for (var _i=0, _len=(_ref3 = this.comps.operands).length; _i<_len; _i++) { if (_ref3[_i] === _ref2) return true; } return false; }).call(this) ? (shore(0)) : null;
         }), canonization("overwhelming", "numbers in product", function() {
-          var _i, _len, _ref2, not_numbers, numbers, operand, product;
+          var _i, _len, _ref2, not_numbers, number, numbers, operand, product;
           numbers = [];
           not_numbers = [];
           _ref2 = this.comps.operands;
@@ -1118,8 +1127,10 @@
           }
           if (numbers.length > 1) {
             product = this.get_nullary().comps.value;
-            while (numbers.length) {
-              product *= numbers.pop().comps.value;
+            _ref2 = numbers;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              number = _ref2[_i];
+              product *= number.comps.value;
             }
             return this.provider({
               operands: [
@@ -1147,9 +1158,7 @@
       ]);
     }), def("Integral", function() {
       return this.__super__.canonizers.concat([
-        canonization("overwhelming", "integration over constant", function() {
-          return this.comps.variable.known_constant ? shore(0) : null;
-        }), canonization("overwhelming", "integration of constant", function() {
+        canonization("overwhelming", "integration of constant", function() {
           return this.comps.expression.known_constant ? this.comps.expression.times(this.comps.variable) : null;
         }), canonization("organization", "rule of sums", function() {
           var _i, _len, _ref2, _result, term;
@@ -1189,14 +1198,24 @@
             new_exponent = exponent.plus(shore(1));
             return base.is(this.comps.variable) ? base.to_the(exponent.minus(new_exponent)).over(new_exponent) : null;
           }
+        }), canonization("overwhelming", "hard-coded", function() {
+          var _i, _len, _ref2, _ref3, result, variable;
+          _ref2 = this.integrals;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            _ref3 = _ref2[_i];
+            variable = _ref3[0];
+            result = _ref3[1];
+            if (variable.is(this.comps.variable)) {
+              return result;
+            }
+          }
+          return null;
         })
       ]);
     }), def("Derivative", function() {
       return this.__super__.canonizers.concat([
         canonization("organization", "differentiation over self", function() {
           return this.comps.variable.is(this.comps.expression) ? shore(1) : null;
-        }), canonization("organization", "differentiation over constant", function() {
-          return this.comps.variable.known_constant ? shore(0) : null;
         }), canonization("organization", "differentiation of constant", function() {
           return this.comps.expression.known_constant ? shore(0) : null;
         }), canonization("organization", "sum rule", function() {
@@ -1256,6 +1275,18 @@
             exponent = _ref2.exponent;
             return base.is(this.comps.variable) ? exponent.times(base).to_the(exponent.minus(shore(1))) : null;
           }
+        }), canonization("overwhelming", "hard-coded", function() {
+          var _i, _len, _ref2, _ref3, _result, result, variable;
+          _result = []; _ref2 = this.derivatives;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            _ref3 = _ref2[_i];
+            variable = _ref3[0];
+            result = _ref3[1];
+            if (variable.is(this.comps.variable)) {
+              return result;
+            }
+          }
+          return _result;
         })
       ]);
     }), def("PendingSubstitution", function() {

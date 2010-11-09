@@ -59,8 +59,8 @@ __definers_of_canonizers = [
 			if numbers.length > 1
 				sum = @get_nullary().comps.value
 				
-				while numbers.length
-					sum += numbers.pop().comps.value
+				for number in numbers
+					sum += number.comps.value
 				
 				@provider operands: [ shore.number value: sum ].concat not_numbers
 		
@@ -85,8 +85,8 @@ __definers_of_canonizers = [
 			if numbers.length > 1
 				product = @get_nullary().comps.value
 				
-				while numbers.length
-					product *= numbers.pop().comps.value
+				for number in numbers
+					product *= number.comps.value
 				
 				@provider operands: [ shore.number value: product ].concat not_numbers
 	]
@@ -103,10 +103,6 @@ __definers_of_canonizers = [
 	]
 	
 	def "Integral", -> @__super__.canonizers.concat [
-		canonization "overwhelming", "integration over constant", ->
-			if @comps.variable.known_constant
-				shore 0
-		
 		canonization "overwhelming", "integration of constant", ->
 			if @comps.expression.known_constant
 				@comps.expression.times @comps.variable
@@ -135,16 +131,17 @@ __definers_of_canonizers = [
 				new_exponent = exponent.plus (shore 1)
 				if base.is @comps.variable
 					base.to_the(exponent.minus new_exponent).over(new_exponent)
+		
+		canonization "overwhelming", "hard-coded", ->
+			for [variable, result] in @integrals
+				return result if variable.is @comps.variable
+			null
 	]
 	
 	def "Derivative", -> @__super__.canonizers.concat [
 		canonization "organization", "differentiation over self", ->
 			if @comps.variable.is @comps.expression
 				shore 1
-		
-		canonization "organization", "differentiation over constant", ->
-			if @comps.variable.known_constant
-				shore 0
 		
 		canonization "organization", "differentiation of constant", ->
 			if @comps.expression.known_constant
@@ -181,6 +178,9 @@ __definers_of_canonizers = [
 				if base.is @comps.variable
 					exponent.times(base).to_the(exponent.minus (shore 1))
 		
+		canonization "overwhelming", "hard-coded", ->
+			for [variable, result] in @derivatives
+				return result if variable.is @comps.variable
 	]
 	
 	def "PendingSubstitution", -> @__super__.canonizers.concat [

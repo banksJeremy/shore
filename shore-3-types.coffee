@@ -40,7 +40,6 @@ __types =
 			enough = shore._significance enough
 			
 			result = this
-			
 			loop
 				next = result.next_canonization()
 				if not next.length then break
@@ -94,6 +93,12 @@ __types =
 	Value: class Value extends Thing
 		known_constant: false
 		is_a_value: true
+		
+		derivatives: []
+		integrals: []
+		# overwhelming-significance derivatives and integrals can be hard-coded
+		# in an array of [ identifier, result ] arrays. added for use with builtin
+		# external functions.
 		
 		plus: (other) -> shore.sum operands: [this, other]
 		minus: (other) -> shore.sum operands: [this, other.neg()]
@@ -364,17 +369,3 @@ for name, type of __types
 utility.extend shore, __types
 utility.make_providers shore
 
-# not types, but need to go here to have the right things defined
-shore.predefined_identifiers =
-	sin: shore.external_numeric_function
-		identifier: shore.identifier (value: "sin", tex_value: "\\sin")
-		arguments: [shore.identifier (value: "theta")]
-		f: Math.sin
-	cos: shore.external_numeric_function
-		identifier: shore.identifier (value: "cos", tex_value: "\\cos")
-		arguments: [shore.identifier (value: "theta")]
-		f: Math.cos
-	tan: shore.external_numeric_function
-		identifier: shore.identifier (value: "tan", tex_value: "\\tan")
-		arguments: [shore.identifier (value: "theta")]
-		f: Math.tan
