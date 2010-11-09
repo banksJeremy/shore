@@ -1010,10 +1010,34 @@
       }))
     })
   };
-  shore.builtins.sin.derivatives = [[shore("theta", shore.builtins.cos)]];
-  shore.builtins.sin.integrals = [[shore("theta", shore.builtins.cos.neg())]];
-  shore.builtins.cos.derivatives = [[shore("theta", shore.builtins.sin.neg())]];
-  shore.builtins.cos.integrals = [[shore("theta", shore.builtins.sin)]];
+  shore.builtins.sin.derivatives = [
+    [
+      (shore.identifier({
+        value: "theta"
+      })), shore.builtins.cos
+    ]
+  ];
+  shore.builtins.sin.integrals = [
+    [
+      (shore.identifier({
+        value: "theta"
+      })), shore.builtins.cos.neg()
+    ]
+  ];
+  shore.builtins.cos.derivatives = [
+    [
+      (shore.identifier({
+        value: "theta"
+      })), shore.builtins.sin.neg()
+    ]
+  ];
+  shore.builtins.cos.integrals = [
+    [
+      (shore.identifier({
+        value: "theta"
+      })), shore.builtins.sin
+    ]
+  ];
   def = function() {
     var args;
     args = __slice.call(arguments, 0);
@@ -1221,7 +1245,7 @@
           }
         }), canonization("overwhelming", "hard-coded", function() {
           var _i, _len, _ref2, _ref3, result, variable;
-          _ref2 = this.integrals;
+          _ref2 = this.comps.expression.integrals;
           for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
             _ref3 = _ref2[_i];
             variable = _ref3[0];
@@ -1298,7 +1322,7 @@
           }
         }), canonization("overwhelming", "hard-coded", function() {
           var _i, _len, _ref2, _ref3, result, variable;
-          _ref2 = this.derivatives;
+          _ref2 = this.comps.expression.derivatives;
           for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
             _ref3 = _ref2[_i];
             variable = _ref3[0];

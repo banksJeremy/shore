@@ -27,14 +27,14 @@ shore.builtins =
 		id: (shore.identifier value: "tau")
 
 shore.builtins.sin.derivatives = [
-	[shore "theta", shore.builtins.cos]
+	[(shore.identifier value: "theta"), shore.builtins.cos]
 ]
 shore.builtins.sin.integrals = [
-	[shore "theta", shore.builtins.cos.neg()]
+	[(shore.identifier value: "theta"), shore.builtins.cos.neg()]
 ]
 shore.builtins.cos.derivatives = [
-	[shore "theta", shore.builtins.sin.neg()]
+	[(shore.identifier value: "theta"), shore.builtins.sin.neg()]
 ]
 shore.builtins.cos.integrals = [
-	[shore "theta", shore.builtins.sin]
+	[(shore.identifier value: "theta"), shore.builtins.sin]
 ]

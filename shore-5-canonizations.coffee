@@ -133,8 +133,9 @@ __definers_of_canonizers = [
 					base.to_the(exponent.minus new_exponent).over(new_exponent)
 		
 		canonization "overwhelming", "hard-coded", ->
-			for [variable, result] in @integrals
-				return result if variable.is @comps.variable
+			for [variable, result] in @comps.expression.integrals
+				if variable.is @comps.variable
+					return result
 			null
 	]
 	
@@ -179,8 +180,9 @@ __definers_of_canonizers = [
 					exponent.times(base).to_the(exponent.minus (shore 1))
 		
 		canonization "overwhelming", "hard-coded", ->
-			for [variable, result] in @derivatives
-				return result if variable.is @comps.variable
+			for [variable, result] in @comps.expression.derivatives
+				if variable.is @comps.variable
+					return result
 			null
 	]
 	
