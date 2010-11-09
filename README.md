@@ -89,6 +89,9 @@ TODO
 
 ### Non-concrete Future Thinkings
 
+  - Some way to iteratively evaluate parts of the module so that code can be
+    grouped logically, not just to satisfy dependencies. Perhaps some way to
+    actually define dependencies.
   - Abstract away identifier values.
   - Support HTML5 offline cache?
   - Make nice on iPod touch/iPhone.

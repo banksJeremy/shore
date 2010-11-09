@@ -1,0 +1,43 @@
+@mixin ms-filter($name, $quoted_attributes, $include_ie8: true)
+	filter: unquote("progid:DXImageTransform.Microsoft.") + $name + "(" + unquote($quoted_attributes) + ")"
+	
+	@if $include_ie8
+		-ms-filter: quote(unquote("progid:DXImageTransform.Microsoft.") + $name + "(" + unquote($quoted_attributes)) + ")"
+
+@mixin border-radius($radius)
+	-webkit-border-radius: $radius
+	-moz-border-radius: $radius
+	border-radius: $radius
+
+@mixin box-shadow($xoff, $yoff, $blur, $color)
+	-webkit-box-shadow: $xoff $yoff $blur $color
+	-moz-box-shadow: $xoff $yoff $blur $color
+	box-shadow: $xoff $yoff $blur $color
+
+@mixin text-shadow($xoff, $yoff, $blur, $color)	 
+	text-shadow: $xoff $yoff $blur $color
+	
+	@if alpha($color) != 1
+		@warn "Alpha channel dropped from text-shadow for IE"
+	
+	$ie-color: rgb(red($color), green($color), blue($color))
+	
+	@include ms-filter(DropShadow, "Color=#{$ie-color}, OffX=#{$xoff / 1px}, OffY=#{$yoff / 1px}")
+
+@mixin vertical-gradient-background($top, $bottom)
+	background: mix($top, $bottom)
+	background: -moz-linear-gradient(top, $top 0%, $bottom 100%)
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, $top), color-stop(100%, $bottom))
+	@include ms-filter(Gradient, "StartColorstr=\"#{rgba($top, 1)}\", EndColorstr=\"#{rgba($bottom, 1)}\", GradientType=0")
+	
+	@if alpha($top) != 1 or alpha($bottom) != 1
+		@warn "Alpha channel dropped from vertical-gradient-background for IE"
+
+@mixin horizontal-gradient-background($left, $right)
+	background: mix($left, $right)
+	background: -moz-linear-gradient(left, $left 0%, $right 100%)
+	background: -webkit-gradient(linear, left top, right top, color-stop(0%, $left), color-stop(100%, $right))
+	@include ms-filter(Gradient, "StartColorstr=\"#{rgba($left, 1)}\", EndColorstr=\"#{rgba($right, 1)}\", GradientType=1")
+	
+	@if alpha($left) != 1 or alpha($right) != 1
+		@warn "Alpha channel dropped from horizontal-gradient-background for IE"

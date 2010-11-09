@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Equation, Exponent, ExternalNumericFunction, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Equation, Exponent, ExternalNumericFunction, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, nix_tinys, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -15,6 +15,7 @@
   Copyright Jeremy Banks <jeremy@jeremybanks.com>
   Released under the MIT License
   */
+  "use strict";
   root = this;
   former_S = root.S;
   former_shore = root.shore;
@@ -39,7 +40,7 @@
         });
       } else if (typeof arg === "string") {
         if (/^[a-zA-Z][a-zA-Z0-9]*'*$/.test(arg)) {
-          return arg in shore.predefined_identifiers ? shore.predefined_identifiers[arg] : shore.identifier({
+          return arg in shore.builtins ? shore.builtins[arg] : shore.identifier({
             value: arg
           });
         } else {
@@ -265,9 +266,10 @@
       return shore._signified(significance, utility.memoize(f));
     },
     _significances: {
-      minor: 0,
-      moderate: 1,
-      major: 2
+      invisible: 0,
+      organization: 1,
+      significant: 2,
+      overwhelming: 3
     },
     canonize: function(object) {
       var arguments, f;
@@ -465,6 +467,8 @@
       __extends(Value, Thing);
       Value.prototype.known_constant = false;
       Value.prototype.is_a_value = true;
+      Value.prototype.derivatives = [];
+      Value.prototype.integrals = [];
       Value.prototype.plus = function(other) {
         return shore.sum({
           operands: [this, other]
@@ -536,10 +540,12 @@
         });
       };
       Number.prototype.to_free_tex = function() {
-        return String(this.comps.value);
+        var _ref;
+        return (typeof (_ref = this.comps.id) !== "undefined" && _ref !== null) ? this.comps.id.to_free_tex.apply(this.comps.id, arguments) : String(this.comps.value);
       };
       Number.prototype.to_free_string = function() {
-        return String(this.comps.value);
+        var _ref;
+        return (typeof (_ref = this.comps.id) !== "undefined" && _ref !== null) ? this.comps.id.to_free_string.apply(this.comps.id, arguments) : String(this.comps.value);
       };
       return Number;
     })(),
@@ -627,8 +633,8 @@
       };
       Sum.prototype.string_symbol = " + ";
       Sum.prototype.tex_symbol = " + ";
-      Sum.prototype.to_free_text = function() {
-        return Sum.__super__.to_free_text.call(this).replace(/\+ *\-/, "-");
+      Sum.prototype.to_free_string = function() {
+        return Sum.__super__.to_free_string.call(this).replace(/\+ *\-/, "-");
       };
       Sum.prototype.to_free_tex = function() {
         return Sum.__super__.to_free_tex.call(this).replace(/\+ *\-/, "-");
@@ -759,6 +765,7 @@
       };
       __extends(WithMarginOfError, Value);
       WithMarginOfError.prototype.precedence = 1.5;
+      WithMarginOfError.prototype.req_comps = sss("value margin");
       WithMarginOfError.prototype.tex_symbol = " \\pm ";
       WithMarginOfError.prototype.string_symbol = " ± ";
       WithMarginOfError.prototype.to_free_string = function() {
@@ -861,9 +868,8 @@
         return true;
       };
       ExternalNumericFunction.prototype.to_string = function() {
-        var _i, _len, _ref, _result, a, args;
-        args = __slice.call(arguments, 0);
-        return !this.specified() ? this.comps.identifier.to_string.apply(this.comps.identifier, args) : (this.comps.identifier.to_string.apply(this.comps.identifier, args)) + ("_external(" + ((function() {
+        var _i, _len, _ref, _result, a;
+        return !this.specified() ? this.comps.identifier.to_string.apply(this.comps.identifier, arguments) : (this.comps.identifier.to_string.apply(this.comps.identifier, arguments)) + ("_external(" + ((function() {
           _result = []; _ref = this.comps.arguments;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             a = _ref[_i];
@@ -873,9 +879,8 @@
         }).apply(this, arguments).join(', ')) + ")");
       };
       ExternalNumericFunction.prototype.to_tex = function() {
-        var _i, _len, _ref, _result, a, args;
-        args = __slice.call(arguments, 0);
-        return !this.specified() ? this.comps.identifier.to_tex.apply(this.comps.identifier, args) : (this.comps.identifier.to_tex.apply(this.comps.identifier, args)) + ("_{external}(" + ((function() {
+        var _i, _len, _ref, _result, a;
+        return !this.specified() ? this.comps.identifier.to_tex.apply(this.comps.identifier, arguments) : (this.comps.identifier.to_tex.apply(this.comps.identifier, arguments)) + ("_{external}(" + ((function() {
           _result = []; _ref = this.comps.arguments;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             a = _ref[_i];
@@ -946,7 +951,10 @@
   }
   utility.extend(shore, __types);
   utility.make_providers(shore);
-  shore.predefined_identifiers = {
+  nix_tinys = function(v) {
+    return Math.abs(v < 1e-12) ? 0 : v;
+  };
+  shore.builtins = {
     sin: shore.external_numeric_function({
       identifier: shore.identifier({
         value: "sin",
@@ -957,7 +965,9 @@
           value: "theta"
         })
       ],
-      f: Math.sin
+      f: function(v) {
+        return nix_tinys(Math.sin(v));
+      }
     }),
     cos: shore.external_numeric_function({
       identifier: shore.identifier({
@@ -969,7 +979,9 @@
           value: "theta"
         })
       ],
-      f: Math.cos
+      f: function(v) {
+        return nix_tinys(Math.cos(v));
+      }
     }),
     tan: shore.external_numeric_function({
       identifier: shore.identifier({
@@ -981,9 +993,51 @@
           value: "theta"
         })
       ],
-      f: Math.tan
+      f: function(v) {
+        return nix_tinys(Math.tan(v));
+      }
+    }),
+    pi: shore.number({
+      value: Math.PI,
+      id: (shore.identifier({
+        value: "pi"
+      }))
+    }),
+    tau: shore.number({
+      value: 2 * Math.PI,
+      id: (shore.identifier({
+        value: "tau"
+      }))
     })
   };
+  shore.builtins.sin.derivatives = [
+    [
+      (shore.identifier({
+        value: "theta"
+      })), shore.builtins.cos
+    ]
+  ];
+  shore.builtins.sin.integrals = [
+    [
+      (shore.identifier({
+        value: "theta"
+      })), shore.builtins.cos.neg()
+    ]
+  ];
+  shore.builtins.cos.derivatives = [
+    [
+      (shore.identifier({
+        value: "theta"
+      })), shore.builtins.sin.neg()
+    ]
+  ];
+  shore.builtins.cos.integrals = [
+    [
+      (shore.identifier({
+        value: "theta"
+      })), shore.builtins.sin
+    ]
+  ];
   def = function() {
     var args;
     args = __slice.call(arguments, 0);
@@ -1007,15 +1061,15 @@
       return _result;
     }), def("CANOperation", function() {
       return this.__super__.canonizers.concat([
-        canonization("minor", "single argument", function() {
+        canonization("invisible", "single argument", function() {
           if (this.comps.operands.length === 1) {
             return this.comps.operands[0];
           }
-        }), canonization("minor", "no arguments", function() {
+        }), canonization("invisible", "no arguments", function() {
           if (this.comps.operands.length === 0 && this.get_nullary) {
             return this.get_nullary();
           }
-        }), canonization("minor", "commutativity", function() {
+        }), canonization("invisible", "commutativity", function() {
           var _i, _j, _len, _len2, _ref2, _ref3, can_expand, new_operands, operand, suboperand;
           can_expand = false;
           _ref2 = this.comps.operands;
@@ -1045,11 +1099,11 @@
               operands: new_operands
             });
           }
-        }), canonization("moderate", "sort items", function() {
+        }), canonization("organization", "sort items", function() {
           return this.provider({
             operands: this.comps.operands.sort(utility.compare_by_hash)
           });
-        }), canonization("major", "remove redundant nullaries", function() {
+        }), canonization("overwhelming", "remove redundant nullaries", function() {
           var _i, _len, _ref2, _result, n, o;
           n = this.get_nullary();
           return this.provider({
@@ -1068,8 +1122,8 @@
       ]);
     }), def("Sum", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "numbers in sum", function() {
-          var _i, _len, _ref2, not_numbers, numbers, operand, sum;
+        canonization("overwhelming", "numbers in sum", function() {
+          var _i, _len, _ref2, not_numbers, number, numbers, operand, sum;
           numbers = [];
           not_numbers = [];
           _ref2 = this.comps.operands;
@@ -1083,8 +1137,10 @@
           }
           if (numbers.length > 1) {
             sum = this.get_nullary().comps.value;
-            while (numbers.length) {
-              sum += numbers.pop().comps.value;
+            _ref2 = numbers;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              number = _ref2[_i];
+              sum += number.comps.value;
             }
             return this.provider({
               operands: [
@@ -1098,11 +1154,11 @@
       ]);
     }), def("Product", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "ZERO IT", function() {
+        canonization("overwhelming", "ZERO IT", function() {
           var _i, _len, _ref2, _ref3;
           return (function(){ (_ref2 = (shore(0))); for (var _i=0, _len=(_ref3 = this.comps.operands).length; _i<_len; _i++) { if (_ref3[_i] === _ref2) return true; } return false; }).call(this) ? (shore(0)) : null;
-        }), canonization("major", "numbers in product", function() {
-          var _i, _len, _ref2, not_numbers, numbers, operand, product;
+        }), canonization("overwhelming", "numbers in product", function() {
+          var _i, _len, _ref2, not_numbers, number, numbers, operand, product;
           numbers = [];
           not_numbers = [];
           _ref2 = this.comps.operands;
@@ -1116,8 +1172,10 @@
           }
           if (numbers.length > 1) {
             product = this.get_nullary().comps.value;
-            while (numbers.length) {
-              product *= numbers.pop().comps.value;
+            _ref2 = numbers;
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              number = _ref2[_i];
+              product *= number.comps.value;
             }
             return this.provider({
               operands: [
@@ -1131,9 +1189,9 @@
       ]);
     }), def("Exponent", function() {
       return this.__super__.canonizers.concat([
-        canonization("minor", "eliminate power of one", function() {
+        canonization("invisible", "eliminate power of one", function() {
           return this.comps.exponent.is(shore(1)) ? this.comps.base : null;
-        }), canonization("major", "exponent of numbers", function() {
+        }), canonization("overwhelming", "exponent of numbers", function() {
           var x;
           if ((this.comps.base.type === this.comps.exponent.type) && (this.comps.exponent.type === shore.Number)) {
             x = Math.pow(this.comps.base.comps.value, this.comps.exponent.comps.value);
@@ -1145,11 +1203,9 @@
       ]);
     }), def("Integral", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "integration over constant", function() {
-          return this.comps.variable.known_constant ? shore(0) : null;
-        }), canonization("major", "integration of constant", function() {
+        canonization("overwhelming", "integration of constant", function() {
           return this.comps.expression.known_constant ? this.comps.expression.times(this.comps.variable) : null;
-        }), canonization("moderate", "rule of sums", function() {
+        }), canonization("organization", "rule of sums", function() {
           var _i, _len, _ref2, _result, term;
           return this.comps.expression.type === shore.Sum ? shore.sum({
             operands: (function() {
@@ -1164,7 +1220,7 @@
               return _result;
             }).call(this)
           }) : null;
-        }), canonization("moderate", "constant coefficient", function() {
+        }), canonization("organization", "constant coefficient", function() {
           var coefficient, terms;
           if (this.comps.expression.type === shore.Product) {
             terms = this.comps.expression.comps.operands;
@@ -1176,9 +1232,9 @@
               })
             })) : null;
           }
-        }), canonization("major", "integration over self", function() {
+        }), canonization("overwhelming", "integration over self", function() {
           return this.comps.expression.is(this.comps.variable) ? this.comps.expression.to_the(shore(2)).over(shore(2)) : null;
-        }), canonization("major", "power rule", function() {
+        }), canonization("overwhelming", "power rule", function() {
           var _ref2, base, exponent, new_exponent;
           if (this.comps.expression.type === shore.Exponent) {
             _ref2 = this.comps.expression.comps;
@@ -1187,17 +1243,27 @@
             new_exponent = exponent.plus(shore(1));
             return base.is(this.comps.variable) ? base.to_the(exponent.minus(new_exponent)).over(new_exponent) : null;
           }
+        }), canonization("overwhelming", "hard-coded", function() {
+          var _i, _len, _ref2, _ref3, result, variable;
+          _ref2 = this.comps.expression.integrals;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            _ref3 = _ref2[_i];
+            variable = _ref3[0];
+            result = _ref3[1];
+            if (variable.is(this.comps.variable)) {
+              return result;
+            }
+          }
+          return null;
         })
       ]);
     }), def("Derivative", function() {
       return this.__super__.canonizers.concat([
-        canonization("moderate", "differentiation over self", function() {
+        canonization("organization", "differentiation over self", function() {
           return this.comps.variable.is(this.comps.expression) ? shore(1) : null;
-        }), canonization("moderate", "differentiation over constant", function() {
-          return this.comps.variable.known_constant ? shore(0) : null;
-        }), canonization("moderate", "differentiation of constant", function() {
+        }), canonization("organization", "differentiation of constant", function() {
           return this.comps.expression.known_constant ? shore(0) : null;
-        }), canonization("moderate", "rule of sums", function() {
+        }), canonization("organization", "sum rule", function() {
           var _i, _len, _ref2, _result, term;
           return this.comps.expression.type === shore.Sum ? shore.sum({
             operands: (function() {
@@ -1212,7 +1278,7 @@
               return _result;
             }).call(this)
           }) : null;
-        }), canonization("major", "constant coefficient", function() {
+        }), canonization("significant", "constant coefficient", function() {
           var coefficient, terms;
           if (this.comps.expression.type === shore.Product) {
             terms = this.comps.expression.comps.operands;
@@ -1224,7 +1290,29 @@
               })
             })) : null;
           }
-        }), canonization("major", "power rule", function() {
+        }), canonization("significant", "product rule", function() {
+          var _ref2, _ref3, _result, _result2, factors, i, j;
+          if (this.comps.expression.type === shore.Product) {
+            factors = this.comps.expression.comps.operands;
+            return shore.sum({
+              operands: (function() {
+                _result = []; _ref2 = factors.length;
+                for (i = 0; (0 <= _ref2 ? i < _ref2 : i > _ref2); (0 <= _ref2 ? i += 1 : i -= 1)) {
+                  _result.push(shore.product({
+                    operands: (function() {
+                      _result2 = []; _ref3 = factors.length;
+                      for (j = 0; (0 <= _ref3 ? j < _ref3 : j > _ref3); (0 <= _ref3 ? j += 1 : j -= 1)) {
+                        _result2.push(i === j ? factors[j].differentiate(this.comps.variable) : factors[j]);
+                      }
+                      return _result2;
+                    }).call(this)
+                  }));
+                }
+                return _result;
+              }).call(this)
+            });
+          }
+        }), canonization("overwhelming", "power rule", function() {
           var _ref2, base, exponent;
           if (this.comps.expression.type === shore.Exponent) {
             _ref2 = this.comps.expression.comps;
@@ -1232,11 +1320,23 @@
             exponent = _ref2.exponent;
             return base.is(this.comps.variable) ? exponent.times(base).to_the(exponent.minus(shore(1))) : null;
           }
+        }), canonization("overwhelming", "hard-coded", function() {
+          var _i, _len, _ref2, _ref3, result, variable;
+          _ref2 = this.comps.expression.derivatives;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            _ref3 = _ref2[_i];
+            variable = _ref3[0];
+            result = _ref3[1];
+            if (variable.is(this.comps.variable)) {
+              return result;
+            }
+          }
+          return null;
         })
       ]);
     }), def("PendingSubstitution", function() {
       return this.__super__.canonizers.concat([
-        canonization("major", "substitute", function() {
+        canonization("overwhelming", "substitute", function() {
           var _ref2, original, replacement;
           _ref2 = this.comps.substitution.comps.values;
           original = _ref2[0];
@@ -1246,7 +1346,7 @@
       ]);
     }), def("ExternalNumericFunction", function() {
       return this.__super__.canonizers.concat([
-        canonization("minor", "apply", function() {
+        canonization("invisible", "apply", function() {
           var _i, _len, _ref2, argument, values;
           values = [];
           _ref2 = this.comps.arguments;
