@@ -16,10 +16,10 @@ __not_types =
 		# If an identifier is created with one of these values it is converted
 		# into the corresponding string/tex values.
 		
-		theta: [ "θ", "\\theta" ]
-		pi: [ "π", "\\pi" ]
-		tau: [ "τ" , "\\tau" ]
-		mu: [ "μ", "\\mu" ]
+		theta: [ "theta", "\\theta" ]
+		pi: [ "pi", "\\pi" ]
+		tau: [ "tau" , "\\tau" ]
+		mu: [ "mu", "\\mu" ]
 	
 	_make_provider: (cls) ->
 		# Used to generate shore.foo_bar from shore.FooBar.
@@ -82,7 +82,17 @@ __not_types =
 				if object.is original
 					replacement
 				else
-					object.provider shore.substitute object.comps, original, replacement
+					new_comps = {}
+					
+					for key, value of object.comps
+						replacement = shore.substitute value, original, replacement
+						
+						if key not in object.id_comps or replacement instanceof shore.Identifier
+							new_comps[key] = replacement
+						else
+							new_comps[key] = value
+					
+					object.provider new_comps
 			else
 				object
 		

@@ -6,7 +6,7 @@ class Test
 	constructor: (@input, @output) ->
 	toString: -> "#{@input} => #{@output}"
 	run: ->
-		try
+		# try
 			input = (S @input).canonize "major"
 			output = (S @output).canonize "minor"
 			
@@ -14,8 +14,8 @@ class Test
 				new TestResult this, true, "#{input.to_string()} is #{output.to_string()}"
 			else
 				new TestResult this, false, "#{input.to_string()} isn't #{output.to_string()}"
-		catch error
-			new TestResult this, false, "Exception: #{error}"
+		# catch error
+			# new TestResult this, false, "Exception: #{error}"
 
 class TestResult
 	constructor: (@test, @passed, @message) ->
