@@ -6,7 +6,7 @@ class Test
 	constructor: (@input, @output) ->
 	toString: -> "#{@input} => #{@output}"
 	run: ->
-		try
+		# try
 			input = (S @input).canonize "major"
 			output = (S @output).canonize "minor"
 			
@@ -14,8 +14,8 @@ class Test
 				new TestResult this, true, "#{input.to_string()} is #{output.to_string()}"
 			else
 				new TestResult this, false, "#{input.to_string()} isn't #{output.to_string()}"
-		catch error
-			new TestResult this, false, "Exception: #{error}"
+		# catch error
+			# new TestResult this, false, "Exception: #{error}"
 
 class TestResult
 	constructor: (@test, @passed, @message) ->
@@ -49,6 +49,7 @@ tests = [
 	(new Test "sin ` theta", "cos")
 	(new Test "(-sin) ~ theta", "cos")
 	(new Test "(x^2 sin(theta=x)) ` x", "2x sin(theta=x) + x^2 cos(theta=x)")
+	(new Test "a=5\nb=a", "a=5\nb=5")
 ]
 
 passes = 0
@@ -59,3 +60,4 @@ for test in tests
 
 console.error()
 console.log "[#{passes}/#{tests.length} Tests Pass]"
+

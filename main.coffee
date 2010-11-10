@@ -2,8 +2,12 @@
 root = this
 
 default_input = """
-d = (((g ~ t + 5) ~ t) + 30)(g = -9.8)
-A = (-4.9t^2 + 5t + 30) ` t ` t
+g = -9.8
+v_0 = 5
+d_0 = 20
+A = g
+v = (A ~t) + v_0
+d = (v ~t) + d_0
 """
 
 mj_wait = 2000

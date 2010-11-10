@@ -1362,6 +1362,62 @@
           });
         })
       ]);
+    }), def("System", function() {
+      return this.__super__.canonizers.concat([
+        canonization("overwhelming", "substitute", function() {
+          var _i, _j, _k, _len, _len2, _ref2, _ref3, _ref4, equation, equations, id, id_, known_equation, knowns, ls, rs, substitution, substitutions;
+          knowns = [];
+          _ref2 = this.comps.equations;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            equation = _ref2[_i];
+            if (equation instanceof shore.Equality) {
+              if (equation.comps.values[0] instanceof shore.Identifier) {
+                knowns.push(equation);
+              }
+            }
+          }
+          equations = [];
+          _ref2 = this.comps.equations;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            equation = _ref2[_i];
+            substitutions = [];
+            _ref3 = equation.identifier_string_set();
+            for (id_ in _ref3) {
+              if (!__hasProp.call(_ref3, id_)) continue;
+              _j = _ref3[id_];
+              id = (shore(id_));
+              if (id.is(equation.comps.values[0])) {
+                continue;
+              }
+              _ref4 = knowns;
+              for (_k = 0, _len2 = _ref4.length; _k < _len2; _k++) {
+                known_equation = _ref4[_k];
+                if (id.is(known_equation.comps.values[0])) {
+                  substitutions.push(known_equation);
+                }
+              }
+            }
+            if (substitutions.length) {
+              _ref3 = equation.comps.values;
+              ls = _ref3[0];
+              rs = _ref3[1];
+              _ref3 = substitutions;
+              for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
+                substitution = _ref3[_j];
+                rs = rs.given(substitution);
+              }
+              equations.push(shore.equality({
+                values: [ls, rs]
+              }));
+            } else {
+              equations.push(equation);
+            }
+          }
+          return shore.system({
+            equations: equations
+          });
+        })
+      ]);
     })
   ];
   _ref = __definers_of_canonizers;

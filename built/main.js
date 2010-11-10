@@ -1,7 +1,7 @@
 (function() {
   var default_input, main, mj_wait, process_math, root;
   root = this;
-  default_input = "d = (((g ~ t + 5) ~ t) + 30)(g = -9.8)\nA = (-4.9t^2 + 5t + 30) ` t ` t";
+  default_input = "g = 9.8\nd = (((g ~t + 5) ~t) + 30)\nv = d `t";
   mj_wait = 2000;
   process_math = function(input, output_element) {
     var mathjax_message, out, output_parts, parsed;

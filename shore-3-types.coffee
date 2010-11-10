@@ -10,6 +10,7 @@ __types =
 		is_shore_thing: true
 		
 		req_comps: []
+		id_comps: [] # components that we should not allow to be non-identifiers
 		
 		identifier_string_set: utility.memoize ->
 			all = {}
@@ -90,15 +91,17 @@ __types =
 		
 		given: (substitution) -> shore.pending_substitution expression: this, substitution: substitution
 		
-	Value: class Value extends Thing
-		known_constant: false
-		is_a_value: true
 		
 		derivatives: []
 		integrals: []
 		# overwhelming-significance derivatives and integrals can be hard-coded
 		# in an array of [ identifier, result ] arrays. added for use with builtin
 		# external functions.
+		
+		
+	Value: class Value extends Thing
+		known_constant: false
+		is_a_value: true
 		
 		plus: (other) -> shore.sum operands: [this, other]
 		minus: (other) -> shore.sum operands: [this, other.neg()]
@@ -251,6 +254,7 @@ __types =
 	Integral: class Integral extends Value
 		precedence: 3
 		req_comps: sss "variable expression"
+		id_comps: sss "variable"
 		
 		to_free_tex: ->
 			"\\int\\left[#{@comps.expression.to_tex()}\\right]d#{@comps.variable.to_tex()}"
@@ -261,6 +265,7 @@ __types =
 	Derivative: class Derivative extends Value
 		precedence: 3
 		req_comps: sss "variable expression"
+		id_comps: sss "variable"
 		
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@comps.variable.to_tex()}}\\left[#{@comps.expression.to_tex()}\\right]"
@@ -346,6 +351,10 @@ __types =
 		precedence: 2.5
 		
 		req_comps: sss "expression substitution"
+		
+		identifier_string_set: ->
+			# TODO: maybe this should include the replacement?
+			@comps.expression.identifier_string_set()
 		
 		constructor: (comps) ->
 			@is_a_value = comps.expression.is_a_value

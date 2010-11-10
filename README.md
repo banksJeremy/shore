@@ -89,6 +89,7 @@ TODO
 
 ### Non-concrete Future Thinkings
 
+  - Clearly work out the way that you want substitutions to work.
   - Some way to iteratively evaluate parts of the module so that code can be
     grouped logically, not just to satisfy dependencies. Perhaps some way to
     actually define dependencies.
