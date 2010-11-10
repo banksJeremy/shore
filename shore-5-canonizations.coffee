@@ -201,6 +201,43 @@ __definers_of_canonizers = [
 				values.push argument.comps.value
 			shore.number value: @comps.f.apply this, values
 	]
+	
+	def "System", -> @__super__.canonizers.concat [
+		canonization "overwhelming", "substitute", ->
+			knowns = []
+			
+			for equation in @comps.equations
+				if equation instanceof shore.Equality
+					if equation.comps.values[0] instanceof shore.Identifier
+						knowns.push equation
+			
+			equations = []
+			
+			for equation in @comps.equations
+				substitutions = []
+				
+				for id_ of equation.identifier_string_set()
+					id = (shore id_)
+					
+					continue if id.is equation.comps.values[0]
+					# don't sub into self
+					
+					for known_equation in knowns
+						if id.is known_equation.comps.values[0]
+							substitutions.push known_equation
+				
+				if substitutions.length
+					[ls, rs] = equation.comps.values
+					
+					for substitution in substitutions
+						rs = rs.given substitution
+					
+					equations.push shore.equality values: [ ls, rs ]
+				else
+					equations.push equation
+			
+			shore.system equations: equations
+	]
 ]
 
 for definition in __definers_of_canonizers

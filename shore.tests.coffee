@@ -49,6 +49,7 @@ tests = [
 	(new Test "sin ` theta", "cos")
 	(new Test "(-sin) ~ theta", "cos")
 	(new Test "(x^2 sin(theta=x)) ` x", "2x sin(theta=x) + x^2 cos(theta=x)")
+	(new Test "a=5\nb=a", "a=5\nb=5")
 ]
 
 passes = 0
@@ -59,3 +60,4 @@ for test in tests
 
 console.error()
 console.log "[#{passes}/#{tests.length} Tests Pass]"
+
