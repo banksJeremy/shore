@@ -3,7 +3,10 @@
 A way to define modules where certain components are dependent on others.
 ###
 
-dep = (arg) ->
+dep = (filters..., arg) ->
+	for f in filters
+		arg = f arg
+	
 	if typeof arg is "function"
 		# create a Dependency object
 		# using amazing JavaScript reflection!
@@ -52,9 +55,3 @@ dep.resolve = (module) ->
 		throw new Error "Unable to resolve dependencies: #{unresolved.join ', '}."
 	
 	module
-
-module = dep
-	a: 5
-	b: dep (c) -> c / 99
-	c: 62
-	d: dep (a, b, c) -> a + b / c
