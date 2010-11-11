@@ -70,12 +70,20 @@
         backgroundColor: "transparent"
       });
     }).toggle(function() {
-      return ($(this)).next().show(300);
+      ($(this)).next().show(300);
+      return ($(this)).css({
+        color: "black"
+      });
     }, function() {
-      return ($(this)).next().hide(300);
+      ($(this)).next().hide(300);
+      return ($(this)).css({
+        color: "grey"
+      });
     });
     ($("h3 + div")).hide();
-    ($("h3#output_input")).click();
+    ($("h3")).css({
+      color: "grey"
+    });
     ($("h3#output_results")).click();
     return output_element.show(300);
   };
