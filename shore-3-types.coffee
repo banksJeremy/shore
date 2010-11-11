@@ -150,7 +150,7 @@ __types =
 			if @comps.id?
 				@comps.id.to_free_tex arguments...
 			else
-				String @comps.value
+				String 1 * @comps.value.toFixed(8) # go to hell
 		
 		to_free_string: ->
 			if @comps.id?

@@ -571,7 +571,7 @@
       };
       Number.prototype.to_free_tex = function() {
         var _ref;
-        return (typeof (_ref = this.comps.id) !== "undefined" && _ref !== null) ? this.comps.id.to_free_tex.apply(this.comps.id, arguments) : String(this.comps.value);
+        return (typeof (_ref = this.comps.id) !== "undefined" && _ref !== null) ? this.comps.id.to_free_tex.apply(this.comps.id, arguments) : String(1 * this.comps.value.toFixed(8));
       };
       Number.prototype.to_free_string = function() {
         var _ref;
