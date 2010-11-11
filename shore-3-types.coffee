@@ -44,6 +44,9 @@ __types =
 		is: (other) ->
 			@type is other?.type and shore.is @comps, other.comps
 		
+		isnt: (other) ->
+			not @is other
+		
 		__hash__: ->
 			@name + ":" + utility.hash @comps
 		
@@ -443,6 +446,30 @@ __types =
 		
 		to_free_string: -> (eq.to_string for eq in @comps.equations).join "\n"
 		to_free_tex: -> (eq.to_tex 0, "&#{eq.tex_symbol}" for eq in @comps.equations).join " \\\\\n"
+		
+		tex_the_steps: (interval) ->
+			interval ?= "significant"
+			
+			original = this
+			
+			lines = []
+			
+			final = utility.set (eq.to_free_tex " &= " for eq in original.canonize().comps.equations)
+			previous = utility.set (eq.to_free_tex " &= " for eq in original.comps.equations)
+			
+			current = original.canonize null, interval
+			while current isnt previous_
+				for eq_ in current.comps.equations
+					eq = eq_.to_free_tex " &= "
+					
+					if eq not of previous and eq not of final
+						lines.push eq
+				
+				previous = utility.set (eq.to_free_tex " &= " for eq in current.comps.equations)
+				previous_ = current
+				current = current.canonize null, interval
+			
+			lines.join "\\\\\n"
 
 # Set the .type property of each type to itself
 for name, type of __types

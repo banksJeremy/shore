@@ -46,6 +46,9 @@ process_math = (input, output_element) ->
 		
 		out "<h3 id=output_steps>Steps</h3>"
 		out "<div>\\begin{align}"
+		
+		out shore.ui.escape_html parsed.tex_the_steps()
+		
 		out "\\end{align}</div>"
 		
 		out "<h3 id=output_results>Results</h3>"
@@ -84,10 +87,10 @@ process_math = (input, output_element) ->
 		.css(cursor: "pointer")
 		.hover (-> ($ this).css backgroundColor: "rgba(0,0,0,.1)"),
 					 (-> ($ this).css backgroundColor: "transparent")
-		.toggle (-> ($ this).next().show 300),
-						(-> ($ this).next().hide 300)
+		.toggle (-> ($ this).next().show 300; ($ this).css color: "black"),
+						(-> ($ this).next().hide 300; ($ this).css color: "grey")
 	($ "h3 + div").hide()
-	($ "h3#output_input").click()
+	($ "h3").css color: "grey"
 	($ "h3#output_results").click()
 	
 	output_element.show 300
