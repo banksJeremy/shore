@@ -188,8 +188,7 @@ __definers_of_canonizers = [
 	
 	def "PendingSubstitution", -> @__super__.canonizers.concat [
 		canonization "overwhelming", "substitute", ->
-			[ original, replacement ] = @comps.substitution.comps.values
-			shore.substitute @comps.expression, original, replacement
+			shore.substitute @comps.value, @comps.original, @comps.replacement
 	]
 	
 	def "ExternalNumericFunction", -> @__super__.canonizers.concat [
@@ -216,7 +215,7 @@ __definers_of_canonizers = [
 			for equation in @comps.equations
 				substitutions = []
 				
-				for id_ of equation.identifier_string_set()
+				for id_ of equation.subbable_id_set false
 					id = (shore id_)
 					
 					continue if id.is equation.comps.values[0]
@@ -230,7 +229,7 @@ __definers_of_canonizers = [
 					[ls, rs] = equation.comps.values
 					
 					for substitution in substitutions
-						rs = rs.given substitution
+						rs = rs.substitute substitution.comps.values[0], substitution.comps.values[1]
 					
 					equations.push shore.equality values: [ ls, rs ]
 				else

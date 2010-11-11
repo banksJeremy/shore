@@ -3,11 +3,13 @@ root = this
 
 default_input = """
 g = -9.8
-v_0 = 5
-d_0 = 20
 A = g
-v = (A ~t) + v_0
-d = (v ~t) + d_0
+v_0 = 20
+d_0 = 0
+v = A ~t + v_0
+d = v ~t + d_0
+t_f = 5
+d_f = d(t=t_f)
 """
 
 mj_wait = 2000

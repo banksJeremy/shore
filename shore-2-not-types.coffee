@@ -76,27 +76,24 @@ __not_types =
 		else
 			String object
 	
-	substitute: (within, original, replacement) ->
-		f = (object, original, replacement) ->
+	substitute: (within, original, replacement, strict, force) ->
+		force ?= false
+		strict ?= true
+		
+		f = (object) ->
 			if object.is_shore_thing
-				if object.is original
-					replacement
+				if object._substitute? and not force
+					 # object can override
+					object._substitute original, replacement, strict
 				else
-					new_comps = {}
-					
-					for key, value of object.comps
-						replacement = shore.substitute value, original, replacement
-						
-						if key not in object.id_comps or replacement instanceof shore.Identifier
-							new_comps[key] = replacement
-						else
-							new_comps[key] = value
-					
-					object.provider new_comps
+					if object.is original
+						replacement
+					else
+						object.provider shore.substitute object.comps, original, replacement, strict, force
 			else
 				object
 		
-		utility.call_in within, f, original, replacement
+		utility.call_in within, f
 	
 	is: (a, b) ->
 		# Determines equality of two objects or recursively within arrays and

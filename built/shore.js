@@ -1,5 +1,5 @@
 (function() {
-  var CANOperation, Derivative, Equality, Equation, Exponent, ExternalNumericFunction, Identifier, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, nix_tinys, root, shore, sss, type, utility;
+  var CANOperation, Derivative, Equality, Equation, Exponent, ExternalNumericFunction, Identifier, IntDerAb, Integral, Matrix, Number, PendingSubstitution, Product, Sum, System, Thing, Value, WithMarginOfError, __definers_of_canonizers, __not_types, __types, _i, _len, _ref, _ref2, canonization, def, definer, definition, former_S, former_shore, name, nix_tinys, root, shore, sss, type, utility;
   var __slice = Array.prototype.slice, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     var ctor = function(){};
     ctor.prototype = parent.prototype;
@@ -239,10 +239,10 @@
       return this;
     },
     _special_identifiers: {
-      theta: ["θ", "\\theta"],
-      pi: ["π", "\\pi"],
-      tau: ["τ", "\\tau"],
-      mu: ["μ", "\\mu"]
+      theta: ["theta", "\\theta"],
+      pi: ["pi", "\\pi"],
+      tau: ["tau", "\\tau"],
+      mu: ["mu", "\\mu"]
     },
     _make_provider: function(cls) {
       return utility.memoize(function() {
@@ -286,12 +286,15 @@
     to_tex: function(object) {
       return object.is_shore_thing ? object.to_tex() : String(object);
     },
-    substitute: function(within, original, replacement) {
+    substitute: function(within, original, replacement, strict, force) {
       var f;
-      f = function(object, original, replacement) {
-        return object.is_shore_thing ? (object.is(original) ? replacement : object.provider(shore.substitute(object.comps, original, replacement))) : object;
+      force = (typeof force !== "undefined" && force !== null) ? force : false;
+      strict = (typeof strict !== "undefined" && strict !== null) ? strict : true;
+      f = function(object) {
+        var _ref;
+        return object.is_shore_thing ? ((typeof (_ref = object._substitute) !== "undefined" && _ref !== null) && !force ? object._substitute(original, replacement, strict) : (object.is(original) ? replacement : object.provider(shore.substitute(object.comps, original, replacement, strict, force)))) : object;
       };
-      return utility.call_in(within, f, original, replacement);
+      return utility.call_in(within, f);
     },
     is: function(a, b) {
       var _i, _ref, index, key;
@@ -379,6 +382,20 @@
         });
         return all;
       });
+      Thing.prototype.subbable_id_set = utility.memoize(function(strict) {
+        var all;
+        strict = (typeof strict !== "undefined" && strict !== null) ? strict : true;
+        all = {};
+        if (this.type === shore.Identifier) {
+          all[this.comps.value] = true;
+        }
+        shore.utility.call_in(this.comps, function(o) {
+          if (o.is_shore_thing) {
+            return utility.extend(all, o.subbable_id_set(strict));
+          }
+        });
+        return all;
+      });
       Thing.prototype.uses_identifier = function(o) {
         return o.comps.value in this.identifier_string_set();
       };
@@ -424,18 +441,19 @@
         }
         return _result;
       };
-      Thing.prototype.precedence = 0;
+      Thing.prototype.outer_tightness = 0;
+      Thing.prototype.inner_tightness = 0;
       Thing.prototype.to_tex = function(context) {
         var args;
         args = __slice.call(arguments, 1);
         context = (typeof context !== "undefined" && context !== null) ? context : 1;
-        return this.precedence < context ? ("\\left(" + (this.to_free_tex.apply(this, args)) + "\\right)") : this.to_free_tex.apply(this, args);
+        return this.outer_tightness < context ? ("\\left(" + (this.to_free_tex.apply(this, args)) + "\\right)") : this.to_free_tex.apply(this, args);
       };
       Thing.prototype.to_string = function(context) {
         var args;
         args = __slice.call(arguments, 1);
         context = (typeof context !== "undefined" && context !== null) ? context : 0;
-        return this.precedence < context ? ("(" + (this.to_free_string.apply(this, args)) + ")") : this.to_free_string.apply(this, args);
+        return this.outer_tightness < context ? ("(" + (this.to_free_string.apply(this, args)) + ")") : this.to_free_string.apply(this, args);
       };
       Thing.prototype.to_free_string = function() {
         return "(shore." + (this.type) + " value)";
@@ -452,12 +470,26 @@
       Thing.prototype._then = function(other) {
         return other.is_a_value ? this.times(other) : this.given(other);
       };
-      Thing.prototype.given = function(substitution) {
+      Thing.prototype.given = function(equation) {
+        var _ref, original, replacement;
+        if (!(equation instanceof shore.Equality) || equation.comps.values.length !== 2) {
+          throw new Error("given equation must be two-element Equality.");
+        }
+        _ref = equation.comps.values;
+        original = _ref[0];
+        replacement = _ref[1];
         return shore.pending_substitution({
-          expression: this,
-          substitution: substitution
+          value: this,
+          original: original,
+          replacement: replacement
         });
       };
+      Thing.prototype.substitute = function(original, replacement, force) {
+        force = (typeof force !== "undefined" && force !== null) ? force : false;
+        return shore.substitute(this, original, replacement, force);
+      };
+      Thing.prototype.derivatives = [];
+      Thing.prototype.integrals = [];
       return Thing;
     })(),
     Value: (function() {
@@ -467,8 +499,6 @@
       __extends(Value, Thing);
       Value.prototype.known_constant = false;
       Value.prototype.is_a_value = true;
-      Value.prototype.derivatives = [];
-      Value.prototype.integrals = [];
       Value.prototype.plus = function(other) {
         return shore.sum({
           operands: [this, other]
@@ -532,7 +562,7 @@
       };
       __extends(Number, Value);
       Number.prototype.known_constant = true;
-      Number.prototype.precedence = 10;
+      Number.prototype.outer_tightness = 10;
       Number.prototype.req_comps = sss("value");
       Number.prototype.neg = function() {
         return shore.number({
@@ -571,13 +601,16 @@
         return this;
       };
       __extends(Identifier, Value);
-      Identifier.prototype.precedence = 10;
+      Identifier.prototype.outer_tightness = 10;
       Identifier.prototype.req_comps = sss("value tex_value");
       Identifier.prototype.to_free_tex = function() {
         return this.comps.tex_value;
       };
       Identifier.prototype.to_free_string = function() {
         return this.comps.value;
+      };
+      Identifier.prototype._substitute = function(original, replacement, strict) {
+        return this.is(original) ? replacement : (strict ? this.given(original.equals(replacement)) : this);
       };
       Identifier.prototype.sub = function(other) {
         var string, tex;
@@ -603,7 +636,7 @@
           _result = []; _ref = this.comps.operands;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             operand = _ref[_i];
-            _result.push(operand.to_tex(this.precedence));
+            _result.push(operand.to_tex(this.outer_tightness));
           }
           return _result;
         }).call(this).join(symbol);
@@ -615,7 +648,7 @@
           _result = []; _ref = this.comps.operands;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             operand = _ref[_i];
-            _result.push(operand.to_string(this.precedence));
+            _result.push(operand.to_string(this.outer_tightness));
           }
           return _result;
         }).call(this).join(symbol);
@@ -627,7 +660,7 @@
         return CANOperation.apply(this, arguments);
       };
       __extends(Sum, CANOperation);
-      Sum.prototype.precedence = 2;
+      Sum.prototype.outer_tightness = 2;
       Sum.prototype.get_nullary = function() {
         return shore(0);
       };
@@ -646,7 +679,7 @@
         return CANOperation.apply(this, arguments);
       };
       __extends(Product, CANOperation);
-      Product.prototype.precedence = 4;
+      Product.prototype.outer_tightness = 4;
       Product.prototype.get_nullary = function() {
         return shore(1);
       };
@@ -655,18 +688,18 @@
       Product.prototype._to_free_tex = function(operands) {
         var _i, _len, _ref, _result, operand;
         "Without checking for negative powers.";
-        return operands.length > 1 && operands[0].type === shore.Number && operands[1].type !== shore.Number ? (operands[0].comps.value !== -1 ? operands[0].to_tex(this.precedence) : "-") + ((function() {
+        return operands.length > 1 && operands[0].type === shore.Number && operands[1].type !== shore.Number ? (operands[0].comps.value !== -1 ? operands[0].to_tex(this.outer_tightness) : "-") + ((function() {
           _result = []; _ref = operands.slice(1);
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             operand = _ref[_i];
-            _result.push(operand.to_tex(this.precedence));
+            _result.push(operand.to_tex(this.outer_tightness));
           }
           return _result;
         }).call(this).join(this.tex_symbol)) : ((function() {
           _result = []; _ref = operands;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             operand = _ref[_i];
-            _result.push(operand.to_tex(this.precedence));
+            _result.push(operand.to_tex(this.outer_tightness));
           }
           return _result;
         }).call(this).join(this.tex_symbol));
@@ -719,23 +752,48 @@
         return Value.apply(this, arguments);
       };
       __extends(Exponent, Value);
-      Exponent.prototype.precedence = 5;
+      Exponent.prototype.outer_tightness = 5;
       Exponent.prototype.req_comps = sss("base exponent");
       Exponent.prototype.to_free_tex = function() {
-        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_tex(this.precedence) : ("{" + (this.comps.base.to_tex(this.precedence)) + "}^{" + (this.comps.exponent.to_tex()) + "}");
+        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_tex(this.outer_tightness) : ("{" + (this.comps.base.to_tex(this.outer_tightness)) + "}^{" + (this.comps.exponent.to_tex()) + "}");
       };
       Exponent.prototype.to_free_string = function() {
-        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_string(this.precedence) : ("" + (this.comps.base.to_string(this.precedence)) + "^" + (this.comps.exponent.to_string()));
+        return this.comps.exponent.type === shore.Number && this.comps.exponent.comps.value === 1 ? this.comps.base.to_string(this.outer_tightness) : ("" + (this.comps.base.to_string(this.outer_tightness)) + "^" + (this.comps.exponent.to_string()));
       };
       return Exponent;
     })(),
-    Integral: (function() {
-      Integral = function() {
+    IntDerAb: (function() {
+      IntDerAb = function() {
         return Value.apply(this, arguments);
       };
-      __extends(Integral, Value);
-      Integral.prototype.precedence = 3;
-      Integral.prototype.req_comps = sss("variable expression");
+      __extends(IntDerAb, Value);
+      IntDerAb.prototype.outer_tightness = 3;
+      IntDerAb.prototype.req_comps = sss("variable expression");
+      IntDerAb.prototype.subbable_id_set = function() {
+        var _i, _ref, key, result;
+        result = this.comps.expression.subbable_id_set();
+        _ref = this.comps.variable.subbable_id_set();
+        for (key in _ref) {
+          if (!__hasProp.call(_ref, key)) continue;
+          _i = _ref[key];
+          delete result[key];
+        }
+        return result;
+      };
+      IntDerAb.prototype._substitute = function(original, replacement, strict) {
+        strict = (typeof strict !== "undefined" && strict !== null) ? strict : true;
+        return original.is(this.comps.variable) ? (strict ? this.given(original.equals(replacement)) : this) : this.provider({
+          variable: this.comps.variable,
+          expression: shore.substitute(this.comps.expression, original, replacement, strict)
+        });
+      };
+      return IntDerAb;
+    })(),
+    Integral: (function() {
+      Integral = function() {
+        return IntDerAb.apply(this, arguments);
+      };
+      __extends(Integral, IntDerAb);
       Integral.prototype.to_free_tex = function() {
         return "\\int\\left[" + (this.comps.expression.to_tex()) + "\\right]d" + (this.comps.variable.to_tex());
       };
@@ -746,11 +804,9 @@
     })(),
     Derivative: (function() {
       Derivative = function() {
-        return Value.apply(this, arguments);
+        return IntDerAb.apply(this, arguments);
       };
-      __extends(Derivative, Value);
-      Derivative.prototype.precedence = 3;
-      Derivative.prototype.req_comps = sss("variable expression");
+      __extends(Derivative, IntDerAb);
       Derivative.prototype.to_free_tex = function() {
         return "\\tfrac{d}{d" + (this.comps.variable.to_tex()) + "}\\left[" + (this.comps.expression.to_tex()) + "\\right]";
       };
@@ -764,19 +820,19 @@
         return Value.apply(this, arguments);
       };
       __extends(WithMarginOfError, Value);
-      WithMarginOfError.prototype.precedence = 1.5;
+      WithMarginOfError.prototype.outer_tightness = 1.5;
       WithMarginOfError.prototype.req_comps = sss("value margin");
       WithMarginOfError.prototype.tex_symbol = " \\pm ";
       WithMarginOfError.prototype.string_symbol = " ± ";
       WithMarginOfError.prototype.to_free_string = function() {
-        return !this.margin.is(shore(0)) ? ("" + (this.comps.value.to_string(this.precedence)) + "\
+        return !this.margin.is(shore(0)) ? ("" + (this.comps.value.to_string(this.outer_tightness)) + "\
 				 " + (this.string_symbol) + "\
-				 " + (this.comps.margin.to_string(this.precedence))) : this.comps.value.to_string(this.precedence);
+				 " + (this.comps.margin.to_string(this.outer_tightness))) : this.comps.value.to_string(this.outer_tightness);
       };
       WithMarginOfError.prototype.to_free_tex = function() {
-        return !this.margin.is(shore(0)) ? ("" + (this.comps.value.to_tex(this.precedence)) + "\
+        return !this.margin.is(shore(0)) ? ("" + (this.comps.value.to_tex(this.outer_tightness)) + "\
 				 " + (this.tex_symbol) + "\
-				 " + (this.comps.margin.to_tex(this.precedence))) : this.comps.value.to_tex(this.precedence);
+				 " + (this.comps.margin.to_tex(this.outer_tightness))) : this.comps.value.to_tex(this.outer_tightness);
       };
       return WithMarginOfError;
     })(),
@@ -813,7 +869,7 @@
         return Thing.apply(this, arguments);
       };
       __extends(Equation, Thing);
-      Equation.prototype.precedence = 1;
+      Equation.prototype.outer_tightness = 1;
       Equation.prototype.req_comps = sss("values");
       Equation.prototype.to_free_tex = function(symbol) {
         var _i, _len, _ref, _result, value;
@@ -822,7 +878,7 @@
           _result = []; _ref = this.comps.values;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             value = _ref[_i];
-            _result.push(value.to_tex(this.precedence));
+            _result.push(value.to_tex(this.outer_tightness));
           }
           return _result;
         }).call(this).join(symbol);
@@ -834,7 +890,7 @@
           _result = []; _ref = this.comps.values;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             value = _ref[_i];
-            _result.push(value.to_string(this.precedence));
+            _result.push(value.to_string(this.outer_tightness));
           }
           return _result;
         }).call(this).join(symbol);
@@ -893,20 +949,34 @@
     })(),
     PendingSubstitution: (function() {
       PendingSubstitution = function(comps) {
-        this.is_a_value = comps.expression.is_a_value;
+        this.is_a_value = comps.original.is_a_value;
         PendingSubstitution.__super__.constructor.call(this, comps);
         return this;
       };
       __extends(PendingSubstitution, Thing);
-      PendingSubstitution.prototype.precedence = 2.5;
-      PendingSubstitution.prototype.req_comps = sss("expression substitution");
-      PendingSubstitution.prototype.string_symbol = "";
-      PendingSubstitution.prototype.tex_symbol = "";
+      PendingSubstitution.prototype.outer_tightness = 2.5;
+      PendingSubstitution.prototype.req_comps = sss("value original replacement");
+      PendingSubstitution.prototype.identifier_string_set = function() {
+        return this.comps.expression.identifier_string_set();
+      };
+      PendingSubstitution.prototype.string_symbol = " = ";
+      PendingSubstitution.prototype.tex_symbol = " = ";
       PendingSubstitution.prototype.to_free_string = function() {
-        return (this.comps.expression.to_string(this.precedence)) + this.string_symbol + (this.comps.substitution.to_string(this.precedence));
+        return "" + (this.comps.value.to_string(this.outer_tightness)) + "(" + (this.comps.original.to_string(this.outer_tightness)) + " " + (this.string_symbol) + " " + (this.comps.replacement.to_string(this.outer_tightness)) + ")";
       };
       PendingSubstitution.prototype.to_free_tex = function() {
-        return (this.comps.expression.to_tex(this.precedence)) + this.tex_symbol + (this.comps.substitution.to_tex(this.precedence));
+        return "" + (this.comps.value.to_tex(this.outer_tightness)) + "(" + (this.comps.original.to_tex(this.outer_tightness)) + " " + (this.tex_symbol) + " " + (this.comps.replacement.to_tex(this.outer_tightness)) + ")";
+      };
+      PendingSubstitution.prototype._substitute = function(original, replacement, strict) {
+        return strict ? this.given(original.equals(replacement)) : this.provider({
+          value: this.comps.value.substitute(original, replacement, strict),
+          original: this.comps.original,
+          replacement: this.comps.replacement
+        });
+      };
+      PendingSubstitution.prototype.subbable_id_set = function(strict) {
+        strict = (typeof strict !== "undefined" && strict !== null) ? strict : true;
+        return strict ? {} : this.comps.value.subbable_id_set();
       };
       return PendingSubstitution;
     })(),
@@ -915,7 +985,7 @@
         return Thing.apply(this, arguments);
       };
       __extends(System, Thing);
-      System.prototype.precedence = 1000;
+      System.prototype.outer_tightness = 1000;
       System.prototype.req_comps = sss("equations");
       System.prototype.to_free_string = function() {
         var _i, _len, _ref, _result, eq;
@@ -934,7 +1004,7 @@
           _result = []; _ref = this.comps.equations;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             eq = _ref[_i];
-            _result.push(eq.to_tex(0, " &= "));
+            _result.push(eq.to_tex(0, "&" + (eq.tex_symbol)));
           }
           return _result;
         }).call(this).join(" \\\\\n");
@@ -1337,11 +1407,7 @@
     }), def("PendingSubstitution", function() {
       return this.__super__.canonizers.concat([
         canonization("overwhelming", "substitute", function() {
-          var _ref2, original, replacement;
-          _ref2 = this.comps.substitution.comps.values;
-          original = _ref2[0];
-          replacement = _ref2[1];
-          return shore.substitute(this.comps.expression, original, replacement);
+          return shore.substitute(this.comps.value, this.comps.original, this.comps.replacement);
         })
       ]);
     }), def("ExternalNumericFunction", function() {
@@ -1381,7 +1447,7 @@
           for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
             equation = _ref2[_i];
             substitutions = [];
-            _ref3 = equation.identifier_string_set();
+            _ref3 = equation.subbable_id_set(false);
             for (id_ in _ref3) {
               if (!__hasProp.call(_ref3, id_)) continue;
               _j = _ref3[id_];
@@ -1404,7 +1470,7 @@
               _ref3 = substitutions;
               for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
                 substitution = _ref3[_j];
-                rs = rs.given(substitution);
+                rs = rs.substitute(substitution.comps.values[0], substitution.comps.values[1]);
               }
               equations.push(shore.equality({
                 values: [ls, rs]
