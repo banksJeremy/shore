@@ -3,12 +3,16 @@
   border: 0;
   padding: 0; }
 
-body {
-  background: #30405c;
+html {
+  min-height: 100%;
+  background: #30405c bottom left no-repeat url(../logo.png);
   color: #fffff0;
   font-family: sans-serif;
-  font-size: 125%;
-  text-align: center; }
+  font-size: 125%; }
+
+body {
+  text-align: center;
+  min-height: 100%; }
   body a {
     color: #ffffa4; }
   body p {
@@ -19,7 +23,9 @@ body {
     text-align: left;
     width: 32em;
     max-width: 100%;
-    margin: 1em auto; }
+    margin: 1em auto;
+    margin-right: 2em;
+    margin-top: 2em; }
   body .box {
     padding: 1em;
     background: #fffff0;
@@ -27,22 +33,13 @@ body {
     -webkit-border-radius: 0.5em;
     -moz-border-radius: 0.5em;
     border-radius: 0.5em;
-    -webkit-box-shadow: 0 0 4px #fffff0;
-    -moz-box-shadow: 0 0 4px #fffff0;
-    box-shadow: 0 0 4px #fffff0;
+    -webkit-box-shadow: 0 0 0.5em #fffff0;
+    -moz-box-shadow: 0 0 0.5em #fffff0;
+    box-shadow: 0 0 0.5em #fffff0;
     margin-top: 0.25em; }
     body .box a {
       color: #30405c;
       font-weight: bold; }
-    body .box h1 {
-      text-shadow: 1px 1px 2px rgba(63, 63, 63, 0.75);
-      filter: progid:DXImageTransform.Microsoft.DropShadow(Color=#3f3f3f, OffX=1, OffY=1);
-      -ms-filter: "progid:DXImageTransform.Microsoft.DropShadow(Color=#3f3f3f, OffX=1, OffY=1)"; }
-      body .box h1 span {
-        font-size: 80%; }
-      body .box h1 a {
-        text-decoration: none;
-        color: black; }
     body .box h3 {
       text-shadow: 1px 1px 2px rgba(63, 63, 63, 0.4);
       filter: progid:DXImageTransform.Microsoft.DropShadow(Color=#3f3f3f, OffX=1, OffY=1);
@@ -101,6 +98,11 @@ body {
           filter: progid:DXImageTransform.Microsoft.Gradient(StartColorstr="#999999", EndColorstr="#bbbbbb", GradientType=0);
           -ms-filter: 'progid:DXImageTransform.Microsoft.Gradient(StartColorstr="#999999", EndColorstr="#bbbbbb", GradientType=0)'; }
   body .footer {
-    font-size: 75%;
-    text-align: center;
-    margin: 1em; }
+    position: absolute;
+    bottom: 0.5em;
+    right: 0.5em;
+    font-wieht: bold;
+    text-align: right; }
+    body .footer a {
+      color: white;
+      text-decoration: none; }

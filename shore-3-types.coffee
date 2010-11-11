@@ -458,11 +458,17 @@ __types =
 			previous = utility.set (eq.to_free_tex " &= " for eq in original.comps.equations)
 			
 			current = original.canonize null, interval
+			
+			ls = (s) -> (s.split " &= ")[0]
+			
 			while current isnt previous_
 				for eq_ in current.comps.equations
 					eq = eq_.to_free_tex " &= "
 					
 					if eq not of previous and eq not of final
+						if lines.length and (ls eq) is (ls lines[lines.length - 1])
+							eq = eq.replace /^.*? &= /, "&= "
+						
 						lines.push eq
 				
 				previous = utility.set (eq.to_free_tex " &= " for eq in current.comps.equations)

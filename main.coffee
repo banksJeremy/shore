@@ -4,10 +4,10 @@ root = this
 default_input = """
 g = -9.8
 A = g
-v_0 = 20
-d_0 = 0
 v = A ~t + v_0
+v_0 = 20
 d = v ~t + d_0
+d_0 = 0
 t_f = 5
 d_f = d(t=t_f)
 """
