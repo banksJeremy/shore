@@ -34,7 +34,7 @@
       out("\\end{align}</div>");
       out("<h3 id=output_steps>Steps</h3>");
       out("<div>\\begin{align}");
-      out(shore.ui.escape_html(parsed.tex_the_steps()));
+      out(shore.ui.escape_html(parsed.tex_the_steps("minor")));
       out("\\end{align}</div>");
       out("<h3 id=output_results>Results</h3>");
       out("<div>\\begin{align}");
@@ -98,6 +98,11 @@
     result_box = $("#results");
     form = $("form");
     provided_input = (location.hash.slice(0, 3)) === "#i=" ? shore.ui.decode(location.hash.slice(3)) : qs.i;
+    form.submit(function() {
+      process_math(input, result_box);
+      location.hash = ("#i=" + (shore.ui.encode(input_box.val())));
+      return false;
+    });
     input = provided_input || default_input;
     input_box.val(input);
     shore.ui.configure_textarea(input_box);

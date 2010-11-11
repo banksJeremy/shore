@@ -47,7 +47,7 @@ process_math = (input, output_element) ->
 		out "<h3 id=output_steps>Steps</h3>"
 		out "<div>\\begin{align}"
 		
-		out shore.ui.escape_html parsed.tex_the_steps()
+		out shore.ui.escape_html parsed.tex_the_steps "minor"
 		
 		out "\\end{align}</div>"
 		
@@ -112,6 +112,11 @@ $ main = ->
 		shore.ui.decode location.hash.slice 3
 	else
 		qs.i
+	
+	form.submit ->
+		process_math input, result_box
+		location.hash = "#i=#{shore.ui.encode input_box.val()}"
+		false
 	
 	input = provided_input or default_input
 	input_box.val input

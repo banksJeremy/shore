@@ -1054,7 +1054,7 @@
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             eq_ = _ref[_i];
             eq = eq_.to_free_tex(" &= ");
-            if (!(eq in previous) && !(eq in final)) {
+            if (!(eq in previous)) {
               if (lines.length && (ls(eq)) === (ls(lines[lines.length - 1]))) {
                 eq = eq.replace(/^.*? &= /, "&= ");
               }
@@ -1494,13 +1494,38 @@
         })
       ]);
     }), def("System", function() {
-      return this.__super__.canonizers.concat([
-        canonization("overwhelming", "substitute", function() {
-          var _i, _j, _k, _len, _len2, _ref2, _ref3, _ref4, equation, equations, id, id_, known_equation, knowns, ls, rs, substitution, substitutions;
+      var _i, _result, significance, simple;
+      simple = (function() {
+        _result = [];
+        for (_i = 0; _i < 10; _i++) {
+          (function() {
+            var significance = _i;
+            return _result.push(canonization(significance, "components " + (significance), function() {
+              var _ref2, canonized, index, new_equations;
+              new_equations = this.comps.equations;
+              _ref2 = new_equations.length;
+              for (index = 0; (0 <= _ref2 ? index < _ref2 : index > _ref2); (0 <= _ref2 ? index += 1 : index -= 1)) {
+                canonized = new_equations[index].canonize(significance, significance);
+                if (new_equations[index].isnt(canonized)) {
+                  new_equations[index] = canonized;
+                  break;
+                }
+              }
+              return this.provider({
+                equations: new_equations
+              });
+            }));
+          })();
+        }
+        return _result;
+      })();
+      return simple.concat([
+        canonization("overwhelming", "substitute!", function() {
+          var _j, _k, _l, _len, _len2, _ref2, _ref3, _ref4, equation, equations, id, id_, known_equation, knowns, ls, rs, substitution, substitutions;
           knowns = [];
           _ref2 = this.comps.equations;
-          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-            equation = _ref2[_i];
+          for (_j = 0, _len = _ref2.length; _j < _len; _j++) {
+            equation = _ref2[_j];
             if (equation instanceof shore.Equality) {
               if (equation.comps.values[0] instanceof shore.Identifier) {
                 knowns.push(equation);
@@ -1509,20 +1534,20 @@
           }
           equations = [];
           _ref2 = this.comps.equations;
-          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-            equation = _ref2[_i];
+          for (_j = 0, _len = _ref2.length; _j < _len; _j++) {
+            equation = _ref2[_j];
             substitutions = [];
             _ref3 = equation.subbable_id_set(false);
             for (id_ in _ref3) {
               if (!__hasProp.call(_ref3, id_)) continue;
-              _j = _ref3[id_];
+              _k = _ref3[id_];
               id = (shore(id_));
               if (id.is(equation.comps.values[0])) {
                 continue;
               }
               _ref4 = knowns;
-              for (_k = 0, _len2 = _ref4.length; _k < _len2; _k++) {
-                known_equation = _ref4[_k];
+              for (_l = 0, _len2 = _ref4.length; _l < _len2; _l++) {
+                known_equation = _ref4[_l];
                 if (id.is(known_equation.comps.values[0])) {
                   substitutions.push(known_equation);
                 }
@@ -1533,8 +1558,8 @@
               ls = _ref3[0];
               rs = _ref3[1];
               _ref3 = substitutions;
-              for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
-                substitution = _ref3[_j];
+              for (_k = 0, _len2 = _ref3.length; _k < _len2; _k++) {
+                substitution = _ref3[_k];
                 rs = rs.substitute(substitution.comps.values[0], substitution.comps.values[1]);
               }
               equations.push(shore.equality({

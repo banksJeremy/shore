@@ -4,15 +4,15 @@
   padding: 0; }
 
 html {
-  min-height: 100%;
+  height: 100%;
   background: #30405c bottom left no-repeat url(../logo.png);
+  background-attachment: fixed;
   color: #fffff0;
   font-family: sans-serif;
   font-size: 125%; }
 
 body {
-  text-align: center;
-  min-height: 100%; }
+  text-align: center; }
   body a {
     color: #ffffa4; }
   body p {
@@ -27,7 +27,8 @@ body {
     max-width: 100%;
     margin: 1em auto;
     margin-right: 2em;
-    margin-top: 2em; }
+    margin-top: 2em;
+    margin-bottom: 2em; }
   body .box {
     padding: 1em;
     background: #fffff0;
@@ -100,7 +101,7 @@ body {
           filter: progid:DXImageTransform.Microsoft.Gradient(StartColorstr="#999999", EndColorstr="#bbbbbb", GradientType=0);
           -ms-filter: 'progid:DXImageTransform.Microsoft.Gradient(StartColorstr="#999999", EndColorstr="#bbbbbb", GradientType=0)'; }
   body .footer {
-    position: absolute;
+    position: fixed;
     bottom: 0.5em;
     right: 0.5em;
     font-wieht: bold;
