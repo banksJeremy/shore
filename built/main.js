@@ -34,6 +34,7 @@
       out("\\end{align}</div>");
       out("<h3 id=output_steps>Steps</h3>");
       out("<div>\\begin{align}");
+      out(shore.ui.escape_html(parsed.tex_the_steps()));
       out("\\end{align}</div>");
       out("<h3 id=output_results>Results</h3>");
       out("<div>\\begin{align}");

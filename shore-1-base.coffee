@@ -78,7 +78,9 @@ utility = shore.utility = shore.U =
 			return parts.join "_"
 	
 	hash: (object) ->
-		if object.__hashed__?
+		if not object?
+			"{nil}"
+		else if object.__hashed__?
 			object.__hashed__
 		else if object.__hash__? # only define on immutable types
 			object.__hashed__ = "OH{#{object.__hash__()}}"
@@ -182,4 +184,10 @@ utility = shore.utility = shore.U =
 		for character in string
 			if character is target_character
 				result += 1
+		result
+	
+	set: (items) -> # no dubious handling
+		result = {}
+		for item in items
+			result[item] = true
 		result

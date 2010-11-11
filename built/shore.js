@@ -85,7 +85,9 @@
     },
     hash: function(object) {
       var _i, _len, _ref, _result, k, key, o, sorted_keys;
-      if (typeof (_ref = object.__hashed__) !== "undefined" && _ref !== null) {
+      if (!(typeof object !== "undefined" && object !== null)) {
+        return "{nil}";
+      } else if (typeof (_ref = object.__hashed__) !== "undefined" && _ref !== null) {
         return object.__hashed__;
       } else if (typeof (_ref = object.__hash__) !== "undefined" && _ref !== null) {
         return (object.__hashed__ = ("OH{" + (object.__hash__()) + "}"));
@@ -223,6 +225,16 @@
         if (character === target_character) {
           result += 1;
         }
+      }
+      return result;
+    },
+    set: function(items) {
+      var _i, _len, _ref, item, result;
+      result = {};
+      _ref = items;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        item = _ref[_i];
+        result[item] = true;
       }
       return result;
     }
@@ -401,6 +413,9 @@
       };
       Thing.prototype.is = function(other) {
         return this.type === ((typeof other === "undefined" || other === null) ? undefined : other.type) && shore.is(this.comps, other.comps);
+      };
+      Thing.prototype.isnt = function(other) {
+        return !this.is(other);
       };
       Thing.prototype.__hash__ = function() {
         return this.name + ":" + utility.hash(this.comps);
@@ -1008,6 +1023,50 @@
           }
           return _result;
         }).call(this).join(" \\\\\n");
+      };
+      System.prototype.tex_the_steps = function(interval) {
+        var _i, _len, _ref, _result, current, eq, eq_, final, lines, original, previous, previous_;
+        interval = (typeof interval !== "undefined" && interval !== null) ? interval : "significant";
+        original = this;
+        lines = [];
+        final = utility.set((function() {
+          _result = []; _ref = original.canonize().comps.equations;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            eq = _ref[_i];
+            _result.push(eq.to_free_tex(" &= "));
+          }
+          return _result;
+        })());
+        previous = utility.set((function() {
+          _result = []; _ref = original.comps.equations;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            eq = _ref[_i];
+            _result.push(eq.to_free_tex(" &= "));
+          }
+          return _result;
+        })());
+        current = original.canonize(null, interval);
+        while (current !== previous_) {
+          _ref = current.comps.equations;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            eq_ = _ref[_i];
+            eq = eq_.to_free_tex(" &= ");
+            if (!(eq in previous) && !(eq in final)) {
+              lines.push(eq);
+            }
+          }
+          previous = utility.set((function() {
+            _result = []; _ref = current.comps.equations;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              eq = _ref[_i];
+              _result.push(eq.to_free_tex(" &= "));
+            }
+            return _result;
+          })());
+          previous_ = current;
+          current = current.canonize(null, interval);
+        }
+        return lines.join("\\\\\n");
       };
       return System;
     })()
