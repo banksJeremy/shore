@@ -10,7 +10,6 @@ __types =
 		is_shore_thing: true
 		
 		req_comps: []
-		id_comps: [] # components that we should not allow to be non-identifiers
 		
 		identifier_string_set: utility.memoize ->
 			all = {}
@@ -22,6 +21,18 @@ __types =
 			
 			all
 		
+		subbable_id_set: utility.memoize (strict) ->
+			strict ?= true
+			
+			all = {}
+			
+			if @type is shore.Identifier
+				all[@comps.value] = true
+			
+			shore.utility.call_in @comps, (o) -> utility.extend all, (o.subbable_id_set strict) if o.is_shore_thing
+			
+			all
+	
 		uses_identifier: (o) ->
 			o.comps.value of @identifier_string_set()
 		
@@ -60,20 +71,20 @@ __types =
 				if value and not @is(value)
 					return [canonization, value]
 		
-		precedence: 0
-		# this needs to be more nuanced
+		outer_tightness: 0
+		inner_tightness: 0 # TODO
 		
 		to_tex: (context, args...) ->
 			context ?= 1
 			
-			if @precedence < context
+			if @outer_tightness < context
 				"\\left(#{@to_free_tex args...}\\right)"
 			else
 				@to_free_tex args...
 		
 		to_string: (context, args...) ->
 			context ?= 0
-			if @precedence < context
+			if @outer_tightness < context
 				"(#{@to_free_string args...})"
 			else
 				@to_free_string args...
@@ -89,8 +100,21 @@ __types =
 			else
 				this.given other
 		
-		given: (substitution) -> shore.pending_substitution expression: this, substitution: substitution
+		given: (equation) ->
+			if equation not instanceof shore.Equality or
+				 equation.comps.values.length isnt 2
+				throw new Error "given equation must be two-element Equality."
+			[ original, replacement ] = equation.comps.values
+			
+			shore.pending_substitution
+				value: this
+				original: original
+				replacement: replacement
 		
+		substitute: (original, replacement, force) ->
+			force ?= false
+			
+			shore.substitute this, original, replacement, force
 		
 		derivatives: []
 		integrals: []
@@ -117,7 +141,7 @@ __types =
 	
 	Number: class Number extends Value
 		known_constant: true
-		precedence: 10
+		outer_tightness: 10
 		req_comps: sss "value"
 		
 		neg: -> shore.number value: -@comps.value
@@ -126,7 +150,7 @@ __types =
 			if @comps.id?
 				@comps.id.to_free_tex arguments...
 			else
-				String @comps.value
+				String 1 * @comps.value.toFixed(8) # go to hell
 		
 		to_free_string: ->
 			if @comps.id?
@@ -135,7 +159,7 @@ __types =
 				String @comps.value
 	
 	Identifier: class Identifier extends Value
-		precedence: 10
+		outer_tightness: 10
 		
 		req_comps: sss "value tex_value"
 		
@@ -153,6 +177,15 @@ __types =
 		to_free_tex: -> @comps.tex_value
 		to_free_string: -> @comps.value
 		
+		_substitute: (original, replacement, strict) ->
+			if @is original
+				replacement
+			else
+				if strict
+					@given original.equals replacement
+				else
+					this
+		
 		sub: (other) ->
 			string = "#{@comps.value}_#{other.to_string()}"
 			tex = "{#{@comps.tex_value}}_{#{other.to_tex()}}"
@@ -167,17 +200,17 @@ __types =
 		to_free_tex: (symbol) ->
 			symbol ?= @tex_symbol
 			
-			(((operand.to_tex @precedence) for operand in @comps.operands)
+			(((operand.to_tex @outer_tightness) for operand in @comps.operands)
 			 .join symbol)
 		
 		to_free_string: (symbol) ->
 			symbol ?= @string_symbol
 			
-			(((operand.to_string @precedence) for operand in @comps.operands)
+			(((operand.to_string @outer_tightness) for operand in @comps.operands)
 			 .join symbol)
 		
 	Sum: class Sum extends CANOperation
-		precedence: 2
+		outer_tightness: 2
 		get_nullary: -> shore 0
 		
 		string_symbol: " + "
@@ -187,7 +220,7 @@ __types =
 		to_free_tex: -> super().replace /\+ *\-/, "-" # HACK
 	
 	Product: class Product extends CANOperation
-		precedence: 4
+		outer_tightness: 4
 		get_nullary: -> shore 1
 		
 		string_symbol: " * "
@@ -200,11 +233,11 @@ __types =
 			   operands[0].type is shore.Number and
 				 operands[1].type isnt shore.Number
 				
-				(if operands[0].comps.value isnt -1 then operands[0].to_tex @precedence else "-") +
-				(((operand.to_tex @precedence) for operand in operands.slice 1)
+				(if operands[0].comps.value isnt -1 then operands[0].to_tex @outer_tightness else "-") +
+				(((operand.to_tex @outer_tightness) for operand in operands.slice 1)
 				 .join @tex_symbol)
 			else
-				(((operand.to_tex @precedence) for operand in operands)
+				(((operand.to_tex @outer_tightness) for operand in operands)
 				 .join @tex_symbol)
 		
 		to_free_tex: ->
@@ -236,37 +269,55 @@ __types =
 			(operand.to_string(20) for operand in @comps.operands).join ""
 	
 	Exponent: class Exponent extends Value
-		precedence: 5
+		outer_tightness: 5
 		req_comps: sss "base exponent"
 		
 		to_free_tex: ->
 			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
-				@comps.base.to_tex @precedence
+				@comps.base.to_tex @outer_tightness
 			else
-				"{#{@comps.base.to_tex @precedence}}^{#{@comps.exponent.to_tex()}}"
+				"{#{@comps.base.to_tex @outer_tightness}}^{#{@comps.exponent.to_tex()}}"
 		
 		to_free_string: ->
 			if @comps.exponent.type is shore.Number and @comps.exponent.comps.value is 1
-				@comps.base.to_string @precedence
+				@comps.base.to_string @outer_tightness
 			else
-				"#{@comps.base.to_string @precedence}^#{@comps.exponent.to_string()}"
+				"#{@comps.base.to_string @outer_tightness}^#{@comps.exponent.to_string()}"
+	
+	IntDerAb: class IntDerAb extends Value
+		# stuff shared by Integrals and Derivatives.
 		
-	Integral: class Integral extends Value
-		precedence: 3
+		outer_tightness: 3
 		req_comps: sss "variable expression"
-		id_comps: sss "variable"
 		
+		subbable_id_set: ->
+			result = @comps.expression.subbable_id_set()
+			for key of @comps.variable.subbable_id_set()
+				delete result[key]
+			result
+		
+		_substitute: (original, replacement, strict) ->
+			strict ?= true
+			
+			if original.is @comps.variable
+				if strict
+					this.given original.equals replacement
+				else
+					this
+				# no-op, but save for post-canonization
+			else
+				@provider
+					variable: @comps.variable
+					expression: shore.substitute @comps.expression, original, replacement, strict
+	
+	Integral: class Integral extends IntDerAb
 		to_free_tex: ->
 			"\\int\\left[#{@comps.expression.to_tex()}\\right]d#{@comps.variable.to_tex()}"
 		
 		to_free_string: ->
 			"int{[#{@comps.expression.to_string()}]d#{@comps.variable.to_string()}}"
 	
-	Derivative: class Derivative extends Value
-		precedence: 3
-		req_comps: sss "variable expression"
-		id_comps: sss "variable"
-		
+	Derivative: class Derivative extends IntDerAb
 		to_free_tex: ->
 			"\\tfrac{d}{d#{@comps.variable.to_tex()}}\\left[#{@comps.expression.to_tex()}\\right]"
 		
@@ -274,7 +325,7 @@ __types =
 			"d/d#{@comps.variable.to_string()}[#{@comps.expression.to_string()}]"
 	
 	WithMarginOfError: class WithMarginOfError extends Value
-		precedence: 1.5
+		outer_tightness: 1.5
 		req_comps: sss "value margin"
 		
 		tex_symbol: " \\pm "
@@ -282,19 +333,19 @@ __types =
 		
 		to_free_string: ->
 			if not @margin.is (shore 0)
-				"#{@comps.value.to_string @precedence}
+				"#{@comps.value.to_string @outer_tightness}
 				 #{@string_symbol}
-				 #{@comps.margin.to_string @precedence}"
+				 #{@comps.margin.to_string @outer_tightness}"
 			else
-				@comps.value.to_string @precedence
+				@comps.value.to_string @outer_tightness
 		
 		to_free_tex: ->
 			if not @margin.is (shore 0)
-				"#{@comps.value.to_tex @precedence}
+				"#{@comps.value.to_tex @outer_tightness}
 				 #{@tex_symbol}
-				 #{@comps.margin.to_tex @precedence}"
+				 #{@comps.margin.to_tex @outer_tightness}"
 			else
-				@comps.value.to_tex @precedence
+				@comps.value.to_tex @outer_tightness
 	
 	Matrix: class Matrix extends Value
 		req_comps: sss "values"
@@ -307,19 +358,19 @@ __types =
 			\\end{matrix}"
 	
 	Equation: class Equation extends Thing
-		precedence: 1
+		outer_tightness: 1
 		req_comps: sss "values"
 		
 		to_free_tex: (symbol) ->
 			symbol ?= @tex_symbol
 			
-			(((value.to_tex @precedence) for value in @comps.values)
+			(((value.to_tex @outer_tightness) for value in @comps.values)
 			 .join symbol)
 		
 		to_free_string: (symbol) ->
 			symbol ?= @string_symbol
 			
-			(((value.to_string @precedence) for value in @comps.values)
+			(((value.to_string @outer_tightness) for value in @comps.values)
 			 .join symbol)
 	
 	Equality: class Equality extends Equation
@@ -348,37 +399,50 @@ __types =
 				(@comps.identifier.to_tex arguments...) + "_{external}(#{(shore.to_tex a for a in  @comps.arguments).join ', '})"
 	
 	PendingSubstitution: class PendingSubstitution extends Thing
-		precedence: 2.5
+		outer_tightness: 2.5
 		
-		req_comps: sss "expression substitution"
+		req_comps: sss "value original replacement"
 		
 		identifier_string_set: ->
 			# TODO: maybe this should include the replacement?
 			@comps.expression.identifier_string_set()
 		
 		constructor: (comps) ->
-			@is_a_value = comps.expression.is_a_value
+			@is_a_value = comps.original.is_a_value
 			super comps
 		
-		string_symbol: ""
-		tex_symbol: ""
+		string_symbol: " = "
+		tex_symbol: " = "
 		
 		to_free_string: ->
-			(@comps.expression.to_string @precedence) +
-			@string_symbol +
-			(@comps.substitution.to_string @precedence)
+			"#{@comps.value.to_string @outer_tightness}(#{@comps.original.to_string @outer_tightness} #{@string_symbol} #{@comps.replacement.to_string @outer_tightness})"
 		
 		to_free_tex: ->
-			(@comps.expression.to_tex @precedence) +
-			@tex_symbol +
-			(@comps.substitution.to_tex @precedence)
+			"#{@comps.value.to_tex @outer_tightness}(#{@comps.original.to_tex @outer_tightness} #{@tex_symbol} #{@comps.replacement.to_tex @outer_tightness})"
+		
+		_substitute: (original, replacement, strict) ->
+			if strict
+				this.given (original.equals replacement)
+			else
+				@provider
+					value: @comps.value.substitute original, replacement, strict
+					original: @comps.original
+					replacement: @comps.replacement
+		
+		subbable_id_set: (strict) ->
+			strict ?= true
+			
+			if strict
+				{}
+			else
+				@comps.value.subbable_id_set()
 	
 	System: class System extends Thing
-		precedence: 1000
+		outer_tightness: 1000
 		req_comps: sss "equations"
 		
 		to_free_string: -> (eq.to_string for eq in @comps.equations).join "\n"
-		to_free_tex: -> (eq.to_tex 0, " &= " for eq in @comps.equations).join " \\\\\n"
+		to_free_tex: -> (eq.to_tex 0, "&#{eq.tex_symbol}" for eq in @comps.equations).join " \\\\\n"
 
 # Set the .type property of each type to itself
 for name, type of __types

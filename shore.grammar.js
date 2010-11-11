@@ -44,7 +44,7 @@ var parser = jison.Parser({
 		[ "left", "^" ],
 		[ "left", "±" ],
 		[ "left", "~", "`" ],
-		[ "left", "UMINUS", "UPLUS" ],
+		[ "left", "UMINUS" ],
 		[ "right", "_" ],
 	],
 	
@@ -72,7 +72,6 @@ var parser = jison.Parser({
 			[ "e ± e", "$$ = $1.plus_minus($3);" ],
 			[ "e _ e", "$$ = $1.sub($3);" ],
 			[ "- e", "$$ = $2.neg();", { "prec": "UMINUS" } ],
-			[ "+ e", "$$ = $2.pos();", { "prec": "UPLUS" } ],
 			
 			[ "e e", "$$ = $1._then($2);", { "prec": "THEN" } ],
 			

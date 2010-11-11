@@ -1,5 +1,5 @@
 nix_tinys = (v) ->
-	# Because `Math.sin 2 * Math.PI` is not 0.
+	# Because `Math.sin 2 * Math.PI` should be 0.
 	
 	if Math.abs v < 1e-12
 		0
