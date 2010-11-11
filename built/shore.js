@@ -1025,7 +1025,7 @@
         }).call(this).join(" \\\\\n");
       };
       System.prototype.tex_the_steps = function(interval) {
-        var _i, _len, _ref, _result, current, eq, eq_, final, lines, original, previous, previous_;
+        var _i, _len, _ref, _result, current, eq, eq_, final, lines, ls, original, previous, previous_;
         interval = (typeof interval !== "undefined" && interval !== null) ? interval : "significant";
         original = this;
         lines = [];
@@ -1046,12 +1046,18 @@
           return _result;
         })());
         current = original.canonize(null, interval);
+        ls = function(s) {
+          return (s.split(" &= "))[0];
+        };
         while (current !== previous_) {
           _ref = current.comps.equations;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             eq_ = _ref[_i];
             eq = eq_.to_free_tex(" &= ");
             if (!(eq in previous) && !(eq in final)) {
+              if (lines.length && (ls(eq)) === (ls(lines[lines.length - 1]))) {
+                eq = eq.replace(/^.*? &= /, "&= ");
+              }
               lines.push(eq);
             }
           }
