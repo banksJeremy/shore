@@ -2,13 +2,14 @@
 root = this
 
 default_input = """
-g = -9.8
+g = [ 0; -9.8 ]
+direction = [ cos; sin ]
 A = g
+v_0 = 20 * direction(theta=tau/8)
 v = A ~t + v_0
-v_0 = 20
+d_0 = [ 0; 30 ]
 d = v ~t + d_0
-d_0 = 0
-t_f = 5
+t_f = 8
 d_f = d(t=t_f)
 """
 
@@ -44,12 +45,14 @@ process_math = (input, output_element) ->
 		
 		out "\\end{align}</div>"
 		
-		out "<h3 id=output_steps>Steps</h3>"
-		out "<div>\\begin{align}"
 		
-		out shore.ui.escape_html parsed.tex_the_steps "minor"
-		
-		out "\\end{align}</div>"
+		if parsed.tex_the_steps?
+			out "<h3 id=output_steps>Steps</h3>"
+			out "<div>\\begin{align}"
+			
+			out shore.ui.escape_html parsed.tex_the_steps "minor"
+			
+			out "\\end{align}</div>"
 		
 		out "<h3 id=output_results>Results</h3>"
 		out "<div>\\begin{align}"
@@ -114,7 +117,7 @@ $ main = ->
 		qs.i
 	
 	form.submit ->
-		process_math input, result_box
+		process_math input_box.val(), result_box
 		location.hash = "#i=#{shore.ui.encode input_box.val()}"
 		false
 	

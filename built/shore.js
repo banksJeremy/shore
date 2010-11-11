@@ -592,6 +592,9 @@
         var _ref;
         return (typeof (_ref = this.comps.id) !== "undefined" && _ref !== null) ? this.comps.id.to_free_string.apply(this.comps.id, arguments) : String(this.comps.value);
       };
+      Number.prototype.bimul = function(n) {
+        return n instanceof this.type ? this.provider(this.comps.value * n.comps.value) : null;
+      };
       return Number;
     })(),
     Identifier: (function() {
@@ -857,9 +860,10 @@
       };
       __extends(Matrix, Value);
       Matrix.prototype.req_comps = sss("values");
+      Matrix.prototype.outer_tightness = 10;
       Matrix.prototype.to_free_tex = function() {
         var _i, _j, _len, _len2, _ref, _ref2, _result, _result2, row, v;
-        return "\\begin{matrix}\
+        return "\\left[\\begin{matrix}\
 			" + ((function() {
           _result = []; _ref = this.comps.values;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -875,7 +879,7 @@
           }
           return _result;
         }).call(this).join(' \\\\\n')) + "\
-			\\end{matrix}";
+			\\end{matrix}\\right]";
       };
       return Matrix;
     })(),
@@ -909,6 +913,26 @@
           }
           return _result;
         }).call(this).join(symbol);
+      };
+      Equation.prototype.bimul = function(other) {
+        var _i, _j, _len, _len2, _ref, _ref2, _result, _result2, row, value;
+        return other.known_constant ? this.provider({
+          values: (function() {
+            _result = []; _ref = this.comps.values;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              row = _ref[_i];
+              _result.push((function() {
+                _result2 = []; _ref2 = row;
+                for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+                  value = _ref2[_j];
+                  _result2.push(other.times(value));
+                }
+                return _result2;
+              })());
+            }
+            return _result;
+          }).call(this)
+        }) : null;
       };
       return Equation;
     })(),
@@ -1320,6 +1344,42 @@
               ].concat(not_numbers)
             });
           }
+        }), canonization("overwhelming", "actually do it", function() {
+          var _ref2, _ref3, _result, found_any, index, new_operands, other_index, result;
+          _result = []; _ref2 = this.comps.operands.length;
+          for (index = 0; (0 <= _ref2 ? index < _ref2 : index > _ref2); (0 <= _ref2 ? index += 1 : index -= 1)) {
+            if (!(typeof (_ref3 = index.bimul) !== "undefined" && _ref3 !== null)) {
+              continue;
+            }
+            found_any = false;
+            _ref3 = this.comps.operands.length;
+            for (other_index = 0; (0 <= _ref3 ? other_index < _ref3 : other_index > _ref3); (0 <= _ref3 ? other_index += 1 : other_index -= 1)) {
+              if (index === other_index) {
+                continue;
+              }
+              result = this.comps.operands[index].bimul(this.comps.operands[other_index]);
+              if (typeof result !== "undefined" && result !== null) {
+                new_operands = [];
+                for (index = 0; (0 <= this.comps.operands.length - 1 ? index < this.comps.operands.length - 1 : index > this.comps.operands.length - 1); (0 <= this.comps.operands.length - 1 ? index += 1 : index -= 1)) {
+                  if (index < min(index, other_index)) {
+                    new_operands.push(this.comps.operands[index]);
+                  } else if (index === min(index, other_index)) {
+                    new_operands.push(result);
+                  } else if (index < max(index, other_index)) {
+                    new_operands.push(this.comps.operands[index]);
+                  } else {
+                    new_operands.push(this.comps.operands[index + 1]);
+                  }
+                }
+                console.log("new operands", new_operands);
+                return this.provider({
+                  operands: new_operands
+                });
+              }
+            }
+            null;
+          }
+          return _result;
         })
       ]);
     }), def("Exponent", function() {

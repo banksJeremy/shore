@@ -1,10 +1,10 @@
 (function() {
   var default_input, main, mj_wait, process_math, root;
   root = this;
-  default_input = "g = -9.8\nA = g\nv = A ~t + v_0\nv_0 = 20\nd = v ~t + d_0\nd_0 = 0\nt_f = 5\nd_f = d(t=t_f)";
+  default_input = "g = [ 0; -9.8 ]\ndirection = [ cos; sin ]\nA = g\nv_0 = 20 * direction(theta=tau/8)\nv = A ~t + v_0\nd_0 = [ 0; 30 ]\nd = v ~t + d_0\nt_f = 8\nd_f = d(t=t_f)";
   mj_wait = 2000;
   process_math = function(input, output_element) {
-    var mathjax_message, out, output_parts, parsed;
+    var _ref, mathjax_message, out, output_parts, parsed;
     "Parses an input string then display and format the input, steps and result\
 	in a given element.";
     if ((typeof MathJax === "undefined" || MathJax === null) ? undefined : MathJax.isReady) {
@@ -32,10 +32,12 @@
       out("<div>\\begin{align}");
       out(shore.ui.escape_html(parsed.to_tex()));
       out("\\end{align}</div>");
-      out("<h3 id=output_steps>Steps</h3>");
-      out("<div>\\begin{align}");
-      out(shore.ui.escape_html(parsed.tex_the_steps("minor")));
-      out("\\end{align}</div>");
+      if (typeof (_ref = parsed.tex_the_steps) !== "undefined" && _ref !== null) {
+        out("<h3 id=output_steps>Steps</h3>");
+        out("<div>\\begin{align}");
+        out(shore.ui.escape_html(parsed.tex_the_steps("minor")));
+        out("\\end{align}</div>");
+      }
       out("<h3 id=output_results>Results</h3>");
       out("<div>\\begin{align}");
       out(shore.ui.escape_html(parsed.canonize().to_tex()));
@@ -99,7 +101,7 @@
     form = $("form");
     provided_input = (location.hash.slice(0, 3)) === "#i=" ? shore.ui.decode(location.hash.slice(3)) : qs.i;
     form.submit(function() {
-      process_math(input, result_box);
+      process_math(input_box.val(), result_box);
       location.hash = ("#i=" + (shore.ui.encode(input_box.val())));
       return false;
     });

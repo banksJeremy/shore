@@ -141,7 +141,7 @@ __types =
 		integrate: (variable) -> shore.integral expression: this, variable: variable
 		differentiate: (variable) -> shore.derivative expression: this, variable: variable
 		plus_minus: (other) -> shore.with_margin_of_error value: this, margin: other
-	
+		
 	Number: class Number extends Value
 		known_constant: true
 		outer_tightness: 10
@@ -160,6 +160,10 @@ __types =
 				@comps.id.to_free_string arguments...
 			else
 				String @comps.value
+		
+		bimul: (n) ->
+			if n instanceof @type
+				@provider @comps.value * n.comps.value
 	
 	Identifier: class Identifier extends Value
 		outer_tightness: 10
@@ -352,13 +356,14 @@ __types =
 	
 	Matrix: class Matrix extends Value
 		req_comps: sss "values"
+		outer_tightness: 10
 		
 		to_free_tex: ->
-			"\\begin{matrix}
+			"\\left[\\begin{matrix}
 			#{
 				((v.to_tex() for v in row).join('&') for row in @comps.values).join(' \\\\\n')
 			}
-			\\end{matrix}"
+			\\end{matrix}\\right]"
 	
 	Equation: class Equation extends Thing
 		outer_tightness: 1
@@ -375,6 +380,15 @@ __types =
 			
 			(((value.to_string @outer_tightness) for value in @comps.values)
 			 .join symbol)
+		
+		bimul: (other) ->
+			# multiply in constants, easy
+			if other.known_constant
+				@provider
+					values: for row in @comps.values
+						for value in row
+							other.times value
+				
 	
 	Equality: class Equality extends Equation
 		string_symbol: " = "

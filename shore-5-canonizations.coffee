@@ -89,6 +89,34 @@ __definers_of_canonizers = [
 					product *= number.comps.value
 				
 				@provider operands: [ shore.number value: product ].concat not_numbers
+		
+		canonization "overwhelming", "actually do it", ->		
+			for index in [0...@comps.operands.length]
+				continue if not index.bimul?
+				
+				found_any = false
+				
+				for other_index in [0...@comps.operands.length]
+					continue if index is other_index
+					
+					result = @comps.operands[index].bimul @comps.operands[other_index]
+					
+					if result?
+						new_operands = []
+						
+						for index in [0...@comps.operands.length - 1]
+							if index < min(index, other_index)
+								new_operands.push @comps.operands[index]
+							else if index == min(index, other_index)
+								new_operands.push result
+							else if index < max(index, other_index)
+								new_operands.push @comps.operands[index]
+							else
+								new_operands.push @comps.operands[index + 1]
+						
+						console.log "new operands", new_operands
+						return @provider operands: new_operands
+				null
 	]
 	
 	def "Exponent", -> @__super__.canonizers.concat [
