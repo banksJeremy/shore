@@ -201,41 +201,56 @@ __definers_of_canonizers = [
 			shore.number value: @comps.f.apply this, values
 	]
 	
-	def "System", -> @__super__.canonizers.concat [
-		canonization "overwhelming", "substitute", ->
-			knowns = []
-			
-			for equation in @comps.equations
-				if equation instanceof shore.Equality
-					if equation.comps.values[0] instanceof shore.Identifier
-						knowns.push equation
-			
-			equations = []
-			
-			for equation in @comps.equations
-				substitutions = []
+	def "System", ->
+		simple = for significance in [0...10] #...
+			canonization significance, "components #{significance}", ->
+				# only do it one equation at a time, to make the steps better
+				new_equations = @comps.equations
 				
-				for id_ of equation.subbable_id_set false
-					id = (shore id_)
-					
-					continue if id.is equation.comps.values[0]
-					# don't sub into self
-					
-					for known_equation in knowns
-						if id.is known_equation.comps.values[0]
-							substitutions.push known_equation
+				for index in [0...new_equations.length]
+					canonized = new_equations[index].canonize significance, significance
 				
-				if substitutions.length
-					[ls, rs] = equation.comps.values
-					
-					for substitution in substitutions
-						rs = rs.substitute substitution.comps.values[0], substitution.comps.values[1]
-					
-					equations.push shore.equality values: [ ls, rs ]
-				else
-					equations.push equation
+					if new_equations[index].isnt canonized
+						new_equations[index] = canonized
+						break
+				
+				@provider equations: new_equations
+		
+		simple.concat [
+			canonization "overwhelming", "substitute!", ->
+				knowns = []
 			
-			shore.system equations: equations
+				for equation in @comps.equations
+					if equation instanceof shore.Equality
+						if equation.comps.values[0] instanceof shore.Identifier
+							knowns.push equation
+			
+				equations = []
+			
+				for equation in @comps.equations
+					substitutions = []
+				
+					for id_ of equation.subbable_id_set false
+						id = (shore id_)
+					
+						continue if id.is equation.comps.values[0]
+						# don't sub into self
+					
+						for known_equation in knowns
+							if id.is known_equation.comps.values[0]
+								substitutions.push known_equation
+				
+					if substitutions.length
+						[ls, rs] = equation.comps.values
+					
+						for substitution in substitutions
+							rs = rs.substitute substitution.comps.values[0], substitution.comps.values[1]
+					
+						equations.push shore.equality values: [ ls, rs ]
+					else
+						equations.push equation
+			
+				shore.system equations: equations
 	]
 ]
 

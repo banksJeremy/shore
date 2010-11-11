@@ -465,7 +465,7 @@ __types =
 				for eq_ in current.comps.equations
 					eq = eq_.to_free_tex " &= "
 					
-					if eq not of previous and eq not of final
+					if eq not of previous# and eq not of final
 						if lines.length and (ls eq) is (ls lines[lines.length - 1])
 							eq = eq.replace /^.*? &= /, "&= "
 						
